@@ -12,29 +12,45 @@
 		<meta name="google-site-verification" content="RA0ehqO8ARMao9j1LAe3SePhjnZO4TkWqOPjma5vS6M" />
 		<title>birdwatcherYT</title>
 		<style>
-		.aa {
-			font-family:monospace, monospace !important;
-			font-size: 10px;
-			transform: scale(0.5);
-			transform-origin: left bottom;
-		}
-		h2:before{
-			content:"\1f426";
-			margin-right:3px;
-		}
-		h3:before{
-			content:"\1f54a";
-			margin-right:3px;
-		}
-		ul, ol {
-			padding-left:50px;
-		}
+			.aa {
+				font-family:monospace, monospace !important;
+				font-size: 10px;
+				transform: scale(0.5);
+				transform-origin: left bottom;
+			}
+			h2:before{
+				content:"\1f426";
+				margin-right:3px;
+			}
+			h3:before{
+				content:"\1f54a";
+				margin-right:3px;
+			}
+			ul, ol {
+				padding-left:50px;
+			}
+			.profile{
+				background-image: url(image/bg.svg);
+				background-size:150px;
+				font-family: "Comic Sans MS";
+			}
+			h1{
+				font-family: "Comic Sans MS";
+			}
+			.text{
+				font-family: "Comic Sans MS";
+			}
+			.icon{
+				width:64px;border-radius: 20%;
+				vertical-align: middle;
+				margin-right: 15px;
+			}
 		</style>
 	</head>
 	<body>
-		<div style="background-image: url(image/bg.svg); background-size:150px">
-		<font face="Comic Sans MS">
-			<h1><a href="https://www.instagram.com/birdwatcheryt/" target="_blank" style="text-decoration: none; color:black;"><img src="image/icon.ico" style="width:64px;border-radius: 20%;vertical-align:middle;margin-right:15px;"/>birdwatcherYT</a></h1>
+		<h1><a href="https://www.instagram.com/birdwatcheryt/" target="_blank" style="text-decoration: none; color:black;"><img src="image/icon.ico" class="icon"/>birdwatcherYT</a></h1>
+
+		<div id="profile" class="profile">
 			Email: yoshida.t.mllab.nit[at]gmail.com
 			<h2>Papers</h2>
 			<ul>
@@ -75,14 +91,16 @@
 				<li><a href="https://www.linkedin.com/in/tomoki-yoshida-3a6905164/" target="_blank">LinkedIn</a></li>
 				<li><a href="https://twitter.com/birdwatcherYT" target="_blank">Twitter</a></li>
 			</ul>
-		</font>
 		</div>
-		<marquee direction="right" scrollamount="15"><img src="image/crow.svg" style="width:9vw;"></marquee>
-		<img src="image/birds.svg" style="width:95vw;">
-		<marquee direction="right"><img src="image/fish.svg" style="width:3vw;"></marquee>
-		<marquee direction="left"  scrolldelay="200"><img src="image/duck.svg" style="width:14vw;"></marquee>
-		<marquee direction="right" scrolldelay="100"><img src="image/tufted.svg" style="width:10vw;"></marquee>
-		<marquee direction="left" scrolldelay="50"><img src="image/cormorant.svg" style="width:15vw;"></marquee>
+		
+		<div id="bird">
+			<marquee direction="right" scrollamount="15"><img src="image/crow.svg" style="width:9vw;"></marquee>
+			<img src="image/birds.svg" style="width:95vw;">
+			<marquee direction="right"><img src="image/fish.svg" style="width:3vw;"></marquee>
+			<marquee direction="left"  scrolldelay="200"><img src="image/duck.svg" style="width:14vw;"></marquee>
+			<marquee direction="right" scrolldelay="100"><img src="image/tufted.svg" style="width:10vw;"></marquee>
+			<marquee direction="left" scrolldelay="50"><img src="image/cormorant.svg" style="width:15vw;"></marquee>
+
 <div class="aa">
 <xmp>
                                                                                                                         .Jgg,                                           .(gg,
@@ -184,15 +202,26 @@
    ,W#HXXWS_(;+++zllztrrvzzvvrrrwuzXVwOzrrrrrvXvvvvtzwrrrrrrrvwuyWZuzzzzzzvvrvvvvvuuZZuuuuzvvvvXWX0vvrvvrvrvvvvvzzzzzzzuuuXuuuuuuuzuzuuuZuuZZyyZZWyyyyyZyZZZyyVWpVffyyyyyZZyyZyyZZZZXNN@HHNNNN##
 </xmp>
 </div>
-	<font face="Comic Sans MS">
-		<font size="1">
-			made by applying <a href="https://tool-taro.com/image_to_ascii/" target="_blank">AA変換</a> to <a href="https://www.instagram.com/p/B-O6rfJgta5/?utm_source=ig_web_copy_link" target="_blank">my favorite photo</a>. 
-		</font>
-		<h3>Oriental Turtle Dove</h3>
-		<audio controls>
-		<source src="audio/turtle_dove.mp3">
-		</audio>
-		<p><img src="image/kjbt.svg" style="width:256px;margin-left:5px;"/><img src="image/god.svg" style="width:128px;margin-left:5px;"/>©birdwatcherYT</p>
-	</font>
+
+			<div class="text">
+				<font size="2">
+					made by applying <a href="https://tool-taro.com/image_to_ascii/" target="_blank">AA変換</a> to <a href="https://www.instagram.com/p/B-O6rfJgta5/?utm_source=ig_web_copy_link" target="_blank">my favorite photo</a>. 
+				</font>
+				<h3>Oriental Turtle Dove</h3>
+				<audio controls>
+				<source src="audio/turtle_dove.mp3">
+				</audio>
+				<p><img src="image/kjbt.svg" width="256"><img src="image/god.svg" width="128">©birdwatcherYT</p>
+			</div>
+		</div>
 	</body>
+
+	<script>
+		var param = location.search;
+		if (param == "?bird") {
+			document.getElementById('profile').innerHTML="";
+		}else if (param == "?profile") {
+			document.getElementById('bird').innerHTML="";
+		}
+	</script>
 </html>
