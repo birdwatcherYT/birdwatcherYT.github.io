@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ナンプレソルバー</title>
+<style>
+
+table{
+	border-collapse:collapse;
+}
+
+th,td{
+	border: solid 1px;
+	width: 30px;
+	height: 30px;
+	text-align: center;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>ナンプレソルバー</h1>
+<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+<h2>問題入力</h2>
+<div id="input"></div>
+<form name="form">
+	<input type="button" value="解く" onclick="on_click();"/>
+	<input type="checkbox" id="all_answer">すべての解を列挙する (解が多すぎるとブラウザが固まる恐れあり)
+</form>
+<div id="output"></div>
+
+<script src="sudoku.js"></script>
+<script>
+function make_table(){
+	str='<table id="board">'
+	for (let i=0;i<9;i++){
+		str += "<tr>";
+		style_i = (i+1)%3==0 ? 'style="border-bottom: solid 3px;' : 'style="';
+		if (i==0){
+			style_i+="border-top: solid 3px;"
+		}
+		for (let j=0;j<9;j++){
+			style_j = j==0 ? "border-left: solid 3px;":""
+			style_j += (j+1)%3==0 ? 'border-right: solid 3px;"' : '"';
+			str += "<td "+style_i+style_j+">"+' <div id="board_'+i+'_'+j+'" contentEditable></div> </td>';
+		}
+		str += "</tr>";
+	}
+	str+="</table>";
+	return str;
+}
+
+function on_click(){
+	const m = 3, n=3;
+	let board=get2d(m*n);
+
+	let table = document.getElementById('board');
+	let all_answer = document.getElementById('all_answer');
+	let target = document.getElementById("output");
+
+	let i=0;
+	for (let row of table.rows) {
+		let j=0;
+		for(let cell of row.cells){
+			if (cell.innerText in [1,2,3,4,5,6,7,8,9]){
+				board[i][j]=Number(cell.innerText);
+			}else{
+				board[i][j]=0;
+			}
+			j++;
+		}
+		i++;
+	}
+	
+	target.innerHTML="<h2>解答</h2>";
+	for (let ans of solve(board,m,n)){
+		target.innerHTML+=print_board(ans,m,n);
+		if (!all_answer.checked){
+			break;
+		}
+		target.innerHTML+="<br>";
+	}
+}
+
+let input = document.getElementById("input");
+input.innerHTML=make_table();
+</script>
+
+</body>
+</html>
