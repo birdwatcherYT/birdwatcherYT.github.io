@@ -27,7 +27,7 @@ th,td{
 <div id="input"></div>
 <form name="form">
 	<input type="button" value="解く" onclick="on_click();"/>
-	<input type="checkbox" id="all_answer">すべての解を列挙する (解が多すぎるとブラウザが固まる恐れあり)
+	<input type="checkbox" id="all_answer">すべての解を列挙する (安全のため上限10まで)
 </form>
 <div id="output"></div>
 
@@ -75,9 +75,14 @@ function on_click(){
 	}
 	
 	target.innerHTML="<h2>解答</h2>";
+	let count_down=1;
+	if (all_answer.checked){
+		count_down=10;
+	}
 	for (let ans of solve(board,m,n)){
+		count_down--;
 		target.innerHTML+=print_board(ans,m,n);
-		if (!all_answer.checked){
+		if (count_down<=0){
 			break;
 		}
 		target.innerHTML+="<br>";
