@@ -14,7 +14,7 @@ function print_maze(maze, start, goal){
 	const row=maze.length;
 	const col=maze[0].length;
 
-	str="<table>";
+	let str="<table>";
 	for (let i = 0; i <row; i++){
 		str+="<tr>";
 		for (let j = 0; j <col; j++){

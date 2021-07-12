@@ -25,40 +25,38 @@ th,td{
 <p>m x nブロックをn x m個並べた問題を作成します. (m=n=3が通常です)</p>
 <p>縦, 横, m x nブロックの数字は重複してはいけません. </p>
 <p>※JavaScriptを使用しています. 極端にマシンスペックが低いとうまく動かないかもしれません. このスクリプトで問題が生じても一切の責任を負いません. </p>
-<form name="form">
-	m=
-	<select name="m">
-		<option value="1">1</option>
-		<option value="2">2</option>
-		<option value="3" selected>3</option>
-		<!-- <option value="4">4</option> -->
-	</select>
-	n=
-	<select name="n">
-		<option value="1">1</option>
-		<option value="2">2</option>
-		<option value="3" selected>3</option>
-		<!-- <option value="4">4</option> -->
-	</select>
-	level=
-	<select name="level">
-		<option value="1" selected>1</option>
-		<option value="2">2</option>
-		<option value="3">3</option>
-		<option value="4">4</option>
-		<option value="5">5</option>
-	</select>
-	<input type="button" value="問題作成" onclick="on_click();"/>
-</form>
+m=
+<select id="m">
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3" selected>3</option>
+	<!-- <option value="4">4</option> -->
+</select>
+n=
+<select id="n">
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3" selected>3</option>
+	<!-- <option value="4">4</option> -->
+</select>
+level=
+<select id="level">
+	<option value="1" selected>1</option>
+	<option value="2">2</option>
+	<option value="3">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+</select>
+<input type="button" value="問題作成" onclick="on_click();"/>
 
 <div id="output"></div>
 
 <script src="sudoku.js"></script>
 <script>
 function on_click(){
-	const m = Number(document.form.m.options[document.form.m.selectedIndex].value);
-	const n = Number(document.form.n.options[document.form.n.selectedIndex].value);
-	const level = Number(document.form.level.options[document.form.level.selectedIndex].value);
+	const m = Number(document.getElementById("m").value);
+	const n = Number(document.getElementById("n").value);
+	const level = Number(document.getElementById("level").value);
 
 	const try_num=m*n;
 	let board=create_problem(m, n, try_num, level);

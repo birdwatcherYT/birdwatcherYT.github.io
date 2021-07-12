@@ -23,44 +23,42 @@ th,td{
 
 <h1>迷路自動作成</h1>
 <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-<form name="form">
-	row=
-	<select name="row">
-		<option value="15">15</option>
-		<option value="25">25</option>
-		<option value="35" selected>35</option>
-		<option value="45">45</option>
-		<option value="55">55</option>
-		<option value="65">65</option>
-		<option value="75">75</option>
-	</select>
-	col=
-	<select name="col">
-		<option value="15">15</option>
-		<option value="25">25</option>
-		<option value="35">35</option>
-		<option value="45">45</option>
-		<option value="55" selected>55</option>
-		<option value="65">65</option>
-		<option value="75">75</option>
-	</select>
-	method=
-	<select name="method">
-		<option value="DigMethod" selected>穴掘り法</option>
-		<option value="BarFallMethod">棒倒し法</option>
-		<option value="BarFallMethodMulti">棒倒し法(複数経路)</option>
-	</select>
-	<input type="button" value="迷路作成" onclick="on_click();"/>
-</form>
+row=
+<select id="row">
+	<option value="15">15</option>
+	<option value="25">25</option>
+	<option value="35" selected>35</option>
+	<option value="45">45</option>
+	<option value="55">55</option>
+	<option value="65">65</option>
+	<option value="75">75</option>
+</select>
+col=
+<select id="col">
+	<option value="15">15</option>
+	<option value="25">25</option>
+	<option value="35">35</option>
+	<option value="45">45</option>
+	<option value="55" selected>55</option>
+	<option value="65">65</option>
+	<option value="75">75</option>
+</select>
+method=
+<select id="method">
+	<option value="DigMethod" selected>穴掘り法</option>
+	<option value="BarFallMethod">棒倒し法</option>
+	<option value="BarFallMethodMulti">棒倒し法(複数経路)</option>
+</select>
+<input type="button" value="迷路作成" onclick="on_click();"/>
 <div id="output"></div>
 
 <script src="maze.js"></script>
 <script>
 
 function on_click(){
-	const row = Number(document.form.row.options[document.form.row.selectedIndex].value);
-	const col = Number(document.form.col.options[document.form.col.selectedIndex].value);
-	const method = document.form.method.options[document.form.method.selectedIndex].value;
+	const row = Number(document.getElementById("row").value);
+	const col = Number(document.getElementById("col").value);
+	const method = document.getElementById("method").value;
 	let result = method=="DigMethod"? buildFromDigMethod(row, col): buildFromBarFallMethod(row, col, method=="BarFallMethodMulti");
 	let maze=result[0], start=result[1], goal=result[2];
 	let target = document.getElementById("output");
