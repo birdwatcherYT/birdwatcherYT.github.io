@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>リバーシ</title>
+<style>
+
+table{
+	border-collapse:collapse;
+}
+
+th,td{
+	border: solid 1px;
+	width: 50px;
+	height: 50px;
+	text-align: center;
+	font-size: 30px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>リバーシ</h1>
+<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+
+
+<select id="level" onchange="reset();">
+	<option value="3">EASY</option>
+	<option value="5" selected>NORMAL</option>
+	<option value="7">DIFFICULT</option>
+</select>
+<select id="first_second" onchange="reset();">
+	<option value="first" selected>先行</option>
+	<option value="second">後攻</option>
+</select>
+<input type="button" value="リセット" onclick="reset();"/>
+
+<div id="output"></div>
+
+<script src="reversi.js"></script>
+<script>
+
+const N=8;
+let reversi = new Reversi();
+reset();
+
+function reset(){
+	let level = Number(document.getElementById("level").value);
+	let first = document.getElementById("first_second").value=="first";
+	reversi.initialize(N, level, first);
+	let output=document.getElementById("output");
+	output.innerHTML=reversi.print_board();
+}
+
+</script>
+
+</body>
+</html>
