@@ -24,7 +24,7 @@ function AA2img(canvas, AA, fontsize){
 	canvas.width=text_width(lines[0],fontsize);
 	canvas.height=fontsize*lines.length;
 	let aa_ctx = canvas.getContext('2d');
-	aa_ctx.font = fontsize+"px monospace";
+	aa_ctx.font = fontsize+"px 'Inconsolata', monospace";
 	aa_ctx.textBaseline = "top";
 	for (let k=0;k<lines.length;k++){
 		let line = lines[k];
@@ -35,7 +35,7 @@ function AA2img(canvas, AA, fontsize){
 function text_width(text, fontsize){
 	let canvas = document.createElement("canvas");
 	let ctx = canvas.getContext('2d');
-	ctx.font = fontsize+"px monospace";
+	ctx.font = fontsize+"px 'Inconsolata', monospace";
 	let width = ctx.measureText(text).width;
 	return width;
 }
@@ -46,7 +46,7 @@ function char2pixel(ch, fontsize){
 	canvas.width=text_width(ch,fontsize);
 	canvas.height=fontsize;
 	let ctx = canvas.getContext('2d');
-	ctx.font = fontsize+"px monospace";
+	ctx.font = fontsize+"px 'Inconsolata', monospace";
 	ctx.textBaseline = "top";
 	ctx.fillText(ch, 0, 0);
 	let pixel=ctx.getImageData(0, 0, canvas.width, canvas.height);
