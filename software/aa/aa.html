@@ -89,8 +89,8 @@ function on_click(){
 		let AA=toAA(pixel, size, characters, c_vals);
 		let output=document.getElementById('output');
 		output.value=AA;
-		output.cols=char_num;
-		output.rows=Math.ceil(AA.length/char_num);
+		output.cols=char_num+10;
+		output.rows=Math.ceil(AA.length/char_num)+5;
 		// AAを画像出力
 		let aa_canvas = document.getElementById("aa_canvas");
 		AA2img(aa_canvas, AA, fontsize);
