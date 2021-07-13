@@ -21,7 +21,7 @@ function draw_image(canvas, img){
 function AA2img(canvas, AA, fontsize){
 	// AAを画像出力
 	const lines = AA.split("\n");
-	canvas.width=fontsize/2*lines[0].length;
+	canvas.width=text_width(lines[0],fontsize);
 	canvas.height=fontsize*lines.length;
 	let aa_ctx = canvas.getContext('2d');
 	aa_ctx.font = fontsize+"px monospace";
@@ -32,11 +32,18 @@ function AA2img(canvas, AA, fontsize){
 	}
 }
 
+function text_width(text, fontsize){
+	let canvas = document.createElement("canvas");
+	let ctx = canvas.getContext('2d');
+	ctx.font = fontsize+"px monospace";
+	let width = ctx.measureText(text).width;
+	return width;
+}
 
 function char2pixel(ch, fontsize){
 	// 半角1文字の画像表現
 	let canvas = document.createElement("canvas");
-	canvas.width=fontsize/2;
+	canvas.width=text_width(ch,fontsize);
 	canvas.height=fontsize;
 	let ctx = canvas.getContext('2d');
 	ctx.font = fontsize+"px monospace";
