@@ -83,10 +83,10 @@ class Reversi {
 		//
 		this.board = get2d(this.n,this.n);
 		let center = this.n/2;
-		this.board[center][center]=this.BLACK;
-		this.board[center-1][center-1]=this.BLACK;
-		this.board[center-1][center]=this.WHITE;
-		this.board[center][center-1]=this.WHITE;
+		this.board[center][center]=this.WHITE;
+		this.board[center-1][center-1]=this.WHITE;
+		this.board[center-1][center]=this.BLACK;
+		this.board[center][center-1]=this.BLACK;
 		this.counter=this.getCount();
 		//
 		if (!this.userFirst){//ユーザーが後攻のとき
