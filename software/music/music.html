@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>音楽作成</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+
+	<style>
+
+	table{
+		border-collapse:collapse;
+	}
+	th,td{
+		border: solid 2px;
+		text-align: center;
+		padding-left: 5px;
+		padding-right: 5px;
+	}
+
+	</style>
+</head>
+
+<body>
+
+<h1>音楽作成</h1>
+<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+<p>
+	<input type="button" value="再生" onclick="play();"/>
+	<input type="button" value="停止" onclick="stop();"/>
+	<input type="button" value="行追加" onclick="add_row();"/>
+	<input type="button" value="行削除" onclick="delete_row();"/>
+
+	<select id="type">
+		<option value="sine" selected>正弦波</option>
+		<option value="square" >矩形波</option>
+		<option value="sawtooth">ノコギリ波</option>
+		<option value="triangle">三角波</option>
+	</select>
+</p>
+<p>
+	ループ数 <input type="number" id="loop" value="3">
+</p>
+
+<div id="output"></div>
+</body>
+
+<script src="./music.js"></script>
+<script>
+	update_table();
+</script>
+
+</body>
+</html>
