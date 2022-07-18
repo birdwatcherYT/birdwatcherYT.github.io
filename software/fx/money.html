@@ -43,6 +43,11 @@
 
 
 <script>
+function round(x, i){
+	let s=10**i;
+	return Math.round(x*s)/s;
+}
+
 function click_jpy(){
 	let jpy_pair = document.getElementById("jpy_pair");
 	let rate = document.getElementById("rate");
@@ -64,17 +69,17 @@ function on_click(){
 
 	switch(askbid){
 	case "ask":
-		money.value=((price-losscut)*amount+losscut*amount/25)*rate;
+		money.value=Math.ceil(((price-losscut)*amount+losscut*amount/25)*rate);
 		break;
 	case "bid":
-		money.value=((losscut-price)*amount+losscut*amount/25)*rate;
+		money.value=Math.ceil(((losscut-price)*amount+losscut*amount/25)*rate);
 		break;
 	}
 
 	let need = document.getElementById("need");
-	need.value=price*amount/25*rate;
+	need.value=Math.ceil(price*amount/25*rate);
 	let leverage = document.getElementById("leverage");
-	leverage.value=price*amount*rate/money.value;
+	leverage.value=round(price*amount*rate/money.value,2);
 }
 
 </script>
