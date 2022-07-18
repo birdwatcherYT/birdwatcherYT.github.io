@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>FXロスカット計算ツール</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@500&display=swap" rel="stylesheet">
+	<style>
+	table {
+		border-collapse: collapse;
+		border: solid 2px orange;
+	}
+	</style>
+</head>
+
+<body>
+
+<h1>FXロスカット計算ツール</h1>
+<p>用意した資金からロスカットレートを計算します. </p>
+
+<table cellpadding="3">
+	<tr><td>資金 (円)</td><td><input id="money" type="number"></td></tr>
+	<tr><td>通貨数</td><td><input id="amount" type="number" value=1000></td></tr>
+	<tr><td>注文価格</td><td><input id="price" type="number"></td></tr>
+	<tr><td>買い/売り</td><td>
+		<select id="askbid">
+		<option value="ask">買い</option>
+		<option value="bid">売り</option>
+		</select>
+	</td></tr>
+	<tr><td>対円通貨</td><td><input id="jpy_pair" type="checkbox" checked onclick="click_jpy();"></td></tr>
+	<tr><td>通貨/円レート</td><td><input id="rate" type="number" disabled></td></tr>
+</table>
+<p><input type="button" onclick="on_click();" value="ロスカット計算"></p>
+<table cellpadding="3">
+	<tr><td>ロスカットレート</td><td><input id="losscut" readonly></input></td></tr>
+	<tr><td>注文時必要証拠金 (円)</td><td><input id="need" readonly></input></td></tr>
+	<tr><td>レバレッジ (倍)</td><td><input id="leverage" readonly></input></td></tr>
+</table>
+
+
+<script>
+function click_jpy(){
+	let jpy_pair = document.getElementById("jpy_pair");
+	let rate = document.getElementById("rate");
+	rate.disabled=jpy_pair.checked;
+}
+
+function on_click(){
+	let money = Number(document.getElementById("money").value);
+	let amount = Number(document.getElementById("amount").value);
+	let price = Number(document.getElementById("price").value);
+
+	let jpy_pair = document.getElementById("jpy_pair");
+	let rate=1;
+	if (!jpy_pair.checked){
+		rate = Number(document.getElementById("rate").value);
+		money /= rate;
+	}
+	let askbid = document.getElementById("askbid").value;
+	let losscut = document.getElementById("losscut");
+
+	switch(askbid){
+	case "ask":
+		losscut.value=25*(price-money/amount)/24;
+		break;
+	case "bid":
+		losscut.value=25*(money/amount+price)/26;
+		break;
+	}
+
+	let need = document.getElementById("need");
+	need.value=price*amount/25*rate;
+	let leverage = document.getElementById("leverage");
+	leverage.value=price*amount/money;
+}
+
+</script>
+</body>
+</html>

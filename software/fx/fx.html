@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>FX計算ツール</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<h1>FX計算ツール</h1>
+<iframe src="./losscut.html" width=450 height=500></iframe>
+<iframe src="./money.html" width=450 height=500></iframe>
+
+<h2>計算式</h2>
+<p> ロスカット条件「評価金額が必要証拠金未満」</p>
+<p>「資金 - 含み損 = 必要証拠金」の方程式を解く. </p>
+<p>対円通貨ではない場合, 資金を通貨/円レートで割る. </p>
+<ul>
+	
+	<li>必要証拠金=ロスカットレート*通貨数/25</li>
+	<li>含み損</li>
+	<ul>
+		<li>買いの場合</li>
+		(注文価格-ロスカットレート)*通貨数
+		<li>売りの場合</li>
+		(ロスカットレート-注文価格)*通貨数
+	</ul>
+</ul>
+
+</body>
+</html>
