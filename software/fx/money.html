@@ -13,6 +13,9 @@
 		border-collapse: collapse;
 		border: solid 2px orange;
 	}
+	input{
+		width:180px;
+	}
 	</style>
 </head>
 
@@ -23,7 +26,7 @@
 
 <table cellpadding="3">
 	<tr><td>ロスカットレート</td><td><input id="losscut" type="number"></input></td></tr>
-	<tr><td>通貨数</td><td><input id="amount" type="number" value=1000></td></tr>
+	<tr><td>通貨数</td><td><input id="amount" type="number" value="1000"></td></tr>
 	<tr><td>注文価格</td><td><input id="price" type="number"></td></tr>
 	<tr><td>買い/売り</td><td>
 		<select id="askbid">
@@ -31,8 +34,8 @@
 		<option value="bid">売り</option>
 		</select>
 	</td></tr>
-	<tr><td>対円通貨</td><td><input id="jpy_pair" type="checkbox" checked onclick="click_jpy();"></td></tr>
-	<tr><td>通貨/円レート</td><td><input id="rate" type="number" disabled></td></tr>
+	<tr><td>対円通貨</td><td><input id="jpy_pair" type="checkbox" style="width:15px;" checked onclick="click_jpy();"></td></tr>
+	<tr><td>通貨/円レート</td><td><input id="rate" type="number" placeholder="XXX/YYYのYYY/JPYを入力" disabled></td></tr>
 </table>
 <p><input type="button" onclick="on_click();" value="資金計算"></p>
 <table cellpadding="3">
