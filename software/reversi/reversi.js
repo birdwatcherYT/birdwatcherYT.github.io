@@ -70,6 +70,10 @@ class Reversi {
 			[-20, -40, -5, -5, -5, -5, -40, -20],
 			[120, -20, 20, 5, 5, 20, -20, 120]
 		];
+		// 表示用
+		this.BLANK_DISP="　";
+		this.BLACK_DISP='<font color="black">●</font>';
+		this.WHITE_DISP='<font color="white">●</font>';
 	}
 	
 	initialize(n, serchLevel, userFirst){
@@ -99,32 +103,34 @@ class Reversi {
 		for (let i = 0; i <this.n; i++){
 			str+="<tr>";
 			for (let j = 0; j <this.n; j++){
-				let ch="";
+				let ch=this.BLANK_DISP;
 				if (this.board[i][j]==this.BLACK){
-					ch="⚫";
+					ch=this.BLACK_DISP;
 				}else if(this.board[i][j]==this.WHITE){
-					ch="⚪";
+					ch=this.WHITE_DISP;
 				}
 				str+='<td id="'+i+','+j+ '" onclick="onclickTd(this);">' + ch + "</td>";
 			}
 			str+="</tr>";
 		}
 		str+="</table>";
-		str+="<p>"+(this.blackFlag ? "⚫": "⚪")+"の番</p>"
+		str+='<div style="background: lightgray; width: 345px;">';
+		str+="<p>"+(this.blackFlag ? this.BLACK_DISP: this.WHITE_DISP)+"の番</p>"
 		switch(this.gameStatus){
 			case this.PLAY:
 				str+="<p>Status: 対戦中</p>";
 				break;
 			case this.BLACK_WIN:
-				str+="<p>Status: ⚫の勝ち</p>";
+				str+="<p>Status: "+this.BLACK_DISP+"の勝ち</p>";
 				break;
 			case this.WHITE_WIN:
-				str+="<p>Status: ⚪の勝ち</p>";
+				str+="<p>Status: "+this.WHITE_DISP+"の勝ち</p>";
 				break;
 			case this.DRAW:
 				str+="<p>Status: 引き分け</p>";
 				break;
 		}
+		str+="</div>";
 		return str;
 	}
 

@@ -18,11 +18,11 @@ function print_maze(maze, start, goal){
 	for (let i = 0; i <row; i++){
 		str+="<tr>";
 		for (let j = 0; j <col; j++){
-			c = " ";
+			c = "　";
 			if (start[0]==i && start[1]==j){
-				c="S";
+				c="Ｓ";
 			}else if (goal[0]==i && goal[1]==j){
-				c="G";
+				c="Ｇ";
 			}
 			str+="<td bgcolor=" + (maze[i][j]=="W" ? '"#000000"':'"#eeeeee"') +">" + c + "</td>";
 		}
