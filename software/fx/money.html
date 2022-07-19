@@ -38,6 +38,7 @@
 	<tr><td>資金 (円)</td><td><input id="money" readonly></td></tr>
 	<tr><td>注文時必要証拠金 (円)</td><td><input id="need" readonly></input></td></tr>
 	<tr><td>レバレッジ (倍)</td><td><input id="leverage" readonly></input></td></tr>
+	<tr><td>証拠金維持率 (%)</td><td><input id="retention" readonly></input></td></tr>
 </table>
 
 
@@ -76,9 +77,11 @@ function on_click(){
 	}
 
 	let need = document.getElementById("need");
-	need.value=Math.ceil(price*amount/25*rate);
+	need.value=Math.ceil(price*amount*rate/25);
 	let leverage = document.getElementById("leverage");
 	leverage.value=round(price*amount*rate/money.value,2);
+	let retention = document.getElementById("retention");
+	retention.value=round(100*money.value/need.value, 0);
 }
 
 </script>
