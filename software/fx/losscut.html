@@ -90,8 +90,13 @@ function on_click(){
 	let retention = document.getElementById("retention");
 	retention.value=round(100*money/need.value, 0);
 }
+
 function search(){
 	let yyy = document.getElementById("yyy").value;
+	if (!yyy.match(/[A-Za-z]{3}/)){
+		alert("通貨を半角アルファベット3文字で入力してください.\n例: USD, AUD, NZD, CAD, EUR, ...");
+		return;
+	}
 	window.open("https://jp.tradingview.com/symbols/"+yyy+"JPY/","_blank");
 }
 
