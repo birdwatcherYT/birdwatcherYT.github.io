@@ -6,6 +6,16 @@
 	<meta name="viewport" content="width=device-width">
 	<title>FX計算ツール</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<style>
+	table {
+		border-collapse: collapse;
+		border: solid 2px cyan;
+		line-height: 1;
+	}
+	input{
+		width:180px;
+	}
+	</style>
 </head>
 
 <body>
@@ -17,6 +27,22 @@
 <iframe src="./money.html" width=410 height=510></iframe>
 
 <p>※注文時必要証拠金と資金は小数点以下を切り上げて表示してます. </p>
+
+<h2>補助ツール</h2>
+<p>ある範囲に等間隔でまとめて注文する際の補助ツールです. </p>
+<table cellpadding="3">
+	<tr><td rowspan="3">レンジ</td><td><input id="start" type="number"></td></tr>
+	<tr><td align="center">︙</td></tr>
+	<tr><td><input id="end" type="number"></td></tr>
+	<tr><td>トラップ本数</td><td><input id="split_num" type="number"></td></tr>
+	<tr><td>1本あたりの通貨数</td><td><input id="amount" type="number" value="1000"></td></tr>
+</table>
+<p><input type="button" onclick="on_click();" value="計算"></p>
+<table cellpadding="3">
+	<tr><td>合計通貨数</td><td><input id="total" readonly></input></td></tr>
+	<tr><td>平均価格</td><td><input id="average" readonly></input></td></tr>
+	<tr><td>トラップ間隔</td><td><input id="interval" readonly></input></td></tr>
+</table>
 
 <h2>説明</h2>
 <p>XXX/JPYのとき, 「対円通貨」にチェックを入れる. </p>
@@ -43,6 +69,25 @@
 	<li><a href="losscut.html">FXロスカット計算ツール</a></li>
 	<li><a href="money.html">FX資金計算ツール</a></li>
 </ul>
+
+
+<script>
+
+function on_click(){
+	let start = Number(document.getElementById("start").value);
+	let end = Number(document.getElementById("end").value);
+	let split_num = Number(document.getElementById("split_num").value);
+	let amount = Number(document.getElementById("amount").value);
+
+	let total = document.getElementById("total");
+	total.value=amount*split_num;
+	let average = document.getElementById("average");
+	average.value=(start+end)/2;
+	let interval = document.getElementById("interval");
+	interval.value=Math.abs(start-end)/Math.max(0,split_num-1);
+}
+
+</script>
 
 </body>
 </html>
