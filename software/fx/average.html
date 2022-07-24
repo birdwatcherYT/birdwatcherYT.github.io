@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>FX加重平均計算ツール</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<style>
+
+	table{
+		border-collapse:collapse;
+	}
+	th,td{
+		border: solid 2px;
+		text-align: center;
+		padding-left: 5px;
+		padding-right: 5px;
+		width: 180px;
+	}
+
+	</style>
+</head>
+
+<body>
+<h2>FX加重平均計算ツール</h2>
+<p>通貨数と注文価格から加重平均を計算します. </p>
+<p>
+	<input type="button" value="計算" onclick="calculate();"/>
+	<input type="button" value="行追加" onclick="add_row();"/>
+	<input type="button" value="行削除" onclick="delete_row();"/>
+	<input type="button" value="リセット" onclick="reset();"/>
+</p>
+
+<p><div id="input"></div></p>
+
+<table cellpadding="3">
+	<tr><td>合計通貨数</td><td id="total"></td></tr>
+	<tr><td>平均価格</td><td id="average"></td></tr>
+</table>
+
+
+<script>
+
+let prices=[0];
+let amounts=[1000];
+
+function load_table(){
+	for (let i=0; i<prices.length; i++){
+		let amount_cell=document.getElementById('amount'+i);
+		amounts[i] = isNaN(amount_cell.innerText) ? 0 : Number(amount_cell.innerText);
+
+		let price_cell=document.getElementById('price'+i);
+		prices[i] = isNaN(price_cell.innerText) ? 0 : Number(price_cell.innerText);
+	}
+}
+
+function calculate(){
+	load_table();
+	let total_amount=0;
+	let total_price=0;
+	for (let i=0; i<prices.length; i++){
+		total_amount += amounts[i];
+		total_price += amounts[i]*prices[i];
+	}
+	let total=document.getElementById('total');
+	total.innerText = total_amount;
+	let average=document.getElementById('average');
+	average.innerText = total_price/total_amount;
+}
+
+function print_table(){
+	str='<table> <tr bgcolor="lightblue"> <th>注文価格</th> <th>通貨数</th> </tr>'
+	for (let i=0; i<prices.length; i++){
+		str+='<tr> <td id="price'+i+'" contentEditable>'+prices[i]+'</td><td id="amount'+i+'" contentEditable>'+amounts[i]+'</td> </tr>';
+	}
+	str+='</table>';
+	return str;
+}
+
+function update_table(){
+	let input=document.getElementById("input");
+	input.innerHTML = print_table();
+}
+
+function add_row(){
+	load_table();
+	prices.push(0);
+	amounts.push(1000);
+	update_table();
+}
+
+function delete_row(){
+	if(prices.length == 0)
+		return;
+	load_table();
+	prices.pop();
+	amounts.pop();
+	update_table();
+}
+
+function reset(){
+	prices=[0];
+	amounts=[1000];
+	update_table();
+}
+
+update_table();
+
+</script>
+
+</body>
+</html>
