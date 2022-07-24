@@ -42,7 +42,7 @@ function play(){
 }
 
 function print_table(){
-	str='<table> <tr bgcolor="lightblue"> <th>周波数 (Hz)</th> <th>時間 (sec)</th> </tr>'
+	let str='<table> <tr bgcolor="lightblue"> <th>周波数 (Hz)</th> <th>時間 (sec)</th> </tr>'
 	for (let i=0; i<freqs.length; i++){
 		str+='<tr> <td id="freq'+i+'" contentEditable>'+freqs[i]+'</td><td id="time'+i+'" contentEditable>'+times[i]+'</td> </tr>';
 	}

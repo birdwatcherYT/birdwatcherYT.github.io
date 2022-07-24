@@ -18,7 +18,12 @@
 		padding-right: 5px;
 		width: 180px;
 	}
-
+	th{
+		background-color: lightblue;
+	}
+	input{
+		text-align: right;
+	}
 	</style>
 </head>
 
@@ -35,8 +40,8 @@
 <p><div id="input"></div></p>
 
 <table cellpadding="3">
-	<tr><td>合計通貨数</td><td id="total"></td></tr>
-	<tr><td>平均価格</td><td id="average"></td></tr>
+	<tr><th>合計通貨数</th><td id="total"></td></tr>
+	<tr><th>平均価格</th><td id="average"></td></tr>
 </table>
 
 
@@ -48,10 +53,10 @@ let amounts=[1000];
 function load_table(){
 	for (let i=0; i<prices.length; i++){
 		let amount_cell=document.getElementById('amount'+i);
-		amounts[i] = isNaN(amount_cell.innerText) ? 0 : Number(amount_cell.innerText);
+		amounts[i] = Number(amount_cell.value);
 
 		let price_cell=document.getElementById('price'+i);
-		prices[i] = isNaN(price_cell.innerText) ? 0 : Number(price_cell.innerText);
+		prices[i] = Number(price_cell.value);
 	}
 }
 
@@ -70,9 +75,9 @@ function calculate(){
 }
 
 function print_table(){
-	str='<table> <tr bgcolor="lightblue"> <th>注文価格</th> <th>通貨数</th> </tr>'
+	str='<table> <tr> <th>注文価格</th> <th>通貨数</th> </tr>'
 	for (let i=0; i<prices.length; i++){
-		str+='<tr> <td id="price'+i+'" contentEditable>'+prices[i]+'</td><td id="amount'+i+'" contentEditable>'+amounts[i]+'</td> </tr>';
+		str+='<tr> <td> <input type="number" id="price'+i+'" value="'+prices[i]+'"></td> <td><input type="number" id="amount'+i+'" value="'+amounts[i]+'"></td> </tr>';
 	}
 	str+='</table>';
 	return str;
