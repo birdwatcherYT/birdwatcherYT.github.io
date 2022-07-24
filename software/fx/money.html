@@ -36,10 +36,16 @@
 	<tr><td>通貨/円レート</td><td><input id="rate" type="number" placeholder="XXX/YYYのYYY/JPYを入力" disabled></td></tr>
 </table>
 <p>
+<table style="border: none;">
+<tr>
+<td>
 <input type="button" onclick="on_click();" value="資金計算" style="width:120px; margin-right:90px;">
-<font style="border: 2px solid cyan; padding: 5px;">
+</td>
+<td style="border: 2px solid cyan; padding: 5px;">
 <input id="yyy" type="text" style="width:30px;" placeholder="YYY" maxlength="3">/JPYを<input type="button" onclick="search();" value="検索" style="width:50px;" title="外部サイトで検索">
-</font>
+</td>
+</tr>
+</table>
 </p>
 <table cellpadding="3">
 	<tr><td>資金 (円)</td><td><input id="money" readonly></td></tr>
