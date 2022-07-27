@@ -87,6 +87,7 @@ class Typing {
 let typing = new Typing(WORDS);
 const id = "output";
 let problems = document.getElementById("problems");
+let sound = document.getElementById("sound");
 
 typing.display(id);
 
@@ -137,7 +138,7 @@ window.addEventListener("keydown", (e)=>{
 		return;
 	let correct = typing.check_char(e.key);
 	console.log(correct);
-	if (!correct)
+	if (!correct && sound.checked)
 		beep();
 	if (typing.word_end()){
 		typing.end();
