@@ -88,6 +88,7 @@ let typing = new Typing(WORDS);
 const id = "output";
 let problems = document.getElementById("problems");
 let sound = document.getElementById("sound");
+let input = document.getElementById("input");
 
 typing.display(id);
 
@@ -114,6 +115,8 @@ function beep(){
 
 
 window.addEventListener("keydown", (e)=>{
+	input.value="";
+
 	let code = e.keyCode;
 	console.log(e.key);
 	if (e.key=="Escape"){
