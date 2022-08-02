@@ -2,6 +2,7 @@ footer {
 	width: 100%;
 	text-align: center;
 	background-color: lightblue;
+	margin-top: 100px;
 }
 footer::after {
 	content: "Copyright: birdwatcherYT"
