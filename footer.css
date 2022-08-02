@@ -2,8 +2,13 @@ footer {
 	width: 100%;
 	text-align: center;
 	background-color: lightblue;
-	margin-top: 100px;
+	margin-top: auto;
 }
 footer::after {
 	content: "Copyright: birdwatcherYT"
+}
+body {
+	min-height: 95vh;
+	flex-direction: column;
+	display: flex;
 }
