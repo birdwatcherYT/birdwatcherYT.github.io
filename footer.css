@@ -9,7 +9,7 @@ footer::after {
 	content: "Copyright: birdwatcherYT"
 }
 body {
-	min-height: 95vh;
+	min-height: calc(100vh - 30px);
 	position: relative;
 	box-sizing: border-box;
 	padding-bottom: 50px;
