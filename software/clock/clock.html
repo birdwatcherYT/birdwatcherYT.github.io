@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Clock</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<style>
+	.date{
+		font-size: 4.5vw;
+		font-family: monospace, serif;
+	}
+	.time{
+		font-size: 15vw;
+		font-family: monospace, serif;
+		font-weight: bold;
+	}
+	</style>
+</head>
+
+<body>
+<p><a href="../software.html">←Softwares</a></p>
+
+<h1>Clock</h1>
+<p>システムの時計を表示する</p>
+<div style="text-align:center;">
+	<div id="date" class="date"></div>
+	<div id="time" class="time"></div>
+</div>
+
+<script>
+function zeroPadding(num, length) {
+	return num.toString().padStart(length, "0");
+}
+var weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+function clock() {
+	var date = new Date();
+	var year = zeroPadding( date.getFullYear(), 4 );
+	var month = zeroPadding( date.getMonth()+1, 2 );
+	var day = zeroPadding( date.getDate(), 2 );
+	var weekday = weekdays[date.getDay()];
+	var hour = zeroPadding( date.getHours(), 2);
+	var minute  = zeroPadding( date.getMinutes(), 2 );
+	var second  = zeroPadding( date.getSeconds(), 2 );
+	document.getElementById("date").innerHTML = year + "/" + month + "/" + day + " " + weekday;
+	document.getElementById("time").innerHTML = hour + ":" + minute + ":" + second;
+}
+clock();
+setInterval("clock();", 1000);
+</script>
+<footer></footer>
+
+</body>
+</html>
