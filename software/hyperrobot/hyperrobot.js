@@ -133,16 +133,14 @@ function int2state(id) {
 	return state.reverse();
 }
 
-function state2int_with_target(state, target) {
-	let state_copy = state.concat();
-	const p = state_copy[target];
-	[state_copy[target], state_copy[state_copy.length - 1]] = [state_copy[state_copy.length - 1], state_copy[target]];
-	state_copy.pop();
-	state_copy.sort();
-	state_copy.push(p);
+function state2int_ignore_target(state, target) {
+	let s_without_t = state.concat();
+	[s_without_t[target], s_without_t[s_without_t.length - 1]] = [s_without_t[s_without_t.length - 1], s_without_t[target]];
+	s_without_t.pop();
+	s_without_t.sort();
 	let id = 0;
 	let scale = 1;
-	state_copy.forEach(
+	s_without_t.forEach(
 		p => {
 			id += p * scale;
 			scale *= N2;
@@ -201,7 +199,9 @@ function get_random_wall(num) {
 async function solve(row_walls, col_walls, init_state, target_index, goal_id) {
 	let progress = document.getElementById("progress");
 
-	let visit = new Set();
+	let visit = new Array(N2);
+	for (let i = 0; i < visit.length; ++i)
+		visit[i] = new Set();
 	let parent = {};
 	let que = new Queue();
 	let last_id = -1;
@@ -209,7 +209,7 @@ async function solve(row_walls, col_walls, init_state, target_index, goal_id) {
 	let init_id = state2int(init_state);
 	que.push(init_id);
 	parent[init_id] = -1;
-	visit.add(state2int_with_target(init_state, target_index));
+	visit[init_state[target_index]].add(state2int_ignore_target(init_state, target_index));
 	let step = 0;
 	while (!que.empty()) {
 		const id = que.pop();
@@ -267,9 +267,9 @@ async function solve(row_walls, col_walls, init_state, target_index, goal_id) {
 				}
 				const org = state[k];
 				state[k] = ij2int(new_i, new_j);
-				const visit_id = state2int_with_target(state, target_index);
-				if (!visit.has(visit_id)) {
-					visit.add(visit_id);
+				const visit_id = state2int_ignore_target(state, target_index);
+				if (!visit[state[target_index]].has(visit_id)) {
+					visit[state[target_index]].add(visit_id);
 					const next_id = state2int(state);
 					que.push(next_id);
 					parent[next_id] = id;
