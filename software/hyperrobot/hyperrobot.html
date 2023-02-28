@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Hyper Robot</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
+	<style>
+	table{
+		border-collapse:collapse;
+		font-family: 'BIZ UDGothic', sans-serif;
+		font-size:1pt;
+		font-weight: bold;
+	}
+	th,td{
+		border: solid 1px;
+		text-align: center;
+	}
+	input{
+		padding: 5px;
+	}
+	</style>
+</head>
+
+<body>
+<p><a href="../software.html">←Softwares</a></p>
+
+<h1>Hyper Robot</h1>
+<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. かなり処理が重い場合があります. PC推奨. </p>
+<p>
+	<input id="solve" type="button" value="Solve" onclick="click_solve();"/>
+	<input id="stop" type="button" value="Stop" onclick="click_stop();"/>
+	<input id="play" type="button" value="Play" onclick="click_play();"/>
+	<input id="shuffle" type="button" value="Shuffle" onclick="click_shuffle();"/>
+</p>
+<p id="answer"></p>
+<p id="progress"></p>
+<h4>初期状態の編集</h4>
+<p>
+	ターゲット★の色
+	<select id="target_color" onchange="change_target();">
+		<option value="red" selected>赤</option>
+		<option value="green">緑</option>
+		<option value="blue">青</option>
+		<option value="yellow">黄</option>
+	</select>
+</p>
+<p>
+	コマ■の移動
+	<select id="selected_robot">
+		<option value="red" selected>赤</option>
+		<option value="green">緑</option>
+		<option value="blue">青</option>
+		<option value="yellow">黄</option>
+	</select>
+</p>
+
+<div id="output"></div>
+
+<h2>ルール</h2>
+<p>4色のコマ■を上下左右の4方向のいずれかに動かすことができます</p>
+<p>ただし壁や他のコマ■にぶつかるまで動き続けます</p>
+<p>ターゲット★と同じ色のコマ■を最短手数でターゲット★まで誘導してください</p>
+<p>ターゲット★とは別の色のコマを動かしても構いません</p>
+
+<h2>使い方</h2>
+<p>Solve: 解を求める</p>
+<p>Play: 最適な動かし方を再生</p>
+<p>Stop: 実行中の処理を停止</p>
+<p>Shuffle: 配置をランダムに初期化</p>
+<p>マスをクリック: コマの初期位置を移動</p>
+<p>壁をクリック: 壁の有無を変更</p>
+
+
+<h2>計算量</h2>
+<p>盤面の状態は、ターゲットと同じ色のコマ1つとそれ以外のコマの3つの位置によって表現できる</p>
+<p>移動可能な252マス（16x16-4）から3点を選ぶパターン数は 252x251x250/(3x2x1)=2,635,500</p>
+<p>さらに残りの空きマスから1つのコマを選ぶため 2635500x249=656,239,500</p>
+<p>したがって、最悪ケースだと656,239,500状態観測して終了する</p>
+
+<script src="hyperrobot.js"></script>
+
+<footer></footer>
+</body>
+</html>
