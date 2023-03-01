@@ -186,7 +186,6 @@ function get_random_wall(num) {
 	let col_walls = get1d(N);
 	// ランダムに壁をつくる
 	let points = random_positions(num);
-	// TODO: 連結性確認
 	points.forEach(p => {
 		const [x, y] = int2point(p);
 		row_walls[x] |= getRandInt(2) ? (1 << y) : (1 << (y + 1));
@@ -197,6 +196,8 @@ function get_random_wall(num) {
 
 
 async function solve(row_walls, col_walls, init_state, target_index, goal_id) {
+	if (!check_connect(row_walls, col_walls, init_state[target_index], goal_id))
+		return [];
 	let progress = document.getElementById("progress");
 
 	let visit = new Array(N2);
@@ -373,15 +374,77 @@ function print_board(state) {
 function change_target() {
 	target_index = document.getElementById("target_color").selectedIndex;
 	print_board(init_state);
-	// document.getElementById("play").disabled = false;
+}
+
+function add_wall_around_point(row_walls, col_walls, p) {
+	const [x, y] = int2point(p);
+	const row_wall = row_walls[x] | fixed_row_walls[x], col_wall = col_walls[y] | fixed_col_walls[y];
+	if (!(col_wall & (1 << x)) && !(col_wall & (1 << (x + 1))))
+		col_walls[y] |= getRandInt(2) ? (1 << x) : (1 << (x + 1));
+	if (!(row_wall & (1 << y)) && !(row_wall & (1 << (y + 1))))
+		row_walls[x] |= getRandInt(2) ? (1 << y) : (1 << (y + 1));
+}
+
+function dfs(row_walls, col_walls, i, j, seen) {
+	if (i < 0 || j < 0 || i >= N || j >= N || seen[i][j])
+		return;
+	seen[i][j] = true;
+	if (!(col_walls[j] & (1 << i)))
+		dfs(row_walls, col_walls, i - 1, j, seen);
+	if (!(col_walls[j] & (1 << (i + 1))))
+		dfs(row_walls, col_walls, i + 1, j, seen);
+	if (!(row_walls[i] & (1 << j)))
+		dfs(row_walls, col_walls, i, j - 1, seen);
+	if (!(row_walls[i] & (1 << (j + 1))))
+		dfs(row_walls, col_walls, i, j + 1, seen);
+}
+
+function check_connectivity(row_walls, col_walls) {
+	let seen = get2d(N, N);
+	IGNORE_TILES.forEach(
+		p => {
+			const [x, y] = int2point(p);
+			seen[x][y] = true;
+		}
+	);
+	dfs(row_walls, col_walls, 0, 0, seen);
+	// console.log(seen);
+	for (let i = 0; i < N; ++i)
+		for (let j = 0; j < N; ++j)
+			if (!seen[i][j])
+				return false;
+	return true;
+}
+
+function check_connect(row_walls, col_walls, p1, p2) {
+	const [p1i, p1j] = int2point(p1);
+	const [p2i, p2j] = int2point(p2);
+	let seen = get2d(N, N);
+	dfs(row_walls, col_walls, p1i, p1j, seen);
+	return seen[p2i][p2j];
+}
+
+function merge_wall(row_walls1, col_walls1, row_walls2, col_walls2) {
+	let row_walls = get1d(N), col_walls = get1d(N);
+	for (let i = 0; i < N; ++i) {
+		row_walls[i] = row_walls1[i] | row_walls2[i];
+		col_walls[i] = col_walls1[i] | col_walls2[i];
+	}
+	return [row_walls, col_walls];
 }
 
 function reset() {
 	[fixed_row_walls, fixed_col_walls] = get_fixed_wall();
-	[editable_row_walls, editable_col_walls] = get_random_wall(N + ROBOT_NUM);
+	for (let k = 0; k < 10000; ++k) {//リトライ回数
+		[editable_row_walls, editable_col_walls] = get_random_wall(N + ROBOT_NUM);
+		const [row_walls, col_walls] = merge_wall(fixed_row_walls, fixed_col_walls, editable_row_walls, editable_col_walls);
+		if (check_connectivity(row_walls, col_walls))
+			break;
+	}
 	target_index = 0;
 	init_state = random_positions(ROBOT_NUM + 1);
 	goal_id = init_state.pop();
+	add_wall_around_point(editable_row_walls, editable_col_walls, goal_id);
 	change_target();
 	path = [];
 	canceled = false;
@@ -418,11 +481,7 @@ function end() {
 async function click_solve() {
 	begin();
 	document.getElementById("answer").innerHTML = "solving";
-	let row_walls = get1d(N), col_walls = get1d(N);
-	for (let i = 0; i < N; ++i) {
-		row_walls[i] = fixed_row_walls[i] | editable_row_walls[i];
-		col_walls[i] = fixed_col_walls[i] | editable_col_walls[i];
-	}
+	const [row_walls, col_walls] = merge_wall(fixed_row_walls, fixed_col_walls, editable_row_walls, editable_col_walls);
 	const startTime = performance.now();
 	path = await solve(row_walls, col_walls, init_state, target_index, goal_id);
 	const endTime = performance.now();
