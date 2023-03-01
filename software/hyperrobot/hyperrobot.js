@@ -305,8 +305,11 @@ function click_cell(cell) {
 			return;
 		if (init_state.includes(id))
 			return;
-		const index = document.getElementById("selected_robot").selectedIndex;
-		init_state[index] = id;
+		const index = document.getElementById("selected_robot").value;
+		if (index < 0)
+			goal_id = id;
+		else
+			init_state[index] = id;
 	} else if (i % 2 == 0 && j % 2 == 1) {
 		if (fixed_col_walls[J] & (1 << I))
 			return;
