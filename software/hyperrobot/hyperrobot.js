@@ -36,6 +36,7 @@ class Queue {
 	front() { return this.head?.value; }
 }
 
+
 function getRandInt(n) {
 	return Math.floor(Math.random() * n);
 }
@@ -167,8 +168,8 @@ function random_positions(num) {
 
 function get_fixed_wall() {
 	// 周りを囲む
-	let row_walls = new Array(N).fill(1 | (1 << N));
-	let col_walls = new Array(N).fill(1 | (1 << N));
+	let row_walls = [...Array(N)].map(() => 1 | (1 << N));
+	let col_walls = [...Array(N)].map(() => 1 | (1 << N));
 	// 使わないタイル周りを囲う
 	IGNORE_TILES.forEach(p => {
 		const [x, y] = int2point(p);
@@ -200,9 +201,7 @@ async function solve(row_walls, col_walls, init_state, target_index, goal_id) {
 		return [];
 	let progress = document.getElementById("progress");
 
-	let visit = new Array(N2);
-	for (let i = 0; i < visit.length; ++i)
-		visit[i] = new Set();
+	let visit = [...Array(N2)].map(() => new Set());
 	let parent = {};
 	let que = new Queue();
 	let last_id = -1;
