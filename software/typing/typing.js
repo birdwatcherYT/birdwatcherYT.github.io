@@ -61,7 +61,7 @@ class Typing {
 	}
 
 	display(id){
-		var output = document.getElementById(id);
+		let output = document.getElementById(id);
 		output.innerHTML="";
 		if (this.selected_word == null){
 			if (this.correct!=0){

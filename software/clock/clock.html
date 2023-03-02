@@ -56,7 +56,7 @@ function play(){
 }
 
 
-var alerm_datetime = null;
+let alerm_datetime = null;
 
 function alerm_reset(){
 	alerm_datetime = null;
@@ -64,14 +64,14 @@ function alerm_reset(){
 	document.getElementById("alerm_date").disabled=false;
 }
 function alerm_set(){
-	var alerm_str=document.getElementById("alerm_date").value
+	let alerm_str=document.getElementById("alerm_date").value
 	alerm_datetime = new Date(alerm_str);
 	if(Number.isNaN(alerm_datetime.getTime())){
 		alert("日時を設定してください");
 		alerm_datetime = null;
 		return;
 	}
-	var date = new Date();
+	let date = new Date();
 	if(date.getTime()>=alerm_datetime.getTime()){
 		alert("現在時刻より未来の時刻を設定してください");
 		alerm_datetime = null;
@@ -83,7 +83,7 @@ function alerm_set(){
 function alerm_check(){
 	if(alerm_datetime == null)
 		return;
-	var date = new Date();
+	let date = new Date();
 	if(date.getTime()>=alerm_datetime.getTime()){
 		play();
 		// alert(alerm_datetime.toLocaleString());
@@ -100,14 +100,14 @@ function alerm_click(){
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 function clock() {
-	var date = new Date();
-	var year = zeroPadding( date.getFullYear(), 4 );
-	var month = zeroPadding( date.getMonth()+1, 2 );
-	var day = zeroPadding( date.getDate(), 2 );
-	var weekday = WEEKDAYS[date.getDay()];
-	var hour = zeroPadding( date.getHours(), 2);
-	var minute  = zeroPadding( date.getMinutes(), 2 );
-	var second  = zeroPadding( date.getSeconds(), 2 );
+	let date = new Date();
+	let year = zeroPadding( date.getFullYear(), 4 );
+	let month = zeroPadding( date.getMonth()+1, 2 );
+	let day = zeroPadding( date.getDate(), 2 );
+	let weekday = WEEKDAYS[date.getDay()];
+	let hour = zeroPadding( date.getHours(), 2);
+	let minute  = zeroPadding( date.getMinutes(), 2 );
+	let second  = zeroPadding( date.getSeconds(), 2 );
 	document.getElementById("date").innerHTML = year + "/" + month + "/" + day + " " + weekday;
 	document.getElementById("time").innerHTML = hour + ":" + minute + ":" + second;
 }

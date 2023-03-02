@@ -46,13 +46,13 @@ ascii.value=characters;
 
 window.addEventListener("DOMContentLoaded", function(){
 	//ファイルオープンの際のイベント
-	var ofd = document.getElementById("selectfile");
+	let ofd = document.getElementById("selectfile");
 	ofd.addEventListener("change", function(evt) {
 		//ここに画像データを入力
-		var img = null;
+		let img = null;
 
-		var file = evt.target.files;
-		var reader = new FileReader();
+		let file = evt.target.files;
+		let reader = new FileReader();
 
 		//dataURL形式でファイルを読み込む
 		reader.readAsDataURL(file[0]);
