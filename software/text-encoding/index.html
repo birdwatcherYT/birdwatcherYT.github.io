@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<title>文字コード変換</title>
+	<style>
+	</style>
+</head>
+
+<body>
+
+	<h1>文字コード変換</h1>
+	<p>テキストファイルを選択（複数選択可能）</p>
+	<p><input id="file_select" type="file" accept="text/*" multiple></p>
+	<p>
+		文字コード
+		<select id="encoding">
+			<option value="UTF8">UTF-8</option>
+			<option value="SJIS">Shift-JIS</option>
+			<option value="EUCJP">EUC-JP</option>
+			<option value="JIS">ISO-2022-JP</option>
+		</select>
+		改行コード
+		<select id="newline">
+			<option value="LF">LF</option>
+			<option value="CRLF">CR+LF</option>
+			<option value="CR">CR</option>
+		</select>
+		へ変換
+	</p>
+	<p><input id="button" type="button" value="Convert"></p>
+
+	<script type="module" src="./index.js"></script>
+	<footer></footer>
+
+</body>
+
+</html>
