@@ -1,7 +1,7 @@
 // npm init -y
 // npm i encoding-japanese
 // npx vite build
-// npx serve
+// npx vite dev
 
 import Encoding from "encoding-japanese";
 
