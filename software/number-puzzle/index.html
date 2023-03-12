@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Number Puzzle</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+	<p class="white-font"><a href="../software.html">←Softwares</a></p>
+	<div class="App">
+		<h1>Number Puzzle</h1>
+		<div>
+			<p>
+				<select id="size" onchange="onChangeSize(this);">
+					<option value="3" selected>8パズル</option>
+					<option value="4">15パズル</option>
+				</select>
+			</p>
+			<p>
+				<button id="reset" onclick="onClickReset();">reset</button>
+				<button id="solve" onclick="onClickSolve();">solve</button>
+				<button id="play" onclick="onClickPlay();" disabled>play</button>
+				<button id="stop" onclick="onClickStop();" disabled>stop</button>
+			</p>
+			<p>
+				speed: <input id="range" type="range" min="-1500" max="-1" value="-500"
+					onchange="onChangeSpeed(this)" />
+			</p>
+			<table id="output"></table>
+			<p id="status"></p>
+			<p id="progress"></p>
+		</div>
+	</div>
+	<p class="small-white-font">※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. 処理が重い場合があります. </p>
+
+	<footer></footer>
+	<script src="helper.js"></script>
+	<script src="main.js"></script>
+</body>
+
+</html>
