@@ -102,6 +102,7 @@
 		</tr>
 	</table>
 	<button onclick="onClick();">plot</button>
+	<button onclick="save();">save</button>
 
 	<h2>グラフ</h2>
 	<span id="graph"></span>
@@ -110,6 +111,7 @@
 
 	<script src="graph.js"></script>
 	<script>
+
 		// クリック時の処理
 		function onClick() {
 			const sep = document.getElementById("sep");
@@ -134,6 +136,15 @@
 				precision: Number(document.getElementById("precision").value)
 			}
 			document.getElementById("graph").innerHTML = makeSVG(data, firstIsX.checked, property);
+		}
+		function save() {
+			onClick();
+			const text = document.getElementById("graph").innerHTML;
+			const blob = new Blob([text], { type: "text/plain" });
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(blob);
+			link.download = "plot.svg";
+			link.click();
 		}
 	</script>
 	<footer></footer>

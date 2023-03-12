@@ -94,7 +94,7 @@ function makeSVG(dataOrg, firstIsX, property) {
 	const width = (xMaxVal - xMinVal) * widthScale + 2 * margin;
 	const height = (yMaxVal - yMinVal) * heightScale + 2 * margin;
 
-	let svgStr = `<svg viewBox="0 0 ${width} ${height}" width="${svgTagWidth}" height="${svgTagHeight}">`;
+	let svgStr = `<svg viewBox="0 0 ${width} ${height}" width="${svgTagWidth}" height="${svgTagHeight}" xmlns="http://www.w3.org/2000/svg">`;
 	const yConverter = (val) => { return (height - margin) - (val - yMinVal) * heightScale; };
 	const xConverter = (val) => { return (val - xMinVal) * widthScale + margin; };
 	// x軸
