@@ -14,7 +14,7 @@ function readText(files, toEncoding, toNL) {
 			const srcArray = new Uint8Array(e.target.result);
 			let str = Encoding.convert(srcArray, { to: "UNICODE", type: "string" });
 			// BOMを削除、改行置換
-			str = str.replace(/^\ufeff/g, "").replaceAll(/\r\n/g, "\n").replaceAll(/(\r|\n)/g, toNL);
+			str = str.replace(/^\ufeff/g, "").replaceAll(/(\r\n|\r|\n)/g, toNL);
 			const converted = Encoding.convert(Encoding.stringToCode(str), { to: toEncoding, from: "UNICODE" });
 			const distArray = new Uint8Array(converted);
 			download(distArray, file.name);
