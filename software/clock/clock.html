@@ -18,12 +18,58 @@
 			font-family: monospace, serif;
 			font-weight: bold;
 		}
+
+		.toggle_input {
+			position: absolute;
+			left: 0;
+			top: 0;
+			z-index: 5;
+			opacity: 0;
+		}
+
+		.toggle_label {
+			width: 40px;
+			height: 20px;
+			background: lightgray;
+			position: relative;
+			display: inline-block;
+			border-radius: 40px;
+			transition: 0.4s;
+			box-sizing: border-box;
+			cursor: pointer;
+		}
+
+		.toggle_label:after {
+			content: "";
+			position: absolute;
+			width: 20px;
+			height: 20px;
+			border-radius: 100%;
+			left: 0;
+			top: 0;
+			z-index: 2;
+			background: white;
+			box-shadow: 0 0 5px black;
+			transition: 0.4s;
+		}
+
+		.toggle_input:checked+.toggle_label {
+			background-color: cyan;
+		}
+
+		.toggle_input:checked+.toggle_label:after {
+			left: 20px;
+		}
 	</style>
 </head>
 
-<body>
+<body id="body" style="background-color: white; color: black;">
 	<p><a href="../software.html">←Softwares</a></p>
-
+	<div class="toggle_button">
+		Dark mode
+		<input id="toggle" class="toggle_input" type='checkbox' onclick="Dark(this)" />
+		<label for="toggle" class="toggle_label">
+	</div>
 	<h1>System Clock</h1>
 	<div style="text-align:center;">
 		<div id="date" class="date"></div>
@@ -34,7 +80,13 @@
 	<button id="alerm_button" onclick="alerm_click();">Set</button>
 
 	<script src="clock.js"></script>
-	<footer></footer>
+	<script>
+		function Dark(elem) {
+			const body = document.getElementById("body");
+			body.style.cssText = elem.checked ? "background-color: black; color: white;" : "background-color: white; color: black;";
+		}
+	</script>
+	<footer style="color: black"></footer>
 </body>
 
 </html>
