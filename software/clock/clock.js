@@ -82,7 +82,7 @@ let startTime = null;
 let setTime = null;
 let timerWorker = null;
 function timer_reset() {
-	timerWorker.terminate();
+	timerWorker?.terminate();
 	startTime = null;
 	document.getElementById("timer_button").textContent = "Set";
 	document.getElementById("minute_selector").disabled = false;
