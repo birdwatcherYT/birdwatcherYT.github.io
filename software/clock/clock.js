@@ -78,6 +78,62 @@ function clock() {
 	document.getElementById("time").innerHTML = hour + ":" + minute + ":" + second;
 }
 
+let startTime = null;
+let setTime = null;
+let timerWorker = null;
+function timer_reset() {
+	timerWorker.terminate();
+	startTime = null;
+	document.getElementById("timer_button").textContent = "Set";
+	document.getElementById("minute_selector").disabled = false;
+	document.getElementById("second_selector").disabled = false;
+	document.getElementById("timer").innerHTML = "";
+}
+function timer() {
+	if (startTime == null) return;
+	const elapsed = Math.floor((performance.now() - startTime) / 1000);
+	let rest = setTime - elapsed;
+	if (rest <= 0) {
+		play();
+		rest = 0;
+		timer_reset();
+	}
+	const second = rest % 60;
+	const minute = (rest - second) / 60;
+	document.getElementById("timer").innerHTML = minute + ":" + zeroPadding(second, 2);
+}
+function timer_set() {
+	const minute = Number(document.getElementById("minute_selector").value);
+	const second = Number(document.getElementById("second_selector").value);
+	setTime = minute * 60 + second;
+	if (setTime <= 0) {
+		alert("1秒以上を指定してください");
+		setTime = null;
+		return;
+	}
+	startTime = performance.now();
+	document.getElementById("timer_button").textContent = "Reset";
+	document.getElementById("minute_selector").disabled = true;
+	document.getElementById("second_selector").disabled = true;
+
+	const code = `
+	onmessage = (e) => {
+		setInterval(() => self.postMessage(null), e.data);
+	};`;
+	timerWorker = new Worker("data:text/javascript;base64," + btoa(code));
+	timerWorker.onmessage = (e) => { timer(); };
+	timerWorker.postMessage(200);
+	timer();
+}
+
+function timer_click() {
+	if (startTime == null) {
+		timer_set();
+	} else {
+		timer_reset();
+	}
+}
+
 clock();
 setTimeout(() => {
 	clock();

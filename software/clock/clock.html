@@ -19,6 +19,12 @@
 			font-weight: bold;
 		}
 
+		.timer {
+			font-size: 5vw;
+			font-family: monospace, serif;
+			font-weight: bold;
+		}
+
 		.toggle_input {
 			position: absolute;
 			left: 0;
@@ -64,20 +70,26 @@
 </head>
 
 <body id="body" style="background-color: white; color: black;">
-	<p><a href="../software.html">←Softwares</a></p>
-	<div class="toggle_button">
+	<p><a href="../software.html" style="float: left; margin-left: 10px;">←Softwares</a></p>
+	<div class="toggle_button" style="text-align: right; margin-right: 10px;">
 		Dark mode
 		<input id="toggle" class="toggle_input" type='checkbox' onclick="Dark(this)" />
 		<label for="toggle" class="toggle_label">
 	</div>
-	<h1>System Clock</h1>
+	<h2>System Clock</h2>
 	<div style="text-align:center;">
 		<div id="date" class="date"></div>
 		<div id="time" class="time"></div>
 	</div>
-	<h1>Alerm</h1>
+	<h2>Alerm</h2>
 	<input id="alerm_date" type="datetime-local" step="1" />
 	<button id="alerm_button" onclick="alerm_click();">Set</button>
+	<h2>Timer</h2>
+	<p>
+		<select id="minute_selector"></select>分<select id="second_selector"></select>秒
+		<button id="timer_button" onclick="timer_click();">Set</button>
+	</p>
+	<div id="timer" class="timer"></div>
 
 	<script src="clock.js"></script>
 	<script>
@@ -85,6 +97,16 @@
 			const body = document.getElementById("body");
 			body.style.cssText = elem.checked ? "background-color: black; color: white;" : "background-color: white; color: black;";
 		}
+		function makeSelector(num, padding) {
+			let str = "";
+			for (let i = 0; i < num; ++i)
+				str += `<option value="${i}">${i.toString().padStart(padding, "0")}</option>`
+			return str;
+		}
+		const second_selector = document.getElementById("second_selector");
+		second_selector.innerHTML = makeSelector(60, 2);
+		const minute_selector = document.getElementById("minute_selector");
+		minute_selector.innerHTML = makeSelector(1000, 0);
 	</script>
 	<footer style="color: black"></footer>
 </body>
