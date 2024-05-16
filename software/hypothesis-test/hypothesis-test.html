@@ -21,15 +21,9 @@
             width: 120px;
         }
 
-        .contentA,
-        .contentB {
-            margin-left: 15px;
-            margin-right: 15px;
-        }
-
-        .main {
-            display: flex;
-            flex-wrap: wrap;
+        #area,
+        #xvalue {
+            width: 200px;
         }
     </style>
 </head>
@@ -38,7 +32,8 @@
     <p><a href="../software.html">←Softwares</a></p>
 
     <h1>2標本検定</h1>
-    <p><a href="https://qiita.com/birdwatcher/items/8887afabe73513fbf264#2%E6%A8%99%E6%9C%AC%E6%A4%9C%E5%AE%9A" target="_blank">2標本検定</a>をするツールです。p値が設定した有意水準より低いときに対立仮説を採択します。</p>
+    <p><a href="https://qiita.com/birdwatcher/items/8887afabe73513fbf264#2%E6%A8%99%E6%9C%AC%E6%A4%9C%E5%AE%9A"
+            target="_blank">2標本検定</a>をするツールです。p値が設定した有意水準より低いときに対立仮説を採択します。</p>
     <h2>母平均の差の検定</h2>
     <table cellpadding="5">
         <tr>
@@ -102,9 +97,40 @@
     <p> 検定統計量 = <input id="output_stat_ratio" value="" readonly></p>
     <p> p値 = <input id="output_prob_ratio" value="" readonly></p>
 
+    <h2>おまけ: 標準正規分布の面積とx軸の対応</h2>
+    <table cellpadding="5">
+        <tr>
+            <td>x軸の値</td>
+            <td align="center" colspan="2"> <input id="xvalue" type="number" value="0"></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td align="center">
+                <button onclick="to_area();">↓</button>
+            </td>
+            <td align="center">
+                <button onclick="to_xvalue();">↑</button>
+            </td>
+        </tr>
+        <tr>
+            <td>面積（確率）</td>
+            <td align="center" colspan="2"> <input id="area" type="number" value="0.5"></td>
+        </tr>
+    </table>
+
+
     <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
     <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
     <script>
+        function to_area() {
+            const xvalue = Number(document.getElementById("xvalue").value);
+            document.getElementById("area").value = jStat.normal.cdf(xvalue, 0, 1);
+        }
+        function to_xvalue() {
+            const area = Number(document.getElementById("area").value);
+            document.getElementById("xvalue").value = jStat.normal.inv(area, 0, 1);
+        }
+
         function on_click(type, test) {
             if (type == "mean") {
                 const meanA = Number(document.getElementById("meanA").value);
