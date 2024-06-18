@@ -11,6 +11,9 @@
         input{
             height: 30px;
         }
+        textarea{
+            width: 100%;
+        }
         .scrollable-container {
             height: 150px; /* 固定の高さ */
             overflow-y: auto; /* 縦方向のスクロールを有効にする */
@@ -30,7 +33,7 @@
 	<p>リアルタイムにLaTeX数式をプレビューできます。svgかpngで保存できます。</p>
 	<p>※JavaScriptのMathJaxを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
 	<p>
-        <textarea id="input" rows="10" cols="100" placeholder="type latex code">x = \frac{-b\pm\sqrt{b^2-4ac}}{2a}</textarea>
+        <textarea id="input" rows="10" cols="40" placeholder="type latex code">x = \frac{-b\pm\sqrt{b^2-4ac}}{2a}</textarea>
     </p>
     <p>
         <input type="button" value="download as svg" onclick="download_svg()"/>
@@ -212,7 +215,6 @@
         function clipboard(trElement){
             const tdElement = trElement.getElementsByTagName("td")[0];
             navigator.clipboard.writeText(tdElement.innerText);
-            // showMessage("クリップボードにコピーしました", 2000);
             showMessage(`<font color="red">クリップボードにコピーしました！</font>`, 2000);
         }
         function to_svg(latex){
@@ -226,12 +228,13 @@
 
             const currentWidth = svg.getAttribute("width");
             const currentHeight = svg.getAttribute("height");
-            const widthUnit = currentWidth.match(/[a-zA-Z%]+$/);
-            const heightUnit = currentHeight.match(/[a-zA-Z%]+$/);
 
             const scaleFactor = parseFloat(scaler.value);
+            // const widthUnit = currentWidth.match(/[a-zA-Z%]+$/);
+            // const heightUnit = currentHeight.match(/[a-zA-Z%]+$/);
             // svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+widthUnit);
             // svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+widthUnit);
+
             // デフォルトのex単位だと別ソフトにコピペした際に表示されないことがある
             svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+"px");
             svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+"px");
