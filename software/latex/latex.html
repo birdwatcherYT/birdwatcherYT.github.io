@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>ページタイトル</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<style>
+        input{
+            height: 30px;
+        }
+        .scrollable-container {
+            height: 150px; /* 固定の高さ */
+            overflow-y: auto; /* 縦方向のスクロールを有効にする */
+            border: 1px solid #ccc; /* ボーダーを追加 */
+            padding: 10px; /* 内側の余白を追加 */
+        }
+        .hover-pointer:hover {
+            cursor: pointer; /* ホバー時に手のマーク */
+        }
+    </style>
+</head>
+
+<body>
+	<p><a href="../software.html">←Softwares</a></p>
+
+	<h1>LaTeX数式画像生成</h1>
+	<p>リアルタイムにLaTeX数式をプレビューできます。svgかpngで保存できます。</p>
+	<p>※JavaScriptのMathJaxを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+	<p>
+        <textarea id="input" rows="10" cols="100" placeholder="type latex code">x = \frac{-b\pm\sqrt{b^{2}-4ac}}{2a}</textarea>
+    </p>
+    <p>
+        <input type="button" value="download as svg" onclick="download_svg()"/>
+        <input type="button" value="download as png" onclick="download_png()"/>
+        表示・保存倍率 <input id="scaler" type="number" value="1"/>
+    </p>
+    <div id="output"></div>
+    <h3>チートシート</h3>
+    クリックするとクリップボードにコピーされます。<span id="message"></span>
+    <div class="scrollable-container" id="cheatsheet">
+    </div>
+    <script>
+        MathJax = {
+          startup: {
+            typeset: false
+          }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.js"></script>
+	<script>
+        const output=document.getElementById("output");
+        const input=document.getElementById("input");
+        const scaler=document.getElementById("scaler");
+        const cheatsheet=document.getElementById("cheatsheet");
+        const messageElement = document.getElementById("message");
+        const cheets=[
+            "<b>基本</b>",
+            "a^{b}",
+            "\\frac{a}{b}",
+            "\\sqrt{a}",
+            "\\sqrt[n]{a}",
+            "\\sum_{i=1}^{n}",
+            "\\prod_{i=1}^{n}",
+            "\\max_{x}",
+            "\\min_{x}",
+
+            "<b>ベクトル・行列</b>",
+            "\\boldsymbol{v}",
+            "\\vec{v}",
+            "\\|v\\|",
+            "v^\\top",
+            "\\begin{bmatrix}a & b \\\\c & d\\end{bmatrix}",
+            "\\langle a, b\\rangle",
+
+            "<b>装飾</b>",
+            "\\bar{x}",
+            "\\tilde{x}",
+            "\\dot{x}",
+
+            "<b>集合・論理</b>",
+            "\\{i\\mid i=1,\\ldots,n\\}",
+            "\\cup",
+            "\\cap",
+            "\\subset",
+            "\\supset",
+            "\\in",
+            "\\ni",
+            "\\emptyset",
+            "\\mathbb{R}",
+            "\\forall",
+            "\\exists",
+            "\\vee",
+            "\\wedge",
+            "\\neg",
+
+            "<b>予約語・斜体解除・特殊フォント</b>",
+            "\\exp",
+            "\\log",
+            "\\ln",
+            "\\arg",
+            "\\sin",
+            "\\cos",
+            "\\tan",
+            "\\det",
+            "\\text{any text}",
+            "\\mathrm{any text}",
+            "\\mathcal{D}",
+            "\\ell",
+            "\\varepsilon",
+            "\\varphi",
+            "\\textcolor{red}{a}\\textcolor{blue}{a}",
+
+            "<b>微分・積分・極限</b>",
+            "\\partial",
+            "\\nabla",
+            "\\to",
+            "\\infty",
+            "\\int_{a}^{b}",
+            "\\prime",
+
+            "<b>場合分け・複数行・カッコ</b>",
+            "\\delta_{ij}=\\begin{cases}1&,i=j\\\\0&,i\\ne j\\end{cases}",
+            "\\begin{split}\\min_x&~ f(x)\\\\ \\mathrm{s.t.}&~x\\ge 0\\end{split}",
+            "\\begin{align*}x&=f(x)\\\\ &=g(x)\\end{align*}",
+            "\\binom{n}{r}",
+            "\\left(\\frac{a}{b}\\right)",
+            "\\bigl(\\bigr)",
+            "\\Bigl(\\Bigr)",
+            "\\biggl(\\biggr)",
+            "\\Biggl(\\Biggr)",
+
+            "<b>ギリシャ文字</b>",
+            "\\alpha",
+            "\\beta",
+            "\\gamma",
+            "\\delta",
+            "\\epsilon",
+            "\\zeta",
+            "\\eta",
+            "\\theta",
+            "\\iota",
+            "\\kappa",
+            "\\lambda",
+            "\\mu",
+            "\\nu",
+            "\\xi",
+            "\\pi",
+            "\\rho",
+            "\\sigma",
+            "\\tau",
+            "\\upsilon",
+            "\\phi",
+            "\\chi",
+            "\\omega",
+            "\\Gamma",
+            "\\Delta",
+            "\\Theta",
+            "\\Lambda",
+            "\\Xi",
+            "\\Pi",
+            "\\Sigma",
+            "\\Upsilon",
+            "\\Phi",
+            "\\Psi",
+            "\\Omega",
+
+            "<b>記号</b>",
+            "\\times",
+            "\\div",
+            "\\pm",
+            "\\le",
+            "\\ge",
+            "\\ll",
+            "\\gg",
+            "\\ne",
+            "\\equiv",
+            "\\coloneqq",
+            "\\approx",
+            "\\sim",
+            "\\propto",
+            "\\leftarrow",
+            "\\rightarrow",
+            "\\uparrow",
+            "\\downarrow",
+            "\\Leftarrow",
+            "\\Rightarrow",
+            "\\ast",
+            "\\star",
+            "\\circ",
+            "\\odot",
+            "\\bullet",
+            "\\cdot",
+            "\\cdots",
+            "\\ldots",
+            "\\vdots",
+        ];
+        function set_cheetsheet(){
+            let str="<table>";
+            for (const x of cheets){
+                if(x.startsWith("<"))
+                    str+=`<tr><td colspan="2">${x}</td></tr>`;
+                else
+                    str+=`<tr class="hover-pointer" onclick="clipboard(this)"><td>${x}</td><td>${to_svg(x).outerHTML}<td></tr>`;
+            }
+            str+="</table>";
+            cheatsheet.innerHTML=str;
+        }
+        set_cheetsheet();
+        function clipboard(trElement){
+            const tdElement = trElement.getElementsByTagName("td")[0];
+            navigator.clipboard.writeText(tdElement.innerText);
+            // showMessage("クリップボードにコピーしました", 2000);
+            showMessage(`<font color="red">クリップボードにコピーしました！</font>`, 2000);
+        }
+        function to_svg(latex){
+            const container = MathJax.tex2svg(latex);
+            const [svg] = container.children;
+            return svg;
+        }
+        function preview(){
+            const container = MathJax.tex2svg(input.value);
+            const [svg] = container.children;
+
+            const currentWidth = svg.getAttribute("width");
+            const currentHeight = svg.getAttribute("height");
+            const widthUnit = currentWidth.match(/[a-zA-Z%]+$/);
+            const heightUnit = currentHeight.match(/[a-zA-Z%]+$/);
+
+            const scaleFactor = parseFloat(scaler.value);
+            svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+widthUnit);
+            svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+widthUnit);
+
+            output.innerHTML = svg.outerHTML;
+        }
+        function download_svg(){
+            preview();
+            const blob = new Blob([output.innerHTML], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "latex.svg";
+            link.click();
+        }
+        function download_png(){
+            preview();
+            const blob = new Blob([output.innerHTML], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                const pngDataUrl = canvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.href = pngDataUrl;
+                link.download = "latex.png";
+                link.click();
+            };
+            img.src = url;
+        }
+        function showMessage(message, duration) {
+            messageElement.innerHTML = message;
+            setTimeout(() => {messageElement.innerHTML = "";}, duration);
+        }
+
+
+
+        preview();
+        
+        // 入力時の自動更新
+        let lastTimeout = undefined;
+        input.addEventListener("input", (e) => {
+            clearTimeout(lastTimeout);
+            lastTimeout = setTimeout(preview, 1000);
+        });
+        scaler.addEventListener("input", (e) => {
+            clearTimeout(lastTimeout);
+            lastTimeout = setTimeout(preview, 1000);
+        });
+    </script>
+	<footer></footer>
+</body>
+
+</html>
