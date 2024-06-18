@@ -15,7 +15,7 @@
             width: 100%;
         }
         .scrollable-container {
-            height: 150px; /* 固定の高さ */
+            height: 200px; /* 固定の高さ */
             overflow-y: auto; /* 縦方向のスクロールを有効にする */
             border: 1px solid #ccc; /* ボーダーを追加 */
             padding: 10px; /* 内側の余白を追加 */
@@ -31,7 +31,6 @@
 
 	<h1>LaTeX数式画像生成</h1>
 	<p>リアルタイムにLaTeX数式をプレビューできます。svgかpngで保存できます。</p>
-	<p>※JavaScriptのMathJaxを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
 	<p>
         <textarea id="input" rows="10" cols="40" placeholder="type latex code">x = \frac{-b\pm\sqrt{b^2-4ac}}{2a}</textarea>
     </p>
@@ -45,6 +44,7 @@
     クリックするとクリップボードにコピーされます。<span id="message"></span>
     <div class="scrollable-container" id="cheatsheet">
     </div>
+	<p>※JavaScriptのMathJaxを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
     <script>
         MathJax = {
           startup: {
