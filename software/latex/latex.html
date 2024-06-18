@@ -35,7 +35,7 @@
     <p>
         <input type="button" value="download as svg" onclick="download_svg()"/>
         <input type="button" value="download as png" onclick="download_png()"/>
-        表示・保存倍率 <input id="scaler" type="number" value="1"/>
+        表示・保存倍率 <input id="scaler" type="number" value="10"/>
     </p>
     <div id="output"></div>
     <h3>チートシート</h3>
@@ -230,8 +230,11 @@
             const heightUnit = currentHeight.match(/[a-zA-Z%]+$/);
 
             const scaleFactor = parseFloat(scaler.value);
-            svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+widthUnit);
-            svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+widthUnit);
+            // svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+widthUnit);
+            // svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+widthUnit);
+            // デフォルトのex単位だと別ソフトにコピペした際に表示されないことがある
+            svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+"px");
+            svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+"px");
 
             output.innerHTML = svg.outerHTML;
         }
