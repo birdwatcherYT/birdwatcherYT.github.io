@@ -276,11 +276,11 @@
         let lastTimeout = undefined;
         input.addEventListener("input", (e) => {
             clearTimeout(lastTimeout);
-            lastTimeout = setTimeout(preview, 1000);
+            lastTimeout = setTimeout(preview, 300);
         });
         scaler.addEventListener("input", (e) => {
             clearTimeout(lastTimeout);
-            lastTimeout = setTimeout(preview, 1000);
+            lastTimeout = setTimeout(preview, 300);
         });
     </script>
 	<footer></footer>
