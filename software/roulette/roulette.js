@@ -1,9 +1,9 @@
 class Roulette {
     constructor() {
         this.items = [
-            { text: 'Item 1', weight: 1 },
-            { text: 'Item 2', weight: 1 },
-            { text: 'Item 3', weight: 1 },
+            { text: 'アイテム1', weight: 1 },
+            { text: 'アイテム2', weight: 1 },
+            { text: 'アイテム3', weight: 1 },
         ];
         this.isSpinning = false;
         this.rotation = 0;
