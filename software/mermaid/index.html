@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
-    <title>Markdown Preview</title>
+    <title>Mermaid Preview</title>
     <style>
         .container {
             display: flex;
@@ -31,54 +31,34 @@
             /* #previewが残りのスペースを埋める */
             flex-grow: 1;
         }
-
-        /* コードブロックのスタイル */
-        pre,
-        code {
-            background-color: #f0f0f0;
-            font-family: monospace;
-        }
-
-        pre {
-            padding: 10px;
-        }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
 </head>
 
 <body>
     <p><a href="../index.html">←Softwares</a></p>
 
-    <h1>Markdown Preview</h1>
-    <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+    <h1>Mermaid Preview</h1>
+    <p>※JavaScriptのmermaid.jsを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
 
     <div class="container">
         <textarea id="input">
-# Example
-## Section
-- item
-
-`main.cpp`
-```c++
-int a; // comment
-```
+graph LR
+  a-->b
 </textarea>
         <div id="preview"></div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
         const input = document.getElementById('input');
-        function rendering(markdownCode) {
+        function rendering(mermaidCode) {
             const preview = document.getElementById('preview');
-            const html = marked.parse(markdownCode);
-            preview.innerHTML = html;
-            hljs.highlightAll();
+            preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
+            mermaid.contentLoaded(); // Mermaid.jsで描画
         }
-        input.addEventListener('input', (event) => {
-            rendering(event.target.value);
+        input.addEventListener('input', function () {
+            rendering(this.value);
         });
         rendering(input.value);
     </script>
