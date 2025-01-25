@@ -106,7 +106,7 @@ class Roulette {
     }
 
     showResult(result) {
-        this.resultDiv.textContent = `Result: ${result}`;
+        this.resultDiv.textContent = result;
         this.resultDiv.classList.add('visible');
     }
 
