@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Markdown Preview</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        #markdown {
+            width: 48%;
+            height: 60vh;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            /* #markdownが縮まないように */
+            flex-shrink: 0;
+        }
+
+        #preview {
+            width: 48%;
+            height: 60vh;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow-y: auto;
+            /* #previewが残りのスペースを埋める */
+            flex-grow: 1;
+        }
+
+        /* コードブロックのスタイル */
+        pre,
+        code {
+            background-color: #f0f0f0;
+            font-family: monospace;
+        }
+
+        pre {
+            padding: 10px;
+        }
+    </style>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+</head>
+
+<body>
+    <p><a href="../software.html">←Softwares</a></p>
+
+    <h1>Markdown Preview</h1>
+    <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+
+    <div class="container">
+        <textarea id="markdown"></textarea>
+        <div id="preview"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        document.getElementById('markdown').addEventListener('input', (event) => {
+            const html = marked.parse(event.target.value);
+            const preview = document.getElementById('preview');
+            preview.innerHTML = html;
+            hljs.highlightAll();
+        });
+    </script>
+    <footer></footer>
+</body>
+
+</html>
