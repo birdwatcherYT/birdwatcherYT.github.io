@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>QRコード生成</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <style>
+        #output {
+            margin: 20px;
+        }
+
+        #input {
+            width: 90%;
+        }
+
+        button {
+            padding: 10px;
+        }
+
+        #download {
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="../software.html">←Softwares</a></p>
+    <h1>QRコード生成</h1>
+    <p>日本語も対応してます. </p>
+    <p>※JavaScriptのjquery.qrcodeを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+    <p><input id="input" size="50" value=""></p>
+    <p><button onclick="generate();">生成</button></p>
+    <div id="output"></div>
+    <a id="download" href="" download="qrcode.png">
+        <button>QRコードをダウンロード</button>
+    </a>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+<script src="https://unpkg.com/encoding-japanese@2.2.0/encoding.min.js"></script>
+<script>
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const downloadButton = document.getElementById("download");
+
+    function generateQRCode(text, renderType) {
+        $('#output').empty();
+        $('#output').qrcode({
+            text: text,
+            // width: 200,
+            // height: 200,
+            render: renderType,
+            ecLevel: 'L',
+            background: '#ffffff',
+            foreground: '#000000',
+            fill: '#000000'
+        });
+    }
+
+    function addMarginToCanvas(canvas) {
+        const margin = 20;  // 余白のサイズ
+        const newCanvas = document.createElement('canvas');
+        newCanvas.width = canvas.width + margin * 2;
+        newCanvas.height = canvas.height + margin * 2;
+        const ctx = newCanvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+        ctx.drawImage(canvas, margin, margin);
+
+        return newCanvas;
+    }
+
+    function generate() {
+        let text = input.value;
+        console.log(text);
+        text = Encoding.convert(text, 'sjis');
+
+        // QRコード生成 (Canvas)
+        generateQRCode(text, 'canvas');
+
+        const canvas = output.querySelector('canvas');
+        if (canvas) {
+            const newCanvas = addMarginToCanvas(canvas);
+            downloadButton.href = newCanvas.toDataURL('image/png');
+            downloadButton.style.display = 'inline';
+        }
+
+        // QRコード生成 (SVG)
+        generateQRCode(text, 'svg');
+    }
+</script>
+
+</html>
