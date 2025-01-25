@@ -1,9 +1,9 @@
 class Roulette {
     constructor() {
         this.items = [
-            { text: 'アイテム1', weight: 1 },
-            { text: 'アイテム2', weight: 1 },
-            { text: 'アイテム3', weight: 1 },
+            { text: 'A', weight: 1 },
+            { text: 'B', weight: 1 },
+            { text: 'C', weight: 1 },
         ];
         this.isSpinning = false;
         this.rotation = 0;
@@ -80,14 +80,39 @@ class Roulette {
     }
 
     addItem() {
-        const text = this.newItemInput.value.trim();
+        let text = this.newItemInput.value.trim();
         const weight = parseInt(this.newItemWeightInput.value, 10) || 1;
+
+        if (!text) {
+            text = this.getNextLabel();
+        }
 
         if (weight >= 1) {
             this.items.push({ text, weight });
             this.newItemInput.value = '';
             this.newItemWeightInput.value = '1';
             this.render();
+        }
+    }
+
+    getNextLabel() {
+        let index = 0;
+        const textSet = new Set(this.items.map(item => item.text));
+
+        while (true) {
+            let columnName = "";
+            let temp = index;
+
+            while (temp >= 0) {
+                columnName = String.fromCharCode((temp % 26) + 65) + columnName;
+                temp = Math.floor(temp / 26) - 1;
+            }
+
+            if (!textSet.has(columnName)) {
+                return columnName;
+            }
+
+            index++;
         }
     }
 
@@ -162,7 +187,7 @@ class Roulette {
         });
     }
     changeName(index, event) {
-        this.items[index].text = event.target.value;
+        this.items[index].text = event.target.value.trim();
         this.render();
     }
 }
