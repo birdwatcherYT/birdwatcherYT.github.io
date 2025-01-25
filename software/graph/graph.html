@@ -1,153 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>データプロット</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<style>
-		button {
-			padding: 6px;
-		}
-
-		table {
-			border: 1px solid;
-			border-collapse: collapse;
-			margin: 10px;
-		}
-
-		td,
-		th {
-			text-align: center;
-			padding: 3px;
-		}
-
-		.output tr {
-			border: 1px solid;
-			height: 10px;
-		}
-
-		.output td,
-		.output th {
-			border: 1px solid;
-			text-align: center;
-			padding-left: 10px;
-			padding-right: 10px;
-		}
-	</style>
 </head>
 
 <body>
-	<p><a href="../software.html">←Softwares</a></p>
-
-	<h1>データプロット</h1>
-	<p>※JavaScriptを使用しています。このスクリプトで問題が生じても一切の責任を負いません。</p>
-	列ごとのデータをプロットします。
-	<p>
-		<textarea id="input" rows="20" cols="40">
--10	30	1
-0	10	4
-10	-20	9
-20	30	16
-30	50	25
-40	20	36
-</textarea>
-	</p>
-	<p>
-		区切り文字
-		<select id="sep">
-			<option value="tab">タブ</option>
-			<option value="comma">カンマ</option>
-			<option value="space">スペース</option>
-		</select>
-	</p>
-	<p>
-		最初の列を共通のx軸にする
-		<input type="checkbox" id="firstIsX">
-	</p>
-	<table>
-		<tr>
-			<td>線の太さ</td>
-			<td><input id="lineWidth" type="number" value="1"></td>
-		<tr>
-		<tr>
-			<td>マーカーサイズ</td>
-			<td> <input id="markerSize" type="number" value="5"> </td>
-		<tr>
-		<tr>
-			<td>フォントサイズ</td>
-			<td><input id="fontSize" type="number" value="20"></td>
-		</tr>
-		<tr>
-			<td>目盛りの数</td>
-			<td><input id="gridNum" type="number" value="5"></td>
-		</tr>
-		<tr>
-			<td>余白</td>
-			<td><input id="margin" type="number" value="50"></td>
-		</tr>
-		<tr>
-			<td>有効桁数</td>
-			<td><input id="precision" type="number" value="5"></td>
-		</tr>
-		<tr>
-			<td>幅</td>
-			<td><input id="width" type="number" value="800"></td>
-		</tr>
-		<tr>
-			<td>高さ</td>
-			<td><input id="height" type="number" value="500"></td>
-		</tr>
-	</table>
-	<button onclick="onClick();">plot</button>
-	<button onclick="save();">save</button>
-
-	<h2>グラフ</h2>
-	<span id="graph"></span>
-	<h2>読み込み結果</h2>
-	<span id="data"></span>
-
-	<script src="graph.js"></script>
-	<script>
-
-		// クリック時の処理
-		function onClick() {
-			const sep = document.getElementById("sep");
-			const input = document.getElementById("input");
-			// 区切り文字
-			const sepToDelimitter = { "tab": "\t", "comma": ",", "space": " " };
-			const delimitter = sepToDelimitter[sep.value];
-			// 数値に変換
-			const data = input.value.trim().split("\n").map(row => row.trim().split(delimitter).map(val => Number(val)));
-			const firstIsX = document.getElementById("firstIsX");
-			// 読み込み結果を確認
-			document.getElementById("data").innerHTML = makeTable(data, firstIsX.checked);
-			// プロット
-			const property = {
-				width: Number(document.getElementById("width").value),
-				height: Number(document.getElementById("height").value),
-				lineWidth: Number(document.getElementById("lineWidth").value),
-				markerSize: Number(document.getElementById("markerSize").value),
-				fontSize: Number(document.getElementById("fontSize").value),
-				gridNum: Number(document.getElementById("gridNum").value),
-				margin: Number(document.getElementById("margin").value),
-				precision: Number(document.getElementById("precision").value)
-			}
-			document.getElementById("graph").innerHTML = makeSVG(data, firstIsX.checked, property);
-		}
-		function save() {
-			onClick();
-			const text = document.getElementById("graph").innerHTML;
-			const blob = new Blob([text], { type: "text/plain" });
-			const link = document.createElement("a");
-			link.href = URL.createObjectURL(blob);
-			link.download = "plot.svg";
-			link.click();
-		}
-	</script>
-	<footer></footer>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
 
 </html>

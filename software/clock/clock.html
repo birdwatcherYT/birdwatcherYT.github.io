@@ -1,114 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>Clock</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<style>
-		.date {
-			font-size: 4.5vw;
-			font-family: monospace, serif;
-		}
-
-		.time {
-			font-size: 15vw;
-			font-family: monospace, serif;
-			font-weight: bold;
-		}
-
-		.timer {
-			font-size: 5vw;
-			font-family: monospace, serif;
-			font-weight: bold;
-		}
-
-		.toggle_input {
-			position: absolute;
-			left: 0;
-			top: 0;
-			z-index: 5;
-			opacity: 0;
-		}
-
-		.toggle_label {
-			width: 40px;
-			height: 20px;
-			background: lightgray;
-			position: relative;
-			display: inline-block;
-			border-radius: 40px;
-			transition: 0.4s;
-			box-sizing: border-box;
-			cursor: pointer;
-		}
-
-		.toggle_label:after {
-			content: "";
-			position: absolute;
-			width: 20px;
-			height: 20px;
-			border-radius: 100%;
-			left: 0;
-			top: 0;
-			z-index: 2;
-			background: white;
-			box-shadow: 0 0 5px black;
-			transition: 0.4s;
-		}
-
-		.toggle_input:checked+.toggle_label {
-			background-color: cyan;
-		}
-
-		.toggle_input:checked+.toggle_label:after {
-			left: 20px;
-		}
-	</style>
 </head>
 
-<body id="body" style="background-color: white; color: black;">
-	<p><a href="../software.html" style="float: left; margin-left: 10px;">←Softwares</a></p>
-	<div class="toggle_button" style="text-align: right; margin-right: 10px;">
-		Dark mode
-		<input id="toggle" class="toggle_input" type='checkbox' onclick="Dark(this)" />
-		<label for="toggle" class="toggle_label">
-	</div>
-	<h2>System Clock</h2>
-	<div style="text-align:center;">
-		<div id="date" class="date"></div>
-		<div id="time" class="time"></div>
-	</div>
-	<h2>Alerm</h2>
-	<input id="alerm_date" type="datetime-local" step="1" />
-	<button id="alerm_button" onclick="alerm_click();">Set</button>
-	<h2>Timer</h2>
-	<p>
-		<select id="minute_selector"></select>分<select id="second_selector"></select>秒
-		<button id="timer_button" onclick="timer_click();">Set</button>
-	</p>
-	<div id="timer" class="timer"></div>
-
-	<script src="clock.js"></script>
-	<script>
-		function Dark(elem) {
-			const body = document.getElementById("body");
-			body.style.cssText = elem.checked ? "background-color: black; color: white;" : "background-color: white; color: black;";
-		}
-		function makeSelector(num, padding) {
-			let str = "";
-			for (let i = 0; i < num; ++i)
-				str += `<option value="${i}">${i.toString().padStart(padding, "0")}</option>`
-			return str;
-		}
-		const second_selector = document.getElementById("second_selector");
-		second_selector.innerHTML = makeSelector(60, 2);
-		const minute_selector = document.getElementById("minute_selector");
-		minute_selector.innerHTML = makeSelector(1000, 0);
-	</script>
-	<footer style="color: black"></footer>
+<body>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
 
 </html>

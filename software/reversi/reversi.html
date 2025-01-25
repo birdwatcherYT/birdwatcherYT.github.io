@@ -1,69 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
+
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>リバーシ</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
-
-	<style>
-
-	table{
-		border-collapse:collapse;
-		background-color: lightgreen;
-		font-family: 'BIZ UDGothic', sans-serif;
-		font-size:30pt;
-	}
-
-	th,td{
-		border: solid 1px;
-		text-align: center;
-	}
-
-	</style>
 </head>
 
 <body>
-<p><a href="../software.html">←Softwares</a></p>
-
-<h1>リバーシ</h1>
-<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-
-
-<select id="level" onchange="reset();">
-	<option value="3">EASY</option>
-	<option value="5" selected>NORMAL</option>
-	<option value="7">DIFFICULT</option>
-</select>
-<select id="first_second" onchange="reset();">
-	<option value="first" selected>先攻</option>
-	<option value="second">後攻</option>
-</select>
-<input type="button" value="リセット" onclick="reset();"/>
-
-<div id="output"></div>
-
-<script src="reversi.js"></script>
-<script>
-
-const N=8;
-let reversi = new Reversi();
-reset();
-
-function reset(){
-	let level = Number(document.getElementById("level").value);
-	let first = document.getElementById("first_second").value=="first";
-	reversi.initialize(N, level, first);
-	let output=document.getElementById("output");
-	output.innerHTML=reversi.print_board();
-}
-
-</script>
-<footer></footer>
-
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
+
 </html>

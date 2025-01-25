@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Sample Size Calculator</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <style>
+        table {
+            border-collapse: collapse;
+            border: solid 2px orange;
+        }
+
+        button {
+            width: 120px;
+        }
+
+        input {
+            width: 120px;
+        }
+
+        .contentA,
+        .contentB {
+            margin-left: 15px;
+            margin-right: 15px;
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="../software.html">←Softwares</a></p>
+
+    <h1>Sample Size Calculator</h1>
+    <p>検定に必要なサンプル数を見積もるツールです。ABテストに必要な期間を算出する際の材料として使えます。</p>
+    <p>オレンジ色の枠内を入力して「計算」を押すと各群それぞれに必要なサンプル数を知ることができます。計算式は<a href="https://qiita.com/birdwatcher/items/8887afabe73513fbf264" target="_blank">こちら</a>。</p>
+    <h2>共通設定</h2>
+    <table cellpadding="5">
+        <tr>
+            <td>有意水準</td>
+            <td><select id="alpha"></select></td>
+            <td>検出力</td>
+            <td><select id="beta"></select></td>
+            <td>種類</td>
+            <td>
+                <select id="test">
+                    <option value="two-side" selected>両側検定</option>
+                    <option value="one-side">片側検定</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+
+    <div class="main">
+        <div class="contentA">
+            <h3>母平均の差の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td>検出したい差</td>
+                    <td> <input id="delta" type="number" value="0.1"></td>
+                </tr>
+                <tr>
+                    <td>不偏分散</td>
+                    <td> <input id="sigma2" type="number" value="1"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td align="center">
+                        <button id="mean" onclick="on_click('mean');">計算</button>
+                    </td>
+                </tr>
+            </table>
+            <p> サンプル数 = <input id="output_mean" value="" readonly></p>
+        </div>
+        <div class="contentB">
+            <h3>母比率の差の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td>A群の比率</td>
+                    <td> <input id="pA" type="number" value="0.3">
+                </tr>
+                </tr>
+                <tr>
+                    <td>B群の比率</td>
+                    <td> <input id="pB" type="number" value="0.35"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td align="center">
+                        <button id="ratio" onclick="on_click('ratio');">計算</button>
+                    </td>
+                </tr>
+            </table>
+            <p>サンプル数 = <input id="output_ratio" value="" readonly></p>
+        </div>
+    </div>
+
+
+
+    <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+
+    <script>
+        const prob = [
+            0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045,
+            0.05, 0.055, 0.06, 0.065, 0.07, 0.075, 0.08, 0.085, 0.09,
+            0.095, 0.1, 0.105, 0.11, 0.115, 0.12, 0.125, 0.13, 0.135,
+            0.14, 0.145, 0.15, 0.155, 0.16, 0.165, 0.17, 0.175, 0.18,
+            0.185, 0.19, 0.195, 0.2, 0.205, 0.21, 0.215, 0.22, 0.225,
+            0.23, 0.235, 0.24, 0.245, 0.25, 0.255, 0.26, 0.265, 0.27,
+            0.275, 0.28, 0.285, 0.29, 0.295, 0.3, 0.305, 0.31, 0.315,
+            0.32, 0.325, 0.33, 0.335, 0.34, 0.345, 0.35, 0.355, 0.36,
+            0.365, 0.37, 0.375, 0.38, 0.385, 0.39, 0.395, 0.4, 0.405,
+            0.41, 0.415, 0.42, 0.425, 0.43, 0.435, 0.44, 0.445, 0.45,
+            0.455, 0.46, 0.465, 0.47, 0.475, 0.48, 0.485, 0.49, 0.495,
+            0.5
+        ];
+        const z = [
+            2.5758293, 2.32634787, 2.17009038, 2.05374891, 1.95996398,
+            1.88079361, 1.81191067, 1.75068607, 1.69539771, 1.64485363,
+            1.59819314, 1.55477359, 1.51410189, 1.47579103, 1.43953147,
+            1.40507156, 1.37220381, 1.34075503, 1.31057911, 1.28155157,
+            1.25356544, 1.22652812, 1.20035886, 1.17498679, 1.15034938,
+            1.12639113, 1.10306256, 1.08031934, 1.05812162, 1.03643339,
+            1.01522203, 0.99445788, 0.97411388, 0.95416525, 0.93458929,
+            0.91536509, 0.89647336, 0.8778963, 0.85961736, 0.84162123,
+            0.82389363, 0.80642125, 0.78919165, 0.77219321, 0.75541503,
+            0.73884685, 0.72247905, 0.70630256, 0.69030882, 0.67448975,
+            0.65883769, 0.64334541, 0.62800601, 0.61281299, 0.59776013,
+            0.58284151, 0.5680515, 0.55338472, 0.53883603, 0.52440051,
+            0.51007346, 0.49585035, 0.48172685, 0.4676988, 0.45376219,
+            0.43991317, 0.42614801, 0.41246313, 0.39885507, 0.38532047,
+            0.37185609, 0.35845879, 0.34512553, 0.33185335, 0.31863936,
+            0.30548079, 0.2923749, 0.27931903, 0.26631061, 0.2533471,
+            0.24042603, 0.22754498, 0.21470157, 0.20189348, 0.18911843,
+            0.17637416, 0.16365849, 0.15096922, 0.13830421, 0.12566135,
+            0.11303854, 0.10043372, 0.08784484, 0.07526986, 0.06270678,
+            0.05015358, 0.03760829, 0.02506891, 0.01253347, 0.
+        ];
+        function make_select(selected, func) {
+            str = "";
+            for (let i = 1; i < prob.length; i += 2)
+                str += `<option value="${i}"${selected == i ? "selected" : ""}>${func(prob[i])}</option>`;
+            return str;
+        }
+        document.getElementById("alpha").innerHTML = make_select(9, (x) => x);
+        document.getElementById("beta").innerHTML = make_select(39, (x) => Math.round((1 - x) * 1000) / 1000);
+
+        function on_click(type) {
+            const test = document.getElementById("test").value;
+            const alpha_i = Number(document.getElementById("alpha").value);
+            const z_alpha = (test == "two-side") ? z[Math.floor(alpha_i / 2)] : z[alpha_i];
+            console.log("z_alpha", z_alpha);
+            const beta_i = Number(document.getElementById("beta").value);
+            const z_beta = z[beta_i];
+            console.log("z_beta", z_beta);
+
+            let delta, sigma2;
+            if (type == "mean") {
+                delta = Number(document.getElementById("delta").value);
+                sigma2 = Number(document.getElementById("sigma2").value);
+            } else {
+                const pA = Number(document.getElementById("pA").value);
+                const pB = Number(document.getElementById("pB").value);
+                const p = (pA + pB) / 2;
+                delta = pA - pB;
+                sigma2 = p * (1 - p);
+            }
+            console.log("delta", delta);
+            console.log("sigma2", sigma2);
+
+            const n = Math.ceil(2 * sigma2 * (z_alpha + z_beta) ** 2 / delta ** 2);
+            document.getElementById(`output_${type}`).value = n;
+        }
+    </script>
+    <footer></footer>
+</body>
+
+</html>

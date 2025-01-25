@@ -1,132 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>ルーレット</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<style>
-		table {
-			border-collapse: collapse;
-		}
-
-		th,
-		td {
-			border: solid 2px;
-			text-align: center;
-			padding-left: 5px;
-			padding-right: 5px;
-			width: 100px;
-		}
-	</style>
 </head>
 
 <body>
-	<p><a href="../software.html">←Softwares</a></p>
-
-	<h1>ルーレット</h1>
-	<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-	<p>
-		<input type="button" value="行追加" onclick="addRow();" />
-		<input type="button" value="行削除" onclick="deleteRow();" />
-		<input type="button" value="シャッフル" onclick="shuffle();" />
-	</p>
-	<div id="input"></div>
-	<p>
-		<input type="button" value="ルーレット" onclick="roulette();" />
-		重みに応じてランダムに選択
-	</p>
-	<p>結果</p>
-	<table>
-		<tr bgcolor="pink">
-			<th>index</th>
-			<th>アイテム</th>
-			<th>重み</th>
-		</tr>
-		<tr>
-			<td id="selected-index"></td>
-			<td id="selected-item"></td>
-			<td id="selected-weight"></td>
-		</tr>
-	</table>
-
-	<script>
-		let items = ["a", "b", "c"];
-		let weights = [10, 20, 30];
-		function makeTable() {
-			let str = '<table> <tr bgcolor="lightblue"> <th>index</th> <th>アイテム</th> <th>重み</th> </tr>';
-			for (let i = 0; i < items.length; i++)
-				str += `<tr> <td>${i}</td> <td id="item${i}" contentEditable>${items[i]}</td><td id="weight${i}" contentEditable>${weights[i]}</td> </tr>`;
-			str += '</table>';
-			return str;
-		}
-
-		function loadTable() {
-			for (let i = 0; i < items.length; i++) {
-				const item = document.getElementById('item' + i);
-				items[i] = item.innerText;
-
-				const weight = document.getElementById('weight' + i);
-				weights[i] = isNaN(weight.innerText) ? 0 : Number(weight.innerText);
-			}
-		}
-
-		function updateTable() {
-			const input = document.getElementById("input");
-			input.innerHTML = makeTable();
-		}
-
-		function addRow() {
-			loadTable();
-			items.push("");
-			weights.push(0);
-			updateTable();
-		}
-
-		function deleteRow() {
-			if (items.length == 0)
-				return;
-			loadTable();
-			items.pop();
-			weights.pop();
-			updateTable();
-		}
-
-		function randomSelect(weights) {
-			const r = Math.random();
-			const total = weights.reduce((sum, e) => sum + e, 0);
-			let cumsum = 0;
-			for (const [i, w] of weights.entries()) {
-				cumsum += w;
-				if (cumsum >= r * total)
-					return i;
-			}
-			return weights.length - 1;
-		}
-
-		function roulette() {
-			loadTable();
-			updateTable();
-			const i = randomSelect(weights);
-			document.getElementById("selected-index").innerText = i;
-			document.getElementById("selected-item").innerText = items[i];
-			document.getElementById("selected-weight").innerText = weights[i];
-		}
-		function shuffle() {
-			loadTable();
-			for (let i = items.length - 1; i > 0; --i) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[items[i], items[j]] = [items[j], items[i]];
-				[weights[i], weights[j]] = [weights[j], weights[i]];
-			}
-			updateTable();
-		}
-
-		document.getElementById("input").innerHTML = makeTable();
-	</script>
-	<footer></footer>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
 
 </html>

@@ -1,69 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>ランダム文字列ジェネレーター</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<style>
-		input {
-			width: 90vw;
-		}
-	</style>
 </head>
 
 <body>
-	<p><a href="../software.html">←Softwares</a></p>
-
-	<h1>ランダム文字列ジェネレーター</h1>
-	<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-	<p>
-		使用する文字
-	</p>
-	<p>
-		<input id="chars" size="100" value="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789">
-	</p>
-	<p>
-		生成する文字の長さ
-	</p>
-	<p>
-		<input id="size" type="number" value="64">
-	</p>
-	<p>
-		<button onclick="generate();">生成</button>
-	</p>
-	<p>
-		<input id="output" size="100" readonly>
-	</p>
-	<p>
-		<button onclick="clipboard();">コピー</button>
-	</p>
-	<script>
-		function generate() {
-			const chars = document.getElementById("chars").value;
-			const size = Math.floor(Number(document.getElementById("size").value));
-			const output = document.getElementById("output");
-			if (size <= 0) {
-				alert("生成する文字の長さは1以上である必要があります");
-				return;
-			}
-			if (chars.length <= 0) {
-				alert("使用する文字は1文字以上必要です");
-				return;
-			}
-			output.value = [...new Array(size)].map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
-		}
-		function clipboard() {
-			const output = document.getElementById("output");
-			navigator.clipboard.writeText(output.value).then(
-				() => alert("クリップボードへコピーしました")
-			);
-		}
-		generate();
-	</script>
-	<footer></footer>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
 
 </html>

@@ -1,83 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
+
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>迷路自動作成</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
-	<style>
-
-	table{
-		border-collapse:collapse;
-		font-family: 'BIZ UDGothic', sans-serif;
-		font-size:10pt;
-		font-weight: bold;
-	}
-
-	th,td{
-		border: solid 0px;
-		text-align: center;
-	}
-
-	</style>
 </head>
 
 <body>
-<p><a href="../software.html">←Softwares</a></p>
-
-<h1>迷路自動作成</h1>
-<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-<p>
-row=
-<select id="row">
-	<option value="15">15</option>
-	<option value="25">25</option>
-	<option value="35" selected>35</option>
-	<option value="45">45</option>
-	<option value="55">55</option>
-	<option value="65">65</option>
-	<option value="75">75</option>
-</select>
-col=
-<select id="col">
-	<option value="15">15</option>
-	<option value="25">25</option>
-	<option value="35">35</option>
-	<option value="45">45</option>
-	<option value="55" selected>55</option>
-	<option value="65">65</option>
-	<option value="75">75</option>
-</select>
-</p>
-<p>
-method=
-<select id="method">
-	<option value="DigMethod" selected>穴掘り法</option>
-	<option value="BarFallMethod">棒倒し法</option>
-	<option value="BarFallMethodMulti">棒倒し法(複数経路)</option>
-</select>
-<input type="button" value="迷路作成" onclick="on_click();"/>
-</p>
-<div id="output"></div>
-
-<script src="maze.js"></script>
-<script>
-
-function on_click(){
-	const row = Number(document.getElementById("row").value);
-	const col = Number(document.getElementById("col").value);
-	const method = document.getElementById("method").value;
-	let result = method=="DigMethod"? buildFromDigMethod(row, col): buildFromBarFallMethod(row, col, method=="BarFallMethodMulti");
-	let maze=result[0], start=result[1], goal=result[2];
-	let target = document.getElementById("output");
-	target.innerHTML = print_maze(maze, start, goal);
-}
-
-</script>
-<footer></footer>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="./index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
+
 </html>
