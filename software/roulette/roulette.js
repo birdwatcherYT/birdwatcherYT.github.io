@@ -83,7 +83,7 @@ class Roulette {
         const text = this.newItemInput.value.trim();
         const weight = parseInt(this.newItemWeightInput.value, 10) || 1;
 
-        if (text && weight >= 1) {
+        if (weight >= 1) {
             this.items.push({ text, weight });
             this.newItemInput.value = '';
             this.newItemWeightInput.value = '1';
