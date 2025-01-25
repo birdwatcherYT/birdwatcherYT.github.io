@@ -1,108 +1,17 @@
 <!DOCTYPE html>
-<html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>AA変換</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="refresh" content="0;url=/index.html">
+    <title>ページ移動中...</title>
 	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
 	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@500&display=swap" rel="stylesheet">
-	<style>
-	#image_canvas, #aa_canvas {
-	  height: 300px;
-	}
-	.aa {
-		font-size:8pt;
-		font-family: 'Inconsolata', monospace;
-	}
-	</style>
 </head>
 
 <body>
-<p><a href="../software.html">←Softwares</a></p>
-
-<h1>AA変換</h1>
-<p>画像ファイルをAA(アスキーアート)に変換します. </p>
-<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
-<p><input type="file" id="selectfile" accept='image/*'></p>
-<p>AAの横の文字数 <input type="text" id="char_num" size="10" value="200"></p>
-<p>使用文字 (半角文字のみ) <input type="text" id="ascii" size="100"></p>
-<p><input type="button" onclick="on_click();" value="変換" style="width:100px;font-size:30px;"></p>
-
-<h2>画像</h2>
-<p><canvas width="1" height="1" id="image_canvas"></canvas> <canvas width="1" height="1" id="aa_canvas"></canvas></p>
-<h2>AA</h2>
-<p><textarea id="output" cols="100" rows="50" class="aa" spellcheck="false"></textarea></p>
-
-<script src="aa.js"></script>
-<script>
-
-const characters="1234567890-^qwertyuiop@[asdfghjkl;:]zxcvbnm,./!\"#$%&'()=~|QWERTYUIOP`{ASDFGHJKL+*}ZXCVBNM<>?_ ";
-let ascii = document.getElementById("ascii"); 
-ascii.value=characters;
-
-window.addEventListener("DOMContentLoaded", function(){
-	//ファイルオープンの際のイベント
-	let ofd = document.getElementById("selectfile");
-	ofd.addEventListener("change", function(evt) {
-		//ここに画像データを入力
-		let img = null;
-
-		let file = evt.target.files;
-		let reader = new FileReader();
-
-		//dataURL形式でファイルを読み込む
-		reader.readAsDataURL(file[0]);
-
-		//ファイルの読込が終了した時の処理
-		reader.onload = function(){
-			img = new Image();
-			img.onload = function(){
-				// 画像描画
-				let canvas = document.getElementById("image_canvas"); 
-				draw_image(canvas, img);
-			}
-			//読み込んだ画像ソースを入れる
-			img.src = reader.result;
-		}
-	}, false);
-}, false);
-
-
-function on_click(){
-	const size=2;
-	const fontsize=32;
-	// 文字数
-	let char_num = document.getElementById("char_num");
-	char_num = Number(char_num.value);
-	// 使用文字
-	let ascii = document.getElementById("ascii");
-	const characters=ascii.value;
-	const c_vals = character_density(characters, fontsize);
-	// 画像を取得
-	let image_canvas = document.getElementById("image_canvas");
-	let img = new Image();
-	img.onload = function() {
-		// 画像をピクセルに変換
-		let pixel=img2pixel(img, char_num);
-		// AAに変換
-		let AA=toAA(pixel, size, characters, c_vals);
-		let output=document.getElementById('output');
-		output.value=AA;
-		output.cols=char_num+Math.ceil(char_num*0.1);
-		output.rows=Math.ceil(AA.length/char_num)+5;
-		// AAを画像出力
-		let aa_canvas = document.getElementById("aa_canvas");
-		AA2img(aa_canvas, AA, fontsize);
-	}
-	img.src = image_canvas.toDataURL();
-}
-
-
-</script>
-<footer></footer>
+    <p>ページが自動的にリダイレクトされます。もし移動しない場合は、<a href="/index.html">こちら</a>をクリックしてください。</p>
+    <footer></footer>
 </body>
+
 </html>
