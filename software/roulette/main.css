@@ -69,7 +69,7 @@ body {
     top: 0;
     left: 50%;
     height: 50%;
-    width: 1px;
+    width: 1.5px;
     background: orange;
     transform-origin: bottom;
 }
@@ -83,6 +83,17 @@ body {
     height: 1rem;
     background: orange;
     clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+}
+
+.center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 0.4rem;
+    height: 0.4rem;
+    background: orange;
+	border-radius: 50%;
 }
 
 .controls {
