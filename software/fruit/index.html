@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+    <title>フルーツゲーム</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <style>
+        #app {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        #score-container,
+        #next-fruit-container {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #next-fruit {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        canvas {
+            background: #f2f2f2;
+            margin-left: 10px;
+        }
+
+        #fruits-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .fruit {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        #info-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            width: 500px;
+            margin-left: 10px;
+        }
+
+        #restart-button {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+	<p><a href="../index.html">←Softwares</a></p>
+    <h1>フルーツゲーム</h1>
+    <div id="app">
+        <div id="fruits-container">進化順</div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="info-container">
+            <div id="score-container">スコア: <span id="score">0</span></div>
+            <div id="next-fruit-container">
+                <span>次のフルーツ:</span>
+                <div id="next-fruit"></div>
+            </div>
+            <button id="restart-button">再スタート</button>
+        </div>
+    </div>
+
+    <script>
+        const { Engine, Render, Runner, Bodies, World, Events } = Matter;
+
+        const engine = Engine.create();
+        const world = engine.world;
+
+        const width = 300, height = 400;
+        const render = Render.create({
+            canvas: document.getElementById('gameCanvas'),
+            engine: engine,
+            options: { width, height, wireframes: false }
+        });
+        Render.run(render);
+        Runner.run(Runner.create(), engine);
+
+        // 床と壁
+        const ground = Bodies.rectangle(width / 2, height, width, 20, { isStatic: true });
+        const leftWall = Bodies.rectangle(0, height / 2, 20, height, { isStatic: true });
+        const rightWall = Bodies.rectangle(width, height / 2, 20, height, { isStatic: true });
+        World.add(world, [ground, leftWall, rightWall]);
+
+        const fruitSizes = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+        const fruitColors = [
+            "#FF5733",  // 明るい赤 
+            "#00FF7F",  // スプリンググリーン
+            "#3357FF",  // 明るい青
+            "#FF69B4",  // ホットピンク
+            "#FF8C00",  // ダークオレンジ
+            "#FFFF33",  // 明るい黄色
+            "#8A2BE2",  // ブルーバイオレット
+            "#FF1493",  // ディープピンク
+            "#32CD32",  // ライムグリーン
+            "#FFD700",  // ゴールド
+            "#00BFFF"   // ドジャーブルー
+        ];
+
+
+        let score = 0;
+        const nextFruitElement = document.getElementById("next-fruit");
+        const scoreElement = document.getElementById("score");
+
+        let nextFruitIndex = Math.floor(Math.random() * 5);
+        nextFruitElement.style.backgroundColor = fruitColors[nextFruitIndex];
+        nextFruitElement.style.width = fruitSizes[nextFruitIndex] * 2 + "px";
+        nextFruitElement.style.height = fruitSizes[nextFruitIndex] * 2 + "px";
+
+        let gameOver = false;
+        function addFruit(x) {
+            if (gameOver || x < 20 || x > width - 20) return; // 画面外クリック防止
+
+            const size = fruitSizes[nextFruitIndex];
+            const color = fruitColors[nextFruitIndex];
+
+            const fruit = Bodies.circle(x, 20 + size, size, { restitution: 0.5, render: { fillStyle: color } });
+            World.add(world, fruit);
+
+            nextFruitIndex = Math.floor(Math.random() * 5);
+            nextFruitElement.style.backgroundColor = fruitColors[nextFruitIndex];
+            nextFruitElement.style.width = fruitSizes[nextFruitIndex] * 2 + "px";
+            nextFruitElement.style.height = fruitSizes[nextFruitIndex] * 2 + "px";
+        }
+
+        document.addEventListener("click", (event) => {
+            const rect = render.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            addFruit(x);
+        });
+
+        Events.on(engine, "collisionStart", event => {
+            let pairs = event.pairs;
+            pairs.forEach(pair => {
+                let { bodyA, bodyB } = pair;
+
+                if (bodyA.circleRadius && bodyB.circleRadius && bodyA.circleRadius === bodyB.circleRadius) {
+                    const newIndex = fruitSizes.indexOf(bodyA.circleRadius) + 1;
+                    if (newIndex < fruitSizes.length) {
+                        const newSize = fruitSizes[newIndex];
+                        const newColor = fruitColors[newIndex];
+                        const newFruit = Bodies.circle((bodyA.position.x + bodyB.position.x) / 2, (bodyA.position.y + bodyB.position.y) / 2, newSize, { restitution: 0.5, render: { fillStyle: newColor } });
+                        World.add(world, newFruit);
+                    }
+                    // スコアを加算（大きいフルーツほど高得点）
+                    const points = bodyA.circleRadius + bodyB.circleRadius;
+                    score += points;
+                    scoreElement.textContent = score;
+                    World.remove(world, [bodyA, bodyB]);
+                }
+            });
+        });
+
+        const restartButton = document.getElementById("restart-button");
+        // ゲームオーバー判定
+        function checkGameOver() {
+            if (gameOver) return;
+            const allFruits = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
+            allFruits.forEach(fruit => {
+                if (!gameOver && fruit.position.y - fruit.circleRadius < 0) {
+                    gameOver = true;
+                    alert('ゲームオーバー！');
+                    restartButton.style.display = 'block';
+                }
+            });
+        }
+
+        // 毎フレームゲームオーバーをチェック
+        Events.on(engine, "afterUpdate", checkGameOver);
+
+        restartButton.addEventListener("click", () => {
+            // ゲームをリセット
+            restartButton.style.display = 'none';
+            const allFruits = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
+            World.remove(world, allFruits);
+            gameOver = false;
+            score = 0;
+            scoreElement.textContent = score;
+        });
+
+        const fruitsContainer = document.getElementById("fruits-container");
+        fruitSizes.forEach((size, index) => {
+            const fruitDiv = document.createElement('div');
+            fruitDiv.classList.add('fruit');
+            fruitDiv.style.backgroundColor = fruitColors[index];
+            fruitDiv.style.width = size * 1 + "px";
+            fruitDiv.style.height = size * 1 + "px";
+
+            fruitsContainer.appendChild(fruitDiv);
+        });
+    </script>
+	<footer></footer>
+</body>
+
+</html>
