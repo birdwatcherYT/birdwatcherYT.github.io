@@ -2,11 +2,11 @@
 <html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
     <title>フルーツゲーム</title>
-	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
-	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
     <style>
         #app {
@@ -74,15 +74,15 @@
 </head>
 
 <body>
-	<p><a href="../index.html">←Softwares</a></p>
+    <p><a href="../index.html">←Softwares</a></p>
     <h1>フルーツゲーム</h1>
     <div id="app">
         <div id="fruits-container">進化順</div>
         <canvas id="gameCanvas"></canvas>
         <div id="info-container">
-            <div id="score-container">スコア: <span id="score">0</span></div>
+            <div id="score-container">Score: <span id="score">0</span></div>
             <div id="next-fruit-container">
-                <span>次のフルーツ:</span>
+                <span>NEXT:</span>
                 <div id="next-fruit"></div>
             </div>
             <button id="restart-button">再スタート</button>
@@ -159,9 +159,13 @@
 
         Events.on(engine, "collisionStart", event => {
             let pairs = event.pairs;
+            let processedBodies = new Set();  // すでに処理したフルーツを記録するセット
             pairs.forEach(pair => {
                 let { bodyA, bodyB } = pair;
-
+                // すでに処理されたフルーツはスキップ
+                if (processedBodies.has(bodyA) || processedBodies.has(bodyB)) {
+                    return;
+                }
                 if (bodyA.circleRadius && bodyB.circleRadius && bodyA.circleRadius === bodyB.circleRadius) {
                     const newIndex = fruitSizes.indexOf(bodyA.circleRadius) + 1;
                     if (newIndex < fruitSizes.length) {
@@ -175,6 +179,9 @@
                     score += points;
                     scoreElement.textContent = score;
                     World.remove(world, [bodyA, bodyB]);
+                    // 処理済みとして登録
+                    processedBodies.add(bodyA);
+                    processedBodies.add(bodyB);
                 }
             });
         });
@@ -217,7 +224,7 @@
             fruitsContainer.appendChild(fruitDiv);
         });
     </script>
-	<footer></footer>
+    <footer></footer>
 </body>
 
 </html>
