@@ -33,8 +33,7 @@
             margin-left: 10px;
         }
 
-        #evolution1,
-        #evolution2 {
+        #evolution {
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -78,8 +77,7 @@
     <p><a href="../index.html">←Softwares</a></p>
     <h1>鳥ゲーム</h1>
     <div id="app">
-        <div id="evolution1">進化順</div>
-        <div id="evolution2"></div>
+        <div id="evolution">進化順</div>
         <canvas id="gameCanvas"></canvas>
         <div id="info-container">
             <div id="score-container">Score: <span id="score">0</span></div>
@@ -97,7 +95,7 @@
         const engine = Engine.create();
         const world = engine.world;
 
-        const scaler = 1.15;
+        const scaler = 1;
         const width = 300 * scaler, height = 400 * scaler;
         const render = Render.create({
             canvas: document.getElementById('gameCanvas'),
@@ -220,11 +218,10 @@
             scoreElement.textContent = score;
         });
 
-        const evolution1 = document.getElementById("evolution1");
-        const evolution2 = document.getElementById("evolution2");
+        const evolution = document.getElementById("evolution");
         ballSizes.forEach((size, index) => {
-            if (index <= 6) evolution1.innerHTML += `<img src="bird${index}.png" width="${ballSizes[index] * 2}px">`;
-            else evolution2.innerHTML += `<img src="bird${index}.png" width="${ballSizes[index] * 2}px">`;
+            // evolution.innerHTML += `<img src="bird${index}.png" width="${ballSizes[index] * 2}px">`;
+            evolution.innerHTML += `<img src="bird${index}.png" width="30px">`;
         });
     </script>
     <footer></footer>
