@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
-    <title>フルーツゲーム</title>
+    <title>鳥ゲーム</title>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
@@ -16,13 +16,13 @@
         }
 
         #score-container,
-        #next-fruit-container {
+        #next-ball-container {
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 10px;
         }
 
-        #next-fruit {
+        #next-ball {
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -33,7 +33,8 @@
             margin-left: 10px;
         }
 
-        #fruits-container {
+        #evolution1,
+        #evolution2 {
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -41,7 +42,7 @@
             gap: 5px;
         }
 
-        .fruit {
+        .ball {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -75,15 +76,16 @@
 
 <body>
     <p><a href="../index.html">←Softwares</a></p>
-    <h1>フルーツゲーム</h1>
+    <h1>鳥ゲーム</h1>
     <div id="app">
-        <div id="fruits-container">進化順</div>
+        <div id="evolution1">進化順</div>
+        <div id="evolution2"></div>
         <canvas id="gameCanvas"></canvas>
         <div id="info-container">
             <div id="score-container">Score: <span id="score">0</span></div>
-            <div id="next-fruit-container">
+            <div id="next-ball-container">
                 <span>NEXT:</span>
-                <div id="next-fruit"></div>
+                <div id="next-ball"></div>
             </div>
             <button id="restart-button">再スタート</button>
         </div>
@@ -95,7 +97,8 @@
         const engine = Engine.create();
         const world = engine.world;
 
-        const width = 300, height = 400;
+        const scaler = 1.15;
+        const width = 300 * scaler, height = 400 * scaler;
         const render = Render.create({
             canvas: document.getElementById('gameCanvas'),
             engine: engine,
@@ -110,51 +113,58 @@
         const rightWall = Bodies.rectangle(width, height / 2, 20, height, { isStatic: true });
         World.add(world, [ground, leftWall, rightWall]);
 
-        const fruitSizes = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
-        const fruitColors = [
-            "#FF5733",  // 明るい赤 
-            "#00FF7F",  // スプリンググリーン
-            "#3357FF",  // 明るい青
-            "#FF69B4",  // ホットピンク
-            "#FF8C00",  // ダークオレンジ
-            "#FFFF33",  // 明るい黄色
-            "#8A2BE2",  // ブルーバイオレット
-            "#FF1493",  // ディープピンク
-            "#32CD32",  // ライムグリーン
-            "#FFD700",  // ゴールド
-            "#00BFFF"   // ドジャーブルー
-        ];
-
+        const ballSizes = [10 * scaler, 15 * scaler, 20 * scaler, 25 * scaler, 30 * scaler, 35 * scaler, 40 * scaler, 45 * scaler, 50 * scaler, 55 * scaler, 60 * scaler];
 
         let score = 0;
-        const nextFruitElement = document.getElementById("next-fruit");
+        const nextBallElement = document.getElementById("next-ball");
         const scoreElement = document.getElementById("score");
 
-        let nextFruitIndex = Math.floor(Math.random() * 5);
-        nextFruitElement.style.backgroundColor = fruitColors[nextFruitIndex];
-        nextFruitElement.style.width = fruitSizes[nextFruitIndex] * 2 + "px";
-        nextFruitElement.style.height = fruitSizes[nextFruitIndex] * 2 + "px";
+        let nextBallIndex = Math.floor(Math.random() * 5);
+        nextBallElement.innerHTML = `<img src="bird${nextBallIndex}.png" width="${ballSizes[nextBallIndex] * 2}px">`
 
         let gameOver = false;
-        function addFruit(x) {
-            if (gameOver || x < 20 || x > width - 20) return; // 画面外クリック防止
+        function makeBall(x, y, index) {
+            const size = ballSizes[index];
+            const texture = `bird${index}.png`;
 
-            const size = fruitSizes[nextFruitIndex];
-            const color = fruitColors[nextFruitIndex];
+            const img = new Image();
+            img.src = texture;
+            img.onload = function () {
+                // 画像の元サイズ
+                const imgWidth = img.width;
+                const imgHeight = img.height;
 
-            const fruit = Bodies.circle(x, 20 + size, size, { restitution: 0.5, render: { fillStyle: color } });
-            World.add(world, fruit);
+                // 画像に合わせてスケールを計算
+                const xScale = size * 2 / imgWidth;
+                const yScale = size * 2 / imgHeight;
 
-            nextFruitIndex = Math.floor(Math.random() * 5);
-            nextFruitElement.style.backgroundColor = fruitColors[nextFruitIndex];
-            nextFruitElement.style.width = fruitSizes[nextFruitIndex] * 2 + "px";
-            nextFruitElement.style.height = fruitSizes[nextFruitIndex] * 2 + "px";
+                // Matter.js のボディを作成
+                const ball = Matter.Bodies.circle(x, y, size, {
+                    restitution: 0.5,
+                    render: {
+                        sprite: {
+                            texture: texture,
+                            xScale: xScale,
+                            yScale: yScale
+                        }
+                    }
+                });
+                Matter.World.add(world, ball);
+            };
+        }
+        function addBall(x) {
+            if (gameOver || x < 10 || x > width - 10) return; // 画面外クリック防止
+
+            const size = ballSizes[nextBallIndex];
+            makeBall(x, 20 + size, nextBallIndex);
+            nextBallIndex = Math.floor(Math.random() * 5);
+            nextBallElement.innerHTML = `<img src="bird${nextBallIndex}.png" width="${ballSizes[nextBallIndex] * 2}px">`
         }
 
         document.addEventListener("click", (event) => {
             const rect = render.canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
-            addFruit(x);
+            addBall(x);
         });
 
         Events.on(engine, "collisionStart", event => {
@@ -167,17 +177,14 @@
                     return;
                 }
                 if (bodyA.circleRadius && bodyB.circleRadius && bodyA.circleRadius === bodyB.circleRadius) {
-                    const newIndex = fruitSizes.indexOf(bodyA.circleRadius) + 1;
-                    if (newIndex < fruitSizes.length) {
-                        const newSize = fruitSizes[newIndex];
-                        const newColor = fruitColors[newIndex];
-                        const newFruit = Bodies.circle((bodyA.position.x + bodyB.position.x) / 2, (bodyA.position.y + bodyB.position.y) / 2, newSize, { restitution: 0.5, render: { fillStyle: newColor } });
-                        World.add(world, newFruit);
+                    const newIndex = ballSizes.indexOf(bodyA.circleRadius) + 1;
+                    if (newIndex < ballSizes.length) {
+                        makeBall((bodyA.position.x + bodyB.position.x) / 2, (bodyA.position.y + bodyB.position.y) / 2, newIndex);
                     }
-                    // スコアを加算（大きいフルーツほど高得点）
+                    // スコアを加算（大きいほど加点）
                     const points = bodyA.circleRadius + bodyB.circleRadius;
                     score += points;
-                    scoreElement.textContent = score;
+                    scoreElement.textContent = Math.round(score);
                     World.remove(world, [bodyA, bodyB]);
                     // 処理済みとして登録
                     processedBodies.add(bodyA);
@@ -190,9 +197,9 @@
         // ゲームオーバー判定
         function checkGameOver() {
             if (gameOver) return;
-            const allFruits = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
-            allFruits.forEach(fruit => {
-                if (!gameOver && fruit.position.y - fruit.circleRadius < 0) {
+            const allBalls = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
+            allBalls.forEach(ball => {
+                if (!gameOver && ball.position.y - ball.circleRadius < 0) {
                     gameOver = true;
                     alert('ゲームオーバー！');
                     restartButton.style.display = 'block';
@@ -206,22 +213,18 @@
         restartButton.addEventListener("click", () => {
             // ゲームをリセット
             restartButton.style.display = 'none';
-            const allFruits = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
-            World.remove(world, allFruits);
+            const allBalls = Matter.Composite.allBodies(world).filter(body => body.circleRadius);
+            World.remove(world, allBalls);
             gameOver = false;
             score = 0;
             scoreElement.textContent = score;
         });
 
-        const fruitsContainer = document.getElementById("fruits-container");
-        fruitSizes.forEach((size, index) => {
-            const fruitDiv = document.createElement('div');
-            fruitDiv.classList.add('fruit');
-            fruitDiv.style.backgroundColor = fruitColors[index];
-            fruitDiv.style.width = size * 1 + "px";
-            fruitDiv.style.height = size * 1 + "px";
-
-            fruitsContainer.appendChild(fruitDiv);
+        const evolution1 = document.getElementById("evolution1");
+        const evolution2 = document.getElementById("evolution2");
+        ballSizes.forEach((size, index) => {
+            if (index <= 6) evolution1.innerHTML += `<img src="bird${index}.png" width="${ballSizes[index] * 2}px">`;
+            else evolution2.innerHTML += `<img src="bird${index}.png" width="${ballSizes[index] * 2}px">`;
         });
     </script>
     <footer></footer>
