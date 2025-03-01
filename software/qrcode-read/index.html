@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+    <title>QRコード読み取り</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<style>
+	</style>
+</head>
+
+<body>
+	<p><a href="../index.html">←Softwares</a></p>
+
+    <h2>QRコード読み取り</h2>
+	<p>※JavaScriptのjsQRを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+    <input type="file" id="qr-input" accept="image/*">
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <script>
+        document.getElementById("qr-input").addEventListener("change", function() {
+            const input = document.getElementById("qr-input").files[0];
+            if (input) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        // キャンバスを使って画像を読み込み、QRコードを検出する
+                        const canvas = document.createElement("canvas");
+                        const ctx = canvas.getContext("2d");
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                        // 画像のデータを取得
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        // jsQRを使ってQRコードを読み取る
+                        const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+                        if (qrCode) {
+                            // binaryDataが存在する場合、それをSJISでデコード
+                            if (qrCode.binaryData) {
+                                const byteArray = new Uint8Array(qrCode.binaryData);
+                                const decoder = new TextDecoder('shift-jis');
+                                const decodedText = decoder.decode(byteArray);
+                                document.getElementById("result").innerHTML = `<p>QRコード読み取り成功</p><p>${decodedText}</p>`;
+                            } else {
+                                document.getElementById("result").innerHTML = "<p>QRコードにデータが含まれていません</p>";
+                            }
+                        } else {
+                            document.getElementById("result").innerHTML = "<p>QRコードの読み取りに失敗しました</p>";
+                        }
+                    };
+                };
+                reader.readAsDataURL(input);
+            } else {
+                document.getElementById("result").innerHTML = "<p>画像を選択してください</p>";
+            }
+        });
+    </script>
+	<footer></footer>
+</body>
+
+</html>
