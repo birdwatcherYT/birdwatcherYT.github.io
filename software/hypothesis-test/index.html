@@ -20,10 +20,24 @@
         input {
             width: 120px;
         }
+
         .input-large {
             width: 200px;
         }
-        
+
+        .input-small {
+            width: 50px;
+        }
+
+        .sub {
+            margin-left: 15px;
+            margin-right: 15px;
+        }
+
+        .main {
+            display: flex;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 
@@ -34,129 +48,152 @@
     <p><a href="https://qiita.com/birdwatcher/items/8887afabe73513fbf264"
             target="_blank">検定</a>をするツールです。p値が設定した有意水準より低いときに対立仮説を採択します。</p>
     <h2>1標本検定</h2>
-    <h3>母平均の検定</h3>
-    <table cellpadding="5">
-        <tr>
-            <td></td>
-            <td>標本</td>
-            <td>母</td>
-        </tr>
-        <tr>
-            <td>平均</td>
-            <td> <input id="mean" type="number" value="0.1"></td>
-            <td> <input id="mu" type="number" value="0.15"></td>
-        </tr>
-        <tr>
-            <td>不偏分散</td>
-            <td> <input id="s2" type="number" value="0.4"></td>
-        </tr>
-        <tr>
-            <td>サンプル数</td>
-            <td> <input id="num" type="number" value="100"></td>
-        </tr>
-        <tr>
-            <td>対立仮説</td>
-            <td align="center" colspan="2">
-                <button onclick="on_click_mean('!=',1);">!=</button>
-                <button onclick="on_click_mean('<',1);">&lt;</button>
-                <button onclick="on_click_mean('>',1);">&gt;</button>
-            </td>
-        </tr>
-    </table>
-    <p> t検定統計量 = <input id="output_stat_mean1" class="input-large" value="" readonly></p>
-    <p> p値 = <input id="output_prob_mean1" class="input-large" value="" readonly></p>
+    <div class="main">
+        <div class="sub">
 
-    <h3>母比率の検定</h3>
-    <table cellpadding="5">
-        <tr>
-            <td></td>
-            <td>標本</td>
-            <td>母</td>
-        </tr>
-        <tr>
-            <td>比率</td>
-            <td> <input id="p_bar" type="number" value="0.3"></td>
-            <td> <input id="p" type="number" value="0.25"></td>
-        </tr>
-        <tr>
-            <td>サンプル数</td>
-            <td> <input id="num_ratio" type="number" value="100"></td>
-        </tr>
-        <tr>
-            <td>対立仮説</td>
-            <td align="center" colspan="2">
-                <button onclick="on_click_ratio('!=',1);">!=</button>
-                <button onclick="on_click_ratio('<',1);">&lt;</button>
-                <button onclick="on_click_ratio('>',1);">&gt;</button>
-            </td>
-        </tr>
-    </table>
-    <p> z検定統計量 = <input id="output_stat_ratio1" class="input-large" value="" readonly></p>
-    <p> p値 = <input id="output_prob_ratio1" class="input-large" value="" readonly></p>
+            <h3>母平均の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td></td>
+                    <td>標本</td>
+                    <td>母</td>
+                </tr>
+                <tr>
+                    <td>平均</td>
+                    <td> <input id="mean" type="number" value="0.1"></td>
+                    <td> <input id="mean_true" type="number" value="0.15"></td>
+                </tr>
+                <tr>
+                    <td>不偏分散</td>
+                    <td> <input id="s2" type="number" value="0.4"></td>
+                </tr>
+                <tr>
+                    <td>サンプル数</td>
+                    <td> <input id="num" type="number" value="100"></td>
+                </tr>
+                <tr>
+                    <td>対立仮説</td>
+                    <td align="center" colspan="2">
+                        <button onclick="on_click_mean('!=',1);">!=</button>
+                        <button onclick="on_click_mean('<',1);">&lt;</button>
+                        <button onclick="on_click_mean('>',1);">&gt;</button>
+                    </td>
+                </tr>
+            </table>
+            <p> t検定統計量 = <input id="output_stat_mean1" class="input-large" value="" readonly></p>
+            <p> p値 = <input id="output_prob_mean1" class="input-large" value="" readonly></p>
+            <p> <input type="number" class="input-small" id="confidence_mean" min="50" max="100" value="95">%信頼区間の幅
+                <input id="output_interval_mean1" class="input-large" value="" readonly>
+            </p>
+            <p> 信頼区間 <input id="output_start_mean1" class="input-large" value="" readonly>~<input id="output_end_mean1"
+                    class="input-large" value="" readonly></p>
+        </div>
+        <div class="sub">
+            <h3>母比率の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td></td>
+                    <td>標本</td>
+                    <td>母</td>
+                </tr>
+                <tr>
+                    <td>比率</td>
+                    <td> <input id="p_bar" type="number" value="0.3" min="0" max="1"></td>
+                    <td> <input id="p_true" type="number" value="0.25" min="0" max="1"></td>
+                </tr>
+                <tr>
+                    <td>サンプル数</td>
+                    <td> <input id="num_ratio" type="number" value="100"></td>
+                </tr>
+                <tr>
+                    <td>対立仮説</td>
+                    <td align="center" colspan="2">
+                        <button onclick="on_click_ratio('!=',1);">!=</button>
+                        <button onclick="on_click_ratio('<',1);">&lt;</button>
+                        <button onclick="on_click_ratio('>',1);">&gt;</button>
+                    </td>
+                </tr>
+            </table>
+            <p> z検定統計量 = <input id="output_stat_ratio1" class="input-large" value="" readonly></p>
+            <p> p値 = <input id="output_prob_ratio1" class="input-large" value="" readonly></p>
+            <p> <input type="number" class="input-small" id="confidence_ratio" min="10" max="100" value="95">%信頼区間の幅
+                <input id="output_interval_ratio1" class="input-large" value="" readonly>
+            </p>
+            <p> 信頼区間 <input id="output_start_ratio1" class="input-large" value="" readonly>~<input
+                    id="output_end_ratio1" class="input-large" value="" readonly></p>
+        </div>
+        ※信頼区間の計算に母の値は使われません
+    </div>
 
     <h2>2標本検定</h2>
-    <h3>母平均の差の検定</h3>
-    <table cellpadding="5">
-        <tr>
-            <td></td>
-            <td>A群</td>
-            <td>B群</td>
-        </tr>
-        <tr>
-            <td>標本平均</td>
-            <td> <input id="meanA" type="number" value="0.1"></td>
-            <td> <input id="meanB" type="number" value="0.3"></td>
-        </tr>
-        <tr>
-            <td>不偏分散</td>
-            <td> <input id="sA2" type="number" value="0.4"></td>
-            <td> <input id="sB2" type="number" value="0.5"></td>
-        </tr>
-        <tr>
-            <td>サンプル数</td>
-            <td> <input id="numA" type="number" value="100"></td>
-            <td> <input id="numB" type="number" value="90"></td>
-        </tr>
-        <tr>
-            <td>対立仮説</td>
-            <td align="center" colspan="2">
-                <button onclick="on_click_mean('!=',2);">!=</button>
-                <button onclick="on_click_mean('<',2);">&lt;</button>
-                <button onclick="on_click_mean('>',2);">&gt;</button>
-            </td>
-        </tr>
-    </table>
-    <p> t検定統計量 = <input id="output_stat_mean2" class="input-large" value="" readonly></p>
-    <p> p値 = <input id="output_prob_mean2" class="input-large" value="" readonly></p>
+    <div class="main">
+        <div class="sub">
+            <h3>母平均の差の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td></td>
+                    <td>A群</td>
+                    <td>B群</td>
+                </tr>
+                <tr>
+                    <td>標本平均</td>
+                    <td> <input id="meanA" type="number" value="0.1"></td>
+                    <td> <input id="meanB" type="number" value="0.3"></td>
+                </tr>
+                <tr>
+                    <td>不偏分散</td>
+                    <td> <input id="sA2" type="number" value="0.4"></td>
+                    <td> <input id="sB2" type="number" value="0.5"></td>
+                </tr>
+                <tr>
+                    <td>サンプル数</td>
+                    <td> <input id="numA" type="number" value="100"></td>
+                    <td> <input id="numB" type="number" value="90"></td>
+                </tr>
+                <tr>
+                    <td>対立仮説</td>
+                    <td align="center" colspan="2">
+                        <button onclick="on_click_mean('!=',2);">!=</button>
+                        <button onclick="on_click_mean('<',2);">&lt;</button>
+                        <button onclick="on_click_mean('>',2);">&gt;</button>
+                    </td>
+                </tr>
+            </table>
+            <p> t検定統計量 = <input id="output_stat_mean2" class="input-large" value="" readonly></p>
+            <p> p値 = <input id="output_prob_mean2" class="input-large" value="" readonly></p>
+        </div>
+        <div class="sub">
 
-    <h3>母比率の差の検定</h3>
-    <table cellpadding="5">
-        <tr>
-            <td></td>
-            <td>A群</td>
-            <td>B群</td>
-        </tr>
-        <tr>
-            <td>標本比率</td>
-            <td> <input id="pA" type="number" value="0.3"></td>
-            <td> <input id="pB" type="number" value="0.35"></td>
-        </tr>
-        <tr>
-            <td>サンプル数</td>
-            <td> <input id="numA_ratio" type="number" value="1000"></td>
-            <td> <input id="numB_ratio" type="number" value="900"></td>
-        </tr>
-        <tr>
-            <td>対立仮説</td>
-            <td align="center" colspan="2">
-                <button onclick="on_click_ratio('!=',2);">!=</button>
-                <button onclick="on_click_ratio('<',2);">&lt;</button>
-                <button onclick="on_click_ratio('>',2);">&gt;</button>
-            </td>
-        </tr>
-    </table>
-    <p> z検定統計量 = <input id="output_stat_ratio2" class="input-large" value="" readonly></p>
-    <p> p値 = <input id="output_prob_ratio2" class="input-large" value="" readonly></p>
+            <h3>母比率の差の検定</h3>
+            <table cellpadding="5">
+                <tr>
+                    <td></td>
+                    <td>A群</td>
+                    <td>B群</td>
+                </tr>
+                <tr>
+                    <td>標本比率</td>
+                    <td> <input id="pA" type="number" value="0.3" min="0" max="1"></td>
+                    <td> <input id="pB" type="number" value="0.35" min="0" max="1"></td>
+                </tr>
+                <tr>
+                    <td>サンプル数</td>
+                    <td> <input id="numA_ratio" type="number" value="1000"></td>
+                    <td> <input id="numB_ratio" type="number" value="900"></td>
+                </tr>
+                <tr>
+                    <td>対立仮説</td>
+                    <td align="center" colspan="2">
+                        <button onclick="on_click_ratio('!=',2);">!=</button>
+                        <button onclick="on_click_ratio('<',2);">&lt;</button>
+                        <button onclick="on_click_ratio('>',2);">&gt;</button>
+                    </td>
+                </tr>
+            </table>
+            <p> z検定統計量 = <input id="output_stat_ratio2" class="input-large" value="" readonly></p>
+            <p> p値 = <input id="output_prob_ratio2" class="input-large" value="" readonly></p>
+        </div>
+    </div>
 
     <h2>おまけ: 標準正規分布の面積とx軸の対応</h2>
     <table cellpadding="5">
@@ -197,8 +234,8 @@
             switch (type) {
                 case 1:
                     const mean = Number(document.getElementById("mean").value);
-                    const mu = Number(document.getElementById("mu").value);
-                    delta = mean - mu;
+                    const mean_true = Number(document.getElementById("mean_true").value);
+                    delta = mean - mean_true;
                     break;
                 case 2:
                     const meanA = Number(document.getElementById("meanA").value);
@@ -245,16 +282,54 @@
                     break;
             }
             document.getElementById(`output_prob_mean${type}`).value = p_value;
+
+            if (type == 1) {
+                const num = Number(document.getElementById("num").value);
+                const confidence = parseFloat(document.getElementById("confidence_mean").value) / 100;
+                const alpha = 1 - confidence;
+                let interval, t_val;
+                let pm;
+                let start, end;
+                const mean = Number(document.getElementById("mean").value);
+                switch (test) {
+                    case "!=":
+                        pm = "±";
+                        t_val = jStat.studentt.inv(1 - alpha / 2, dof);
+                        interval = t_val * Math.sqrt(sigma2);
+                        start = mean - interval;
+                        end = mean + interval;
+                        break;
+                    case "<":
+                        pm = "-";
+                        t_val = jStat.studentt.inv(1 - alpha, dof);
+                        interval = t_val * Math.sqrt(sigma2);
+                        start = mean - interval;
+                        end = "Infinity";
+                        break;
+                    case ">":
+                        pm = "+";
+                        t_val = jStat.studentt.inv(1 - alpha, dof);
+                        interval = t_val * Math.sqrt(sigma2);
+                        start = "-Infinity";
+                        end = mean + interval;
+                        break;
+                }
+                document.getElementById(`output_interval_mean${type}`).value = `${pm}${interval}`;
+                document.getElementById(`output_start_mean${type}`).value = start;
+                document.getElementById(`output_end_mean${type}`).value = end;
+            }
         }
         function on_click_ratio(test, type) {
             let delta, sigma2, p;
             switch (type) {
                 case 1:
+                    const p_true = Number(document.getElementById("p_true").value);
                     const p_bar = Number(document.getElementById("p_bar").value);
-                    p = Number(document.getElementById("p").value);
+                    delta = p_bar - p_true;
+                    // 検定の際は真の値を使う
+                    p = p_true;
                     const num = Number(document.getElementById("num_ratio").value);
-                    delta = p_bar - p;
-                    sigma2 = p * (1 - p) / num
+                    sigma2 = p * (1 - p) / num;
                     break;
                 case 2:
                     const pA = Number(document.getElementById("pA").value);
@@ -286,6 +361,45 @@
                     break;
             }
             document.getElementById(`output_prob_ratio${type}`).value = p_value;
+
+            if (type == 1) {
+                const num = Number(document.getElementById("num_ratio").value);
+                const confidence = parseFloat(document.getElementById("confidence_ratio").value) / 100;
+                const alpha = 1 - confidence;
+                // 信頼区間の際は推定値を使う
+                const p_bar = Number(document.getElementById("p_bar").value);
+                const sigma_bar = Math.sqrt(p_bar * (1 - p_bar) / num);
+
+                let z_val, interval;
+                let pm;
+                let start, end;
+                switch (test) {
+                    case "!=":
+                        pm = "±";
+                        z_val = jStat.normal.inv(1 - alpha / 2, 0, 1);
+                        interval = z_val * sigma_bar;
+                        start = Math.max(0, p_bar - interval);
+                        end = Math.min(1, p_bar + interval);
+                        break;
+                    case "<":
+                        pm = "-";
+                        z_val = jStat.normal.inv(1 - alpha, 0, 1);
+                        interval = z_val * sigma_bar;
+                        start = Math.max(0, p_bar - interval);
+                        end = 1;
+                        break;
+                    case ">":
+                        pm = "+";
+                        z_val = jStat.normal.inv(1 - alpha, 0, 1);
+                        interval = z_val * sigma_bar;
+                        start = 0;
+                        end = Math.min(1, p_bar + interval);
+                        break;
+                }
+                document.getElementById(`output_interval_ratio${type}`).value = `${pm}${interval}`;
+                document.getElementById(`output_start_ratio${type}`).value = start;
+                document.getElementById(`output_end_ratio${type}`).value = end;
+            }
         }
     </script>
     <footer></footer>
