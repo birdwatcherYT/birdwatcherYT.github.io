@@ -95,7 +95,7 @@ int a; // comment
                 localStorage.setItem(storageKey, event.target.value);
             } catch (error) { };
         });
-        input.addEventListener('keydown', (event) => {
+        input.addEventListener('keydown', function (event) {
             if (event.key === 'Tab') {
                 event.preventDefault(); // デフォルトの動作をキャンセル
 
