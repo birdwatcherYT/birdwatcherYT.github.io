@@ -315,7 +315,7 @@
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
             try {
-                localStorage.setItem(storageKey, event.target.value);
+                localStorage.setItem(storageKey, input.value);
             } catch (error) { }
         });
         scaler.addEventListener("input", (event) => {

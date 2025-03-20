@@ -90,24 +90,24 @@ int a; // comment
         };
 
         input.addEventListener('input', (event) => {
-            rendering(event.target.value);
+            rendering(input.value);
             try {
-                localStorage.setItem(storageKey, event.target.value);
+                localStorage.setItem(storageKey, input.value);
             } catch (error) { };
         });
-        input.addEventListener('keydown', function (event) {
+        input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
                 event.preventDefault(); // デフォルトの動作をキャンセル
 
-                const start = this.selectionStart;
-                const end = this.selectionEnd;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
 
                 // Tab文字を挿入
-                this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
+                input.value = input.value.substring(0, start) + '\t' + input.value.substring(end);
 
                 // カーソル位置を調整
-                this.selectionStart = this.selectionEnd = start + 1;
-                rendering(event.target.value);
+                input.selectionStart = input.selectionEnd = start + 1;
+                rendering(input.value);
             }
         });
 
