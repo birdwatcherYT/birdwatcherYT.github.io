@@ -88,12 +88,14 @@ int a; // comment
         } catch (error) {
             input.value = defaultValue;
         };
-
-        input.addEventListener('input', (event) => {
-            rendering(input.value);
+        function saveLocal(){
             try {
                 localStorage.setItem(storageKey, input.value);
             } catch (error) { };
+        }
+        input.addEventListener('input', (event) => {
+            rendering(input.value);
+            saveLocal();
         });
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
@@ -108,6 +110,7 @@ int a; // comment
                 // カーソル位置を調整
                 input.selectionStart = input.selectionEnd = start + 1;
                 rendering(input.value);
+                saveLocal();
             }
         });
 

@@ -14,6 +14,8 @@
 
         textarea {
             width: 100%;
+            tab-size: 4;
+            /* Tab文字の幅をスペース4文字分として表示 */
         }
 
         .scrollable-container {
@@ -306,6 +308,11 @@
         } catch (error) {
             input.value = defaultValue;
         };
+        function saveLocal() {
+            try {
+                localStorage.setItem(storageKey, input.value);
+            } catch (error) { };
+        }
 
         preview();
 
@@ -314,9 +321,25 @@
         input.addEventListener("input", (event) => {
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
-            try {
-                localStorage.setItem(storageKey, input.value);
-            } catch (error) { }
+            saveLocal();
+        });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Tab') {
+                event.preventDefault(); // デフォルトの動作をキャンセル
+
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+
+                // Tab文字を挿入
+                input.value = input.value.substring(0, start) + '\t' + input.value.substring(end);
+
+                // カーソル位置を調整
+                input.selectionStart = input.selectionEnd = start + 1;
+
+                clearTimeout(lastTimeout);
+                lastTimeout = setTimeout(preview, 300);
+                saveLocal();
+            }
         });
         scaler.addEventListener("input", (event) => {
             clearTimeout(lastTimeout);

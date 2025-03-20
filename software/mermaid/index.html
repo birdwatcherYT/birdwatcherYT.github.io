@@ -66,14 +66,16 @@
         } catch (error) {
             input.value = defaultValue;
         };
-
-        input.addEventListener('input', (event) => {
-            rendering(input.value);
+        function saveLocal(){
             try {
                 localStorage.setItem(storageKey, input.value);
-            } catch (error) { }
+            } catch (error) { };
+        }
+        input.addEventListener('input', (event) => {
+            rendering(input.value);
+            saveLocal();
         });
-        input.addEventListener('keydown', function (event) {
+        input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
                 event.preventDefault(); // デフォルトの動作をキャンセル
 
@@ -86,6 +88,7 @@
                 // カーソル位置を調整
                 input.selectionStart = input.selectionEnd = start + 1;
                 rendering(input.value);
+                saveLocal();
             }
         });
 
