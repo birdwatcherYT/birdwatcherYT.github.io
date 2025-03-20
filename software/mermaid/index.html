@@ -31,6 +31,9 @@
             /* #previewが残りのスペースを埋める */
             flex-grow: 1;
         }
+        textarea {
+            tab-size: 4; /* Tab文字の幅をスペース4文字分として表示 */
+        }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -45,7 +48,7 @@
     <div class="container">
         <textarea id="input">
 graph LR
-  a-->b
+	a-->b
 </textarea>
         <div id="preview"></div>
     </div>
@@ -57,9 +60,25 @@ graph LR
             preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
             mermaid.contentLoaded(); // Mermaid.jsで描画
         }
-        input.addEventListener('input', function () {
-            rendering(this.value);
+        input.addEventListener('input', (event) => {
+            rendering(event.target.value);
         });
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Tab') {
+                event.preventDefault(); // デフォルトの動作をキャンセル
+
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+
+                // Tab文字を挿入
+                this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
+
+                // カーソル位置を調整
+                this.selectionStart = this.selectionEnd = start + 1;
+                rendering(event.target.value);
+            }
+        });
+
         rendering(input.value);
     </script>
     <footer></footer>
