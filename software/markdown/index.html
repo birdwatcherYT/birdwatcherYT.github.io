@@ -44,9 +44,9 @@
         }
 
         textarea {
-            tab-size: 4; /* Tab文字の幅をスペース4文字分として表示 */
+            tab-size: 4;
+            /* Tab文字の幅をスペース4文字分として表示 */
         }
-
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -57,19 +57,10 @@
     <p><a href="../index.html">←Softwares</a></p>
 
     <h1>Markdown Preview</h1>
-    <p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+    <p>入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
 
     <div class="container">
-        <textarea id="input">
-# Example
-## Section
-- item
-
-`main.cpp`
-```c++
-int a; // comment
-```
-</textarea>
+        <textarea id="input"></textarea>
         <div id="preview"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -82,10 +73,27 @@ int a; // comment
             preview.innerHTML = html;
             hljs.highlightAll();
         }
+        const storageKey = "birdwatcheryt_github_io_software_markdown";
+        const defaultValue = `# Example
+## Section
+- item
+
+\`main.cpp\`
+\`\`\`c++
+int a; // comment
+\`\`\`
+`;
+        try {
+            input.value = localStorage.getItem(storageKey) || defaultValue;
+        } catch (error) { };
+
         input.addEventListener('input', (event) => {
             rendering(event.target.value);
+            try {
+                localStorage.setItem(storageKey, event.target.value);
+            } catch (error) { };
         });
-        input.addEventListener('keydown', function(event) {
+        input.addEventListener('keydown', function (event) {
             if (event.key === 'Tab') {
                 event.preventDefault(); // デフォルトの動作をキャンセル
 
