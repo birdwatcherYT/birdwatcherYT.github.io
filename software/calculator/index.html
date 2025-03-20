@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>関数電卓</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<style>
+		.main-container {
+			display: flex;
+			justify-content: center;
+			margin: 20px auto;
+		}
+
+		.calculator-container {
+			display: flex;
+			flex-direction: column;
+			/* 入力欄を上に配置するため */
+			align-items: center;
+			width: 400px;
+			/* 左右のボタンを並べるのに十分な幅 */
+			margin-right: 10px;
+			/* 履歴との間隔 */
+		}
+
+		.display-container {
+			width: 100%;
+			margin-bottom: 10px;
+		}
+
+		input {
+			width: 98%;
+			height: 40px;
+			font-size: 18px;
+			text-align: right;
+		}
+
+		.buttons-container {
+			display: flex;
+			justify-content: center;
+			width: 100%;
+		}
+
+		.functions-buttons {
+			width: 50%;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			/* 3列に配置 */
+			gap: 5px;
+			margin-right: 10px;
+		}
+
+		.number-buttons {
+			width: 50%;
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			/* 4列に配置 */
+			gap: 5px;
+		}
+
+		button {
+			background-color: lightgray;
+			color: black;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			/* background-color: gray; */
+			background-color: lightgreen;
+		}
+
+		.functions-buttons button {
+			width: 100%;
+			/* グリッドに合わせて幅を調整 */
+			height: 35px;
+			font-size: 16px;
+		}
+
+		.number-buttons button {
+			width: 100%;
+			/* グリッドに合わせて幅を調整 */
+			height: 50px;
+			font-size: 16px;
+		}
+
+		.history-container {
+			width: 300px;
+			padding: 10px;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			text-align: right;
+		}
+
+		.history-container button {
+			width: 100%;
+			font-size: 16px;
+		}
+
+		#history div:hover {
+			background-color: lightcyan;
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body>
+	<p><a href="../index.html">←Softwares</a></p>
+
+	<h1>関数電卓</h1>
+	<div class="main-container">
+		<div class="calculator-container">
+			<div class="display-container">
+				<input type="text" id="display">
+			</div>
+			<div class="buttons-container">
+				<div class="functions-buttons">
+					<button onclick="deleteLast(this)">←</button>
+					<button onclick="appendValue(this, 'sqrt(')">√</button>
+					<button onclick="appendValue(this, '^')">^</button>
+
+					<button onclick="appendValue(this, 'sin(')">sin</button>
+					<button onclick="appendValue(this, 'cos(')">cos</button>
+					<button onclick="appendValue(this, 'tan(')">tan</button>
+
+					<button onclick="appendValue(this, 'asin(')">asin</button>
+					<button onclick="appendValue(this, 'acos(')">acos</button>
+					<button onclick="appendValue(this, 'atan(')">atan</button>
+
+					<button onclick="appendValue(this, 'sinh(')">sinh</button>
+					<button onclick="appendValue(this, 'cosh(')">cosh</button>
+					<button onclick="appendValue(this, 'tanh(')">tanh</button>
+
+					<button onclick="appendValue(this, 'asinh(')">asinh</button>
+					<button onclick="appendValue(this, 'acosh(')">acosh</button>
+					<button onclick="appendValue(this, 'atanh(')">atanh</button>
+
+					<button onclick="appendValue(this, 'log10(')">log10</button>
+					<button onclick="appendValue(this, 'log(')">log</button>
+					<button onclick="appendValue(this, 'exp(')">exp</button>
+
+					<button onclick="appendValue(this, 'PI')">π</button>
+					<button onclick="appendValue(this, 'E')">e</button>
+					<button onclick="appendValue(this, 'abs(')">abs</button>
+				</div>
+				<div class="number-buttons">
+					<button onclick="appendValue(this, '(')">(</button>
+					<button onclick="appendValue(this, ')')">)</button>
+					<button onclick="appendValue(this, '%')">%</button>
+					<button onclick="clearDisplay(this)">C</button>
+					<button onclick="appendValue(this, '7')">7</button>
+					<button onclick="appendValue(this, '8')">8</button>
+					<button onclick="appendValue(this, '9')">9</button>
+					<button onclick="appendValue(this, '/')">/</button>
+					<button onclick="appendValue(this, '4')">4</button>
+					<button onclick="appendValue(this, '5')">5</button>
+					<button onclick="appendValue(this, '6')">6</button>
+					<button onclick="appendValue(this, '*')">*</button>
+					<button onclick="appendValue(this, '1')">1</button>
+					<button onclick="appendValue(this, '2')">2</button>
+					<button onclick="appendValue(this, '3')">3</button>
+					<button onclick="appendValue(this, '-')">-</button>
+					<button onclick="appendValue(this, '0')">0</button>
+					<button onclick="appendValue(this, '.')">.</button>
+					<button onclick="calculate(this)">=</button>
+					<button onclick="appendValue(this, '+')">+</button>
+				</div>
+			</div>
+		</div>
+		<div class="history-container">
+			<button onclick="clearHistory(this)">履歴クリア</button>
+			<div id="history" style="text-align: right;"></div>
+		</div>
+	</div>
+	<p>※JavaScriptを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+	<script>
+		const display = document.getElementById('display');
+		let isInputActive = false;
+
+		function appendValue(button, value) {
+			display.value += value;
+			if (button) button.blur();
+		}
+		function clearDisplay(button) {
+			display.value = "";
+			if (button) button.blur();
+		}
+		function deleteFirst() {
+			display.value = display.value.slice(1);
+		}
+		function deleteLast(button) {
+			display.value = display.value.slice(0, -1);
+			if (button) button.blur();
+		}
+		function calculate(button) {
+			const expression = display.value;
+			// 予約語リスト（OR表現を使ってまとめる）
+			const reservedWords = [
+				'log10',
+				'asin', 'acos', 'atan',
+				'sinh', 'cosh', 'tanh',
+				'asinh', 'acosh', 'atanh',
+				'sin', 'cos', 'tan',
+				'sqrt', 'log', 'exp',
+				"abs", "PI", "E"
+			];
+
+			// 正規表現のORを使って一度に置換
+			let for_eval = expression.replace(
+				new RegExp(`\\b(${reservedWords.join('|')})`, 'g'),
+				'Math.$1'
+			);
+
+			// '^' を '**' に置換
+			for_eval = for_eval.replace(/\^/g, '**').replace(/,/g, "");;
+			console.log(for_eval);
+			try {
+				const result = eval(for_eval);
+				display.value = result;
+				const history = document.getElementById("history");
+				let historyItem = document.createElement("div"); // div要素で囲む
+				historyItem.innerHTML = expression + " = " + result;
+				historyItem.onclick = function () { // クリックイベントを追加
+					display.value = expression;
+				};
+				history.appendChild(historyItem); // 履歴に追加
+			} catch (e) {
+				alert("計算エラー");
+			}
+			if (button) button.blur();
+		}
+
+		function clearHistory(button) {
+			document.getElementById("history").innerHTML = ""; // 履歴をクリア
+			if (button) button.blur();
+		}
+
+		// inputフィールドがフォーカスされたとき
+		display.addEventListener('focus', () => {
+			isInputActive = true;
+		});
+		// inputフィールドからフォーカスが外れたとき
+		display.addEventListener('blur', () => {
+			isInputActive = false;
+		});
+		document.addEventListener('keydown', function (event) {
+			// console.log(event.key);
+			if (event.key === 'Enter') {
+				calculate();
+			} else if (event.key === 'Escape') {
+				clearDisplay();
+			}
+			if (isInputActive) return;
+			if (event.key === 'Backspace') {
+				deleteLast();
+			} else if (event.key === 'Delete') {
+				deleteFirst();
+			} else if (event.key.length === 1) {
+				display.value += event.key;
+			}
+		});
+	</script>
+	<footer></footer>
+</body>
+
+</html>
