@@ -303,7 +303,7 @@
         const defaultValue = "x = \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}";
         try {
             input.value = localStorage.getItem(storageKey) || defaultValue;
-        } catch (error) { 
+        } catch (error) {
             input.value = defaultValue;
         };
 
@@ -311,14 +311,14 @@
 
         // 入力時の自動更新
         let lastTimeout = undefined;
-        input.addEventListener("input", (e) => {
+        input.addEventListener("input", (event) => {
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
             try {
                 localStorage.setItem(storageKey, event.target.value);
             } catch (error) { }
         });
-        scaler.addEventListener("input", (e) => {
+        scaler.addEventListener("input", (event) => {
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
         });
