@@ -45,12 +45,12 @@
     <p><a href="../index.html">←Softwares</a></p>
 
     <h1>Mermaid Preview</h1>
-    <p>入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
 
     <div class="container">
-        <textarea id="input"></textarea>
+        <textarea id="input" placeholder="type mermaid code"></textarea>
         <div id="preview"></div>
     </div>
+    <p>入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
         const input = document.getElementById('input');
@@ -63,7 +63,9 @@
         const defaultValue = "graph LR\n\ta-->b\n";
         try {
             input.value = localStorage.getItem(storageKey) || defaultValue;
-        } catch (error) { };
+        } catch (error) {
+            input.value = defaultValue;
+        };
 
         input.addEventListener('input', (event) => {
             rendering(event.target.value);

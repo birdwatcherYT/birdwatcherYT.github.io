@@ -2,28 +2,37 @@
 <html lang="ja">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width">
-	<title>LaTeX数式画像生成</title>
-	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
-	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
-	<style>
-        input{
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>LaTeX数式画像生成</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <style>
+        input {
             height: 30px;
         }
-        textarea{
+
+        textarea {
             width: 100%;
         }
+
         .scrollable-container {
-            height: 200px; /* 固定の高さ */
-            overflow-y: auto; /* 縦方向のスクロールを有効にする */
-            border: 1px solid #ccc; /* ボーダーを追加 */
-            padding: 10px; /* 内側の余白を追加 */
+            height: 200px;
+            /* 固定の高さ */
+            overflow-y: auto;
+            /* 縦方向のスクロールを有効にする */
+            border: 1px solid #ccc;
+            /* ボーダーを追加 */
+            padding: 10px;
+            /* 内側の余白を追加 */
         }
+
         .hover-pointer:hover {
-            cursor: pointer; /* ホバー時に手のマーク */
+            cursor: pointer;
+            /* ホバー時に手のマーク */
             background-color: lightblue;
         }
+
         .hover-pointer td {
             padding-left: 20px;
         }
@@ -31,39 +40,39 @@
 </head>
 
 <body>
-	<p><a href="../index.html">←Softwares</a></p>
+    <p><a href="../index.html">←Softwares</a></p>
 
-	<h1>LaTeX数式画像生成</h1>
-	<p>リアルタイムにLaTeX数式をプレビューできます。svgかpngで保存できます。</p>
-	<p>
-        <textarea id="input" rows="10" cols="40" placeholder="type latex code">x = \frac{-b\pm\sqrt{b^2-4ac}}{2a}</textarea>
+    <h1>LaTeX数式画像生成</h1>
+    <p>リアルタイムにLaTeX数式をプレビューできます。svgかpngで保存できます。</p>
+    <p>
+        <textarea id="input" rows="10" cols="40" placeholder="type latex code"></textarea>
     </p>
     <p>
-        <input type="button" value="download as svg" onclick="download_svg()"/>
-        <input type="button" value="download as png" onclick="download_png()"/>
-        表示・保存倍率 <input id="scaler" type="number" value="10"/>
+        <input type="button" value="download as svg" onclick="download_svg()" />
+        <input type="button" value="download as png" onclick="download_png()" />
+        表示・保存倍率 <input id="scaler" type="number" value="10" />
     </p>
     <div id="output"></div>
     <h3>チートシート</h3>
     クリックするとクリップボードにコピーされます。<span id="message"></span>
     <div class="scrollable-container" id="cheatsheet">
     </div>
-	<p>※JavaScriptのMathJaxを使用しています. このスクリプトで問題が生じても一切の責任を負いません. </p>
+    <p>入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script>
         MathJax = {
-          startup: {
-            typeset: false
-          }
+            startup: {
+                typeset: false
+            }
         };
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.js"></script>
-	<script>
-        const output=document.getElementById("output");
-        const input=document.getElementById("input");
-        const scaler=document.getElementById("scaler");
-        const cheatsheet=document.getElementById("cheatsheet");
+    <script>
+        const output = document.getElementById("output");
+        const input = document.getElementById("input");
+        const scaler = document.getElementById("scaler");
+        const cheatsheet = document.getElementById("cheatsheet");
         const messageElement = document.getElementById("message");
-        const cheets=[
+        const cheets = [
             "<b>基本</b>",
             "a_{i}^{n}",
             "\\frac{a}{b}",
@@ -216,29 +225,29 @@
             "\\ldots",
             "\\vdots",
         ];
-        function set_cheetsheet(){
-            let str="<table>";
-            for (const x of cheets){
-                if(x.startsWith("<"))
-                    str+=`<tr><td colspan="2">${x}</td></tr>`;
+        function set_cheetsheet() {
+            let str = "<table>";
+            for (const x of cheets) {
+                if (x.startsWith("<"))
+                    str += `<tr><td colspan="2">${x}</td></tr>`;
                 else
-                    str+=`<tr class="hover-pointer" onclick="clipboard(this)"><td>${x}</td><td>${to_svg(x).outerHTML}<td></tr>`;
+                    str += `<tr class="hover-pointer" onclick="clipboard(this)"><td>${x}</td><td>${to_svg(x).outerHTML}<td></tr>`;
             }
-            str+="</table>";
-            cheatsheet.innerHTML=str;
+            str += "</table>";
+            cheatsheet.innerHTML = str;
         }
         set_cheetsheet();
-        function clipboard(trElement){
+        function clipboard(trElement) {
             const tdElement = trElement.getElementsByTagName("td")[0];
             navigator.clipboard.writeText(tdElement.innerText);
             showMessage(`<font color="red">クリップボードにコピーしました！</font>`, 2000);
         }
-        function to_svg(latex){
+        function to_svg(latex) {
             const container = MathJax.tex2svg(latex);
             const [svg] = container.children;
             return svg;
         }
-        function preview(){
+        function preview() {
             const container = MathJax.tex2svg(input.value);
             const [svg] = container.children;
 
@@ -252,12 +261,12 @@
             // svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+widthUnit);
 
             // デフォルトのex単位だと別ソフトにコピペした際に表示されないことがある
-            svg.setAttribute("width", parseFloat(currentWidth)*scaleFactor+"px");
-            svg.setAttribute("height", parseFloat(currentHeight)*scaleFactor+"px");
+            svg.setAttribute("width", parseFloat(currentWidth) * scaleFactor + "px");
+            svg.setAttribute("height", parseFloat(currentHeight) * scaleFactor + "px");
 
             output.innerHTML = svg.outerHTML;
         }
-        function download_svg(){
+        function download_svg() {
             preview();
             const blob = new Blob([output.innerHTML], { type: "text/plain" });
             const link = document.createElement("a");
@@ -265,7 +274,7 @@
             link.download = "latex.svg";
             link.click();
         }
-        function download_png(){
+        function download_png() {
             preview();
             const blob = new Blob([output.innerHTML], { type: "image/svg+xml;charset=utf-8" });
             const url = URL.createObjectURL(blob);
@@ -287,25 +296,34 @@
         }
         function showMessage(message, duration) {
             messageElement.innerHTML = message;
-            setTimeout(() => {messageElement.innerHTML = "";}, duration);
+            setTimeout(() => { messageElement.innerHTML = ""; }, duration);
         }
 
-
+        const storageKey = "birdwatcheryt_github_io_software_latex";
+        const defaultValue = "x = \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}";
+        try {
+            input.value = localStorage.getItem(storageKey) || defaultValue;
+        } catch (error) { 
+            input.value = defaultValue;
+        };
 
         preview();
-        
+
         // 入力時の自動更新
         let lastTimeout = undefined;
         input.addEventListener("input", (e) => {
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
+            try {
+                localStorage.setItem(storageKey, event.target.value);
+            } catch (error) { }
         });
         scaler.addEventListener("input", (e) => {
             clearTimeout(lastTimeout);
             lastTimeout = setTimeout(preview, 300);
         });
     </script>
-	<footer></footer>
+    <footer></footer>
 </body>
 
 </html>
