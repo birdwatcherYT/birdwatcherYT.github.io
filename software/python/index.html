@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Python Runner</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<script src="https://cdn.jsdelivr.net/pyodide/v0.27.4/full/pyodide.js"></script>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 20px;
+		}
+
+		textarea {
+			width: 98%;
+			height: 30vh;
+			padding: 10px;
+			border: 1px solid #ccc;
+			font-family: monospace;
+			tab-size: 4;
+		}
+
+		pre {
+			background: #f4f4f4;
+			padding: 10px;
+			border-radius: 5px;
+		}
+
+		.lib-options {
+			margin-bottom: 10px;
+		}
+
+		#loading {
+			display: none;
+			color: blue;
+		}
+	</style>
+</head>
+
+<body>
+	<p><a href="../index.html">←Softwares</a></p>
+
+	<h1>Python Runner</h1>
+	<div class="lib-options">
+		<label><input type="checkbox" id="numpy" value="numpy" checked>numpy</label>
+		<label><input type="checkbox" id="pandas" value="pandas">pandas</label>
+		<label><input type="checkbox" id="matplotlib" value="matplotlib" checked>matplotlib</label>
+		<label><input type="checkbox" id="scikit-learn" value="scikit-learn">scikit-learn</label>
+		<label><input type="checkbox" id="scipy" value="scipy">scipy</label>
+		<label><input type="checkbox" id="sympy" value="sympy">sympy</label>
+		<label><input type="checkbox" id="statsmodels" value="statsmodels">statsmodels</label>
+		<label><input type="checkbox" id="lightgbm" value="lightgbm">lightgbm</label>
+	</div>
+	<textarea id="codeInput" placeholder="ここにPythonコードを入力..."></textarea>
+	<button id="runButton" onclick="runPythonCode()">実行</button>
+	<button id="resetButton" onclick="resetOutput()">実行環境のリセット</button>
+	<h3 id="loading"></h3>
+	<h3>出力:</h3>
+	<pre id="output"></pre>
+	<img id="plot" style="display: none;" />
+	<p>Pyodide.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+
+	<script>
+		const input = document.getElementById("codeInput");
+		const outputElement = document.getElementById("output");
+		const plotElement = document.getElementById("plot");
+		const loadingElement = document.getElementById("loading");
+		const runButton = document.getElementById("runButton");
+		const resetButton = document.getElementById("resetButton");
+		const matplotlibCheckbox = document.getElementById("matplotlib");
+
+		async function loadPyodideAndRun() {
+			window.pyodide = await loadPyodide();
+		}
+
+		document.addEventListener('DOMContentLoaded', async function () {
+			loadingElement.style.display = "block";
+			loadingElement.innerText = "Pyodide読み込み中...";
+
+			try {
+				await loadPyodideAndRun();
+				loadingElement.style.display = "none";
+			} catch (error) {
+				loadingElement.innerText = "Pyodide読み込みエラー: " + error;
+			}
+		});
+
+		const storageKey = "birdwatcheryt_github_io_software_python";
+		const defaultValue = `import numpy as np
+import matplotlib.pyplot as plt
+
+x=np.random.rand(10)
+y=np.random.rand(10)
+
+print(np.sum(x))
+print(np.sum(y))
+
+plt.scatter(x,y)
+`;
+		try {
+			input.value = localStorage.getItem(storageKey) || defaultValue;
+		} catch (error) {
+			input.value = defaultValue;
+		};
+		function saveLocal() {
+			try {
+				localStorage.setItem(storageKey, input.value);
+			} catch (error) { };
+		}
+		input.addEventListener('input', (event) => {
+			saveLocal();
+		});
+
+		async function runPythonCode() {
+			const code = input.value;
+			const selectedLibs = Array.from(document.querySelectorAll('.lib-options input:checked')).map(el => el.value);
+
+			// 実行中の表示とボタンの無効化
+			loadingElement.style.display = "block";
+			loadingElement.innerText = "ライブラリ読み込み中...";
+			runButton.disabled = true;
+
+			try {
+				// 必要なライブラリを動的にロード
+				if (selectedLibs.length > 0) {
+					await pyodide.loadPackage(selectedLibs);
+				}
+
+				// コード実行中の表示
+				loadingElement.innerText = "コード実行中...";
+				let clearPlotCode = '';
+				if (matplotlibCheckbox.checked) {
+					clearPlotCode = `
+import matplotlib.pyplot as plt
+plt.clf()
+`;
+				}
+				const captureOutput = `
+${clearPlotCode}
+import sys
+from io import StringIO, BytesIO
+import base64
+import json
+
+__pyodide_old_stdout = sys.stdout
+sys.stdout = __pyodide_mystdout = StringIO()
+
+# ユーザーコード実行
+${code}
+
+# 標準出力キャプチャ
+__pyodide_output = __pyodide_mystdout.getvalue()
+
+__pyodide_result = {
+	'output': __pyodide_output
+}
+
+# 画像の生成があればBase64エンコード
+if 'plt' in globals():
+	__pyodide_img_buffer = BytesIO()
+	plt.savefig(__pyodide_img_buffer, format = 'svg')
+	__pyodide_img_buffer.seek(0)
+	__pyodide_img_base64 = base64.b64encode(__pyodide_img_buffer.read()).decode('utf-8')
+	__pyodide_result['image'] = __pyodide_img_base64
+
+sys.stdout = __pyodide_old_stdout
+
+# JSON形式で結果を返す
+json.dumps(__pyodide_result)
+`;
+				const result = await pyodide.runPythonAsync(captureOutput);
+				let parsedResult = JSON.parse(result);
+				console.log(parsedResult);
+				outputElement.innerText = parsedResult.output;
+
+				if (parsedResult.image) {
+					plotElement.src = "data:image/svg+xml;base64," + parsedResult.image;
+					plotElement.style.display = "block"; // 画像表示
+				} else {
+					plotElement.style.display = "none"; // 画像非表示
+				}
+			} catch (error) {
+				outputElement.innerText = "エラー: " + error;
+			} finally {
+				// 実行終了後の処理
+				loadingElement.style.display = "none";
+				runButton.disabled = false;
+			}
+		}
+
+
+		// リセットボタン処理
+		async function resetOutput() {
+			// リセット中の表示とボタンの無効化
+			loadingElement.style.display = "block";
+			loadingElement.innerText = "リセット中...";
+			resetButton.disabled = true;
+
+			try {
+				// 出力エリアと画像のリセット
+				outputElement.innerText = '';
+				plotElement.style.display = 'none';
+
+				// Pyodideインスタンスの再読み込みで変数やライブラリをリセット
+				await loadPyodideAndRun();
+			} catch (error) {
+				outputElement.innerText = "エラー: " + error;
+			} finally {
+				// リセット終了後の処理
+				loadingElement.style.display = "none";
+				resetButton.disabled = false;
+			}
+		}
+
+		input.addEventListener('keydown', (event) => {
+			if (event.key === 'Tab') {
+				event.preventDefault(); // デフォルトの動作をキャンセル
+
+				const start = input.selectionStart;
+				const end = input.selectionEnd;
+
+				// Tab文字を挿入
+				input.value = input.value.substring(0, start) + '\t' + input.value.substring(end);
+
+				// カーソル位置を調整
+				input.selectionStart = input.selectionEnd = start + 1;
+				saveLocal();
+			}
+		});
+
+	</script>
+	<footer></footer>
+</body>
+
+</html>
