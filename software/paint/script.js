@@ -1,23 +1,19 @@
 const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const previewCanvas = document.getElementById('previewCanvas');
-const previewCtx = previewCanvas.getContext('2d');
+const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
 const canvasContainer = document.getElementById('canvasContainer');
 
 let drawing = false;
-let eraser = false; // 消しゴムモードかどうかのフラグ
 let history = [];
 let redoStack = [];
 let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select')
 let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
 let imageToInsert = null; // 挿入する画像オブジェクト
-let insertingImage = false; // 画像挿入モードかどうか
-let isSelecting = false; // 選択モードかどうか
 let selectionStartX, selectionStartY;
 let selectionEndX, selectionEndY;
 let clipboard = null; // コピーまたはカットされたImageDataを保存
-let pasteX, pasteY; // 貼り付け位置
 let originalImageWidth; // 挿入する画像の元の幅
 let originalImageHeight; // 挿入する画像の元の高さ
 
@@ -169,9 +165,6 @@ function updateUndoRedoButtons() {
 // --- ツール関連 ---
 function setActiveTool(toolName) {
     currentTool = toolName;
-    eraser = (toolName === 'eraser'); // 消しゴムツールが選択されたか
-    insertingImage = (toolName === 'image'); // 画像挿入モードを設定
-    isSelecting = (toolName === 'select'); // 選択モードを設定
 
     // ボタンのハイライト処理
     const buttons = [selectBtn, penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn];
@@ -228,7 +221,6 @@ function startPosition(e) {
     startY = pos.y;
 
     if (currentTool === 'select') {
-        isSelecting = true;
         selectionStartX = startX;
         selectionStartY = startY;
     } else if (currentTool === 'pen' || currentTool === 'eraser') {
@@ -248,10 +240,8 @@ function startPosition(e) {
         }
         drawing = false; // テキスト入力はドラッグではないので即終了
     } else if (currentTool === 'paste' && clipboard) {
-        pasteX = startX;
-        pasteY = startY;
         // 貼り付けを実行
-        ctx.putImageData(clipboard, pasteX, pasteY);
+        ctx.putImageData(clipboard, startX, startY);
         saveState();
         saveLocal();
     } else {
@@ -266,7 +256,7 @@ function applyContextSettings(context) {
     context.lineCap = 'round';
     context.lineJoin = 'round';
 
-    if (eraser && context === ctx) { // メインキャンバスでの消しゴム処理
+    if (currentTool === 'eraser' && context === ctx) { // メインキャンバスでの消しゴム処理
         context.globalCompositeOperation = 'destination-out';
         context.globalAlpha = 1.0; // 消しゴムは常に不透明
         // strokeStyleはdestination-outでは効果がないが一応設定
@@ -300,7 +290,7 @@ function drawPenLine(e) {
     ctx.lineCap = 'round'; // 丸い先端
 
     // 消しゴムかペンかで設定を分ける
-    if (eraser) { // グローバル変数 eraser を参照
+    if (currentTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out'; // 消しゴム効果
         ctx.globalAlpha = 1.0; // 消しゴムは常に不透明
         // destination-out では色は影響しないが、念のため設定
@@ -478,8 +468,7 @@ function endPosition(e) {
     const endX = Math.max(0, Math.min(pos.x, canvas.width));
     const endY = Math.max(0, Math.min(pos.y, canvas.height));
 
-    if (currentTool === 'select' && isSelecting) {
-        isSelecting = false;
+    if (currentTool === 'select') {
         selectionEndX = endX;
         selectionEndY = endY;
 
@@ -510,7 +499,6 @@ function endPosition(e) {
     } else if (currentTool === 'image' && imageToInsert) {
         if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
             previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-            // ctx.drawImage(imageToInsert, startX, startY, width, height);
             drawImagePreviewOrFinal(ctx, startX, startY, endX, endY, e, imageToInsert);
             actuallyDrew = true;
         }
