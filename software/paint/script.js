@@ -121,7 +121,6 @@ function saveState() {
         height: canvas.height
     });
     redoStack = []; // 新しい操作をしたらRedo履歴はクリア
-    // ボタンの状態更新などが必要ならここで行う (例: Undo/Redoボタンの有効/無効)
     updateUndoRedoButtons();
 }
 
@@ -157,9 +156,9 @@ function restoreState(state) {
 }
 
 function updateUndoRedoButtons() {
-    undoBtn.disabled = history.length <= 1; // 最初の状態以外ならUndo可能
+    undoBtn.disabled = history.length <= 1;
     redoBtn.disabled = redoStack.length === 0;
-    pasteBtn.disabled = !clipboard; // クリップボードにデータがあれば貼り付け可能
+    pasteBtn.disabled = !clipboard;
 }
 
 // --- ツール関連 ---
@@ -205,6 +204,17 @@ function setActiveTool(toolName) {
 // --- 描画関数 ---
 function getMousePos(e) {
     const rect = canvas.getBoundingClientRect(); // キャンバスの絶対位置とサイズを取得
+    if (e.touches && e.touches.length > 0) {
+        return {
+            x: e.touches[0].clientX - rect.left,
+            y: e.touches[0].clientY - rect.top
+        };
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+        return {
+            x: e.changedTouches[0].clientX - rect.left,
+            y: e.changedTouches[0].clientY - rect.top
+        };
+    }
     return {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
@@ -213,7 +223,8 @@ function getMousePos(e) {
 
 function startPosition(e) {
     // 左クリック以外は無視
-    if (e.button !== 0) return;
+    // タッチの場合はe.buttonがundefinedなため、存在する場合のみチェック
+    if (e.button !== undefined && e.button !== 0) return;
 
     drawing = true;
     const pos = getMousePos(e);
@@ -664,6 +675,21 @@ canvas.addEventListener('mouseout', (e) => {
         // mouseout時はmouseupと同じ扱いとするが、座標はイベントから取得
         endPosition(e);
     }
+});
+
+
+// タッチイベントの追加
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startPosition(e);
+});
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    draw(e);
+});
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    endPosition(e);
 });
 
 // ツール選択ボタン
