@@ -677,18 +677,33 @@ canvas.addEventListener('mouseout', (e) => {
     }
 });
 
+function isInside(e) {
+    if (e.targetTouches.length === 1) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.targetTouches[0];
+
+        return (
+            touch.clientX >= rect.left &&
+            touch.clientX <= rect.right &&
+            touch.clientY >= rect.top &&
+            touch.clientY <= rect.bottom
+        );
+    }
+    return false;
+}
 
 // タッチイベントの追加
 canvas.addEventListener('touchstart', (e) => {
+    if (!isInside(e)) return;
     e.preventDefault();
     startPosition(e);
 });
 canvas.addEventListener('touchmove', (e) => {
+    if (!isInside(e)) return;
     e.preventDefault();
     draw(e);
 });
 canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
     endPosition(e);
 });
 
