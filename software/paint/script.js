@@ -23,6 +23,7 @@ const lineBtn = document.getElementById('lineBtn');
 const rectBtn = document.getElementById('rectBtn');
 const circleBtn = document.getElementById('circleBtn');
 const eraserBtn = document.getElementById('eraserBtn');
+const textBtn = document.getElementById('textBtn');
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -152,7 +153,7 @@ function setActiveTool(toolName) {
     eraser = (toolName === 'eraser'); // 消しゴムツールが選択されたか
 
     // ボタンのハイライト処理
-    const buttons = [penBtn, lineBtn, rectBtn, circleBtn, eraserBtn];
+    const buttons = [penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn];
     buttons.forEach(btn => {
         if (btn) { // ボタンが存在するか確認
             btn.classList.remove('active');
@@ -168,7 +169,10 @@ function setActiveTool(toolName) {
     eraserBtn.textContent = '消しゴム'; // デフォルトに戻す
 
     // カーソルの変更（任意）
-    // canvas.style.cursor = toolName === 'eraser' ? 'cell' : 'crosshair';
+    canvas.style.cursor = toolName === 'eraser' ? 'cell' : 'crosshair';
+    if (toolName === 'text') {
+        canvas.style.cursor = 'text'; // テキストカーソル
+    }
 }
 
 // --- 描画関数 ---
@@ -195,6 +199,17 @@ function startPosition(e) {
         lastY = startY;
         applyContextSettings(ctx);
         drawPenPoint(ctx, startX, startY);
+    } else if (currentTool === 'text') {
+        // テキスト入力処理
+        const text = prompt("テキストを入力してください:", "");
+        if (text) {
+            applyContextSettings(ctx);
+            ctx.font = `${sizePicker.value * 2}px sans-serif`; // サイズを調整
+            ctx.fillText(text, startX, startY);
+            saveState();
+            saveLocal();
+        }
+        drawing = false; // テキスト入力はドラッグではないので即終了
     } else {
         // 図形ツールの場合、プレビュー設定
         applyContextSettings(previewCtx);
@@ -218,6 +233,7 @@ function applyContextSettings(context) {
         context.globalAlpha = parseFloat(alphaPicker.value);
         context.strokeStyle = colorPicker.value;
         context.fillStyle = colorPicker.value; // fill用にも色を設定
+        context.textAlign = 'start'; // テキストの揃えを左上に設定
     }
 }
 
@@ -368,7 +384,7 @@ function endPosition(e) {
     saveLocal();
 
     // 実際に描画が行われた場合のみ、その状態を履歴に保存
-    if (actuallyDrew) {
+    if (actuallyDrew && currentTool !== 'text') { // テキストの場合は startPosition で保存済み
         saveState();
     }
 
@@ -393,7 +409,8 @@ penBtn.addEventListener('click', () => setActiveTool('pen'));
 lineBtn.addEventListener('click', () => setActiveTool('line'));
 rectBtn.addEventListener('click', () => setActiveTool('rect'));
 circleBtn.addEventListener('click', () => setActiveTool('circle'));
-eraserBtn.addEventListener('click', () => setActiveTool('eraser')); // 消しゴムはツールとして選択
+eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
+textBtn.addEventListener('click', () => setActiveTool('text'));
 
 // クリアボタン
 clearBtn.addEventListener('click', () => {
