@@ -51,8 +51,8 @@ const scaleBtn = document.getElementById('scaleBtn');
 
 // --- 初期化処理 ---
 function initializeCanvas() {
-    let initialWidth = 800; // デフォルト幅
-    let initialHeight = 400; // デフォルト高さ
+    let initialWidth = 500; // デフォルト幅
+    let initialHeight = 500; // デフォルト高さ
     let initialImageData = null;
 
     // 以前の状態を復元 or 初期化

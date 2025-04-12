@@ -82,20 +82,16 @@
     }
 
     #canvasContainer {
-      /* キャンバスを囲むコンテナ */
       position: relative;
-      /* 子要素の絶対位置指定のため */
       border: 1px solid #ccc;
-      /* 枠線をコンテナに移動 */
+      width: 100%;
+      max-width: 100%;
+      overflow: auto;
     }
 
     canvas {
-      /* border: 1px solid #ccc; */
-      /* 枠線はコンテナに */
       background: white;
-      /* 背景色はメインキャンバスのみ */
       display: block;
-      /* 余計な隙間をなくす */
     }
 
     #previewCanvas {
@@ -164,10 +160,10 @@
       <button id="undoBtn">Undo</button>
       <button id="redoBtn">Redo</button>
       <label>幅:
-        <input type="number" id="canvasWidth" value="800" min="100" max="9999">
+        <input type="number" id="canvasWidth" value="500" min="100" max="9999">
       </label>
       <label>高さ:
-        <input type="number" id="canvasHeight" value="400" min="100" max="9999">
+        <input type="number" id="canvasHeight" value="500" min="100" max="9999">
       </label>
       <button id="resizeBtn">サイズ変更</button>
       <button id="scaleBtn">拡大/縮小</button>
@@ -187,8 +183,8 @@
     </div>
 
     <div id="canvasContainer">
-      <canvas id="drawCanvas" width="800" height="400"></canvas>
-      <canvas id="previewCanvas" width="800" height="400"></canvas>
+      <canvas id="drawCanvas"></canvas>
+      <canvas id="previewCanvas"></canvas>
     </div>
   </div>
 
