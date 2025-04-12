@@ -75,8 +75,8 @@ function initializeCanvas() {
     }
 
     // 取得したサイズまたはデフォルトサイズでキャンバスを設定
-    canvasContainer.style.width = initialWidth + 'px';
-    canvasContainer.style.height = initialHeight + 'px';
+    // canvasContainer.style.width = initialWidth + 'px';
+    // canvasContainer.style.height = initialHeight + 'px';
     canvas.width = initialWidth;
     canvas.height = initialHeight;
     previewCanvas.width = initialWidth;
@@ -128,8 +128,8 @@ function restoreState(state) {
     const img = new Image();
     img.onload = () => {
         // キャンバスのサイズを復元
-        canvasContainer.style.width = state.width + 'px';
-        canvasContainer.style.height = state.height + 'px';
+        // canvasContainer.style.width = state.width + 'px';
+        // canvasContainer.style.height = state.height + 'px';
         canvas.width = state.width;
         canvas.height = state.height;
         previewCanvas.width = state.width;
@@ -590,8 +590,8 @@ function resizeCanvas() {
     const newHeight = parseInt(heightInput.value);
 
     // 各要素のリサイズ
-    canvasContainer.style.width = newWidth + 'px';
-    canvasContainer.style.height = newHeight + 'px';
+    // canvasContainer.style.width = newWidth + 'px';
+    // canvasContainer.style.height = newHeight + 'px';
     canvas.width = newWidth;
     canvas.height = newHeight;
     previewCanvas.width = newWidth;
@@ -611,8 +611,8 @@ function trimCanvas() {
         const imageData = ctx.getImageData(x, y, width, height);
 
         // リサイズ
-        canvasContainer.style.width = width + 'px';
-        canvasContainer.style.height = height + 'px';
+        // canvasContainer.style.width = width + 'px';
+        // canvasContainer.style.height = height + 'px';
         canvas.width = width;
         canvas.height = height;
         previewCanvas.width = width;
@@ -809,8 +809,8 @@ scaleBtn.addEventListener('click', () => {
             tempCtx.drawImage(canvas, 0, 0);
 
             // サイズを変更
-            canvasContainer.style.width = newWidth + 'px';
-            canvasContainer.style.height = newHeight + 'px';
+            // canvasContainer.style.width = newWidth + 'px';
+            // canvasContainer.style.height = newHeight + 'px';
             canvas.width = newWidth;
             canvas.height = newHeight;
             previewCanvas.width = newWidth;

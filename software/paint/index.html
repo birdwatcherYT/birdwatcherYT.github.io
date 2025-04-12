@@ -84,14 +84,16 @@
     #canvasContainer {
       position: relative;
       border: 1px solid #ccc;
-      width: 100%;
       max-width: 100%;
       overflow: auto;
+      padding: 10px;
+      box-sizing: border-box;
     }
 
     canvas {
       background: white;
       display: block;
+      margin: 0 auto;  /* 中央揃え */
     }
 
     #previewCanvas {
