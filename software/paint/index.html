@@ -136,7 +136,10 @@
       <button id="textBtn">文字</button>
       <button id="eraserBtn">消しゴム</button>
       <button id="imageBtn">画像</button>
-
+      <button id="selectBtn">選択</button>
+      <label>
+        <input type="checkbox" id="fillCheckbox"> Fill
+      </label>
       <label>色:
         <input type="color" id="colorPicker" value="#000000">
       </label>
@@ -152,8 +155,12 @@
       <button id="undoBtn">Undo</button>
       <button id="redoBtn">Redo</button>
       <button id="clearBtn">クリア</button>
+      <button id="trimBtn" disabled>トリミング</button>
+      <button id="copyBtn" disabled>コピー</button>
+      <button id="cutBtn" disabled>カット</button>
+      <button id="pasteBtn" disabled>貼り付け</button>
 
-
+      <div class="line-break"></div>
       <label>幅:
         <input type="number" id="canvasWidth" value="800" min="100" max="10000">
       </label>

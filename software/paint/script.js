@@ -8,11 +8,18 @@ let drawing = false;
 let eraser = false; // 消しゴムモードかどうかのフラグ
 let history = [];
 let redoStack = [];
-let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser', 'text', 'image')
+let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select')
 let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
 let imageToInsert = null; // 挿入する画像オブジェクト
 let insertingImage = false; // 画像挿入モードかどうか
+let isSelecting = false; // 選択モードかどうか
+let selectionStartX, selectionStartY;
+let selectionEndX, selectionEndY;
+let clipboard = null; // コピーまたはカットされたImageDataを保存
+let pasteX, pasteY; // 貼り付け位置
+let originalImageWidth; // 挿入する画像の元の幅
+let originalImageHeight; // 挿入する画像の元の高さ
 
 const storageKey = "birdwatcheryt_github_io_software_paint";
 
@@ -38,6 +45,12 @@ const uploadBtn = document.getElementById('uploadBtn');
 const imageUpload = document.getElementById('imageUpload');
 const imageBtn = document.getElementById('imageBtn');
 const imageInsert = document.getElementById('imageInsert');
+const selectBtn = document.getElementById('selectBtn');
+const trimBtn = document.getElementById('trimBtn');
+const copyBtn = document.getElementById('copyBtn');
+const cutBtn = document.getElementById('cutBtn');
+const pasteBtn = document.getElementById('pasteBtn');
+const fillCheckbox = document.getElementById('fillCheckbox'); // 追加
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -150,6 +163,7 @@ function restoreState(state) {
 function updateUndoRedoButtons() {
     undoBtn.disabled = history.length <= 1; // 最初の状態以外ならUndo可能
     redoBtn.disabled = redoStack.length === 0;
+    pasteBtn.disabled = !clipboard; // クリップボードにデータがあれば貼り付け可能
 }
 
 // --- ツール関連 ---
@@ -157,9 +171,10 @@ function setActiveTool(toolName) {
     currentTool = toolName;
     eraser = (toolName === 'eraser'); // 消しゴムツールが選択されたか
     insertingImage = (toolName === 'image'); // 画像挿入モードを設定
+    isSelecting = (toolName === 'select'); // 選択モードを設定
 
     // ボタンのハイライト処理
-    const buttons = [penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn];
+    const buttons = [selectBtn, penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn];
     buttons.forEach(btn => {
         if (btn) { // ボタンが存在するか確認
             btn.classList.remove('active');
@@ -180,8 +195,17 @@ function setActiveTool(toolName) {
         canvas.style.cursor = 'cell'; // 消しゴムカーソル
     } else if (toolName === 'text') {
         canvas.style.cursor = 'text'; // テキストカーソル
+    } else if (toolName === 'paste' && clipboard) {
+        canvas.style.cursor = 'copy'; // 貼り付けカーソル
     } else {
         canvas.style.cursor = 'crosshair'; // 画像挿入時のカーソル
+    }
+    // 選択ツールが非アクティブになったらプレビューをクリアし、トリミングボタンを無効化
+    if (currentTool !== 'select') {
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        trimBtn.disabled = true;
+        copyBtn.disabled = true;
+        cutBtn.disabled = true;
     }
 }
 
@@ -203,8 +227,11 @@ function startPosition(e) {
     startX = pos.x;
     startY = pos.y;
 
-    // ペン/消しゴムモードの場合、最初の点を打つ
-    if (currentTool === 'pen' || currentTool === 'eraser') {
+    if (currentTool === 'select') {
+        isSelecting = true;
+        selectionStartX = startX;
+        selectionStartY = startY;
+    } else if (currentTool === 'pen' || currentTool === 'eraser') {
         lastX = startX;
         lastY = startY;
         applyContextSettings(ctx);
@@ -220,6 +247,13 @@ function startPosition(e) {
             saveLocal();
         }
         drawing = false; // テキスト入力はドラッグではないので即終了
+    } else if (currentTool === 'paste' && clipboard) {
+        pasteX = startX;
+        pasteY = startY;
+        // 貼り付けを実行
+        ctx.putImageData(clipboard, pasteX, pasteY);
+        saveState();
+        saveLocal();
     } else {
         // 図形ツールの場合、プレビュー設定
         applyContextSettings(previewCtx);
@@ -315,18 +349,94 @@ function drawShapePreview(e) {
     previewCtx.beginPath();
 
     if (currentTool === 'line') {
-        previewCtx.moveTo(startX, startY);
-        previewCtx.lineTo(currentX, currentY);
+        if (e.shiftKey) {
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            const angleRadians = Math.atan2(deltaY, deltaX);
+            const angleDegrees = angleRadians * 180 / Math.PI;
+            const roundedAngleDegrees = Math.round(angleDegrees / 45) * 45;
+            const roundedAngleRadians = roundedAngleDegrees * Math.PI / 180;
+            const distance = Math.hypot(deltaX, deltaY);
+            const newX = startX + distance * Math.cos(roundedAngleRadians);
+            const newY = startY + distance * Math.sin(roundedAngleRadians);
+            previewCtx.moveTo(startX, startY);
+            previewCtx.lineTo(newX, newY);
+        } else {
+            previewCtx.moveTo(startX, startY);
+            previewCtx.lineTo(currentX, currentY);
+        }
+        previewCtx.stroke();
     } else if (currentTool === 'rect') {
-        previewCtx.rect(startX, startY, currentX - startX, currentY - startY);
+        if (e.shiftKey) {
+            const side = Math.max(Math.abs(currentX - startX), Math.abs(currentY - startY));
+            const width = Math.sign(currentX - startX) * side;
+            const height = Math.sign(currentY - startY) * side;
+            previewCtx.rect(startX, startY, width, height);
+        } else {
+            previewCtx.rect(startX, startY, currentX - startX, currentY - startY);
+        }
+        if (fillCheckbox.checked) {
+            previewCtx.fill(); // 塗りつぶし
+        } else {
+            previewCtx.stroke(); // 線描画
+        }
     } else if (currentTool === 'circle') {
-        const radius = Math.hypot(currentX - startX, currentY - startY);
-        previewCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+        const centerX = startX + (currentX - startX) / 2;
+        const centerY = startY + (currentY - startY) / 2;
+        const radiusX = Math.abs(currentX - startX) / 2;
+        const radiusY = Math.abs(currentY - startY) / 2;
+
+        if (e.shiftKey) {
+            const radius = Math.max(radiusX, radiusY);
+            previewCtx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
+        } else {
+            previewCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+        }
+        if (fillCheckbox.checked) {
+            previewCtx.fill(); // 塗りつぶし
+        } else {
+            previewCtx.stroke(); // 線描画
+        }
     } else if (currentTool === 'image' && imageToInsert) {
+        let width = currentX - startX;
+        let height = currentY - startY;
+
+        if (e.shiftKey && originalImageWidth && originalImageHeight) {
+            const aspectRatio = originalImageWidth / originalImageHeight;
+            if (Math.abs(width) > Math.abs(height) * aspectRatio) {
+                height = Math.sign(height) * Math.abs(width) / aspectRatio;
+            } else {
+                width = Math.sign(width) * Math.abs(height) * aspectRatio;
+            }
+        }
         // 画像挿入プレビュー（ドラッグでサイズ変更）
-        previewCtx.drawImage(imageToInsert, startX, startY, currentX - startX, currentY - startY);
+        previewCtx.drawImage(imageToInsert, startX, startY, width, height);
     }
-    previewCtx.stroke();
+}
+
+function drawSelectionPreview(e) {
+    if (!drawing || currentTool !== 'select') return;
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+    const pos = getMousePos(e);
+    selectionEndX = pos.x;
+    selectionEndY = pos.y;
+
+    const x = Math.min(selectionStartX, selectionEndX);
+    const y = Math.min(selectionStartY, selectionEndY);
+    const width = Math.abs(selectionEndX - selectionStartX);
+    const height = Math.abs(selectionEndY - selectionStartY);
+
+    previewCtx.strokeStyle = '#000';
+    previewCtx.lineWidth = 1;
+    previewCtx.strokeRect(x, y, width, height);
+}
+
+function drawPastePreview(e) {
+    if (!clipboard) return;
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    const pos = getMousePos(e);
+    previewCtx.putImageData(clipboard, pos.x, pos.y);
 }
 
 // mousemove イベントハンドラ
@@ -337,8 +447,13 @@ function draw(e) {
         drawPenLine(e);
     } else if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || (currentTool === 'image' && imageToInsert)) {
         drawShapePreview(e);
+    } else if (currentTool === 'select') {
+        drawSelectionPreview(e);
+    } else if (clipboard) {
+        drawPastePreview(e);
     }
 }
+
 function endPosition(e) {
     // 左クリックのリリース以外、または描画中でなければ無視
     // mouseoutイベントの場合、buttonプロパティがないことがあるので drawing フラグのみチェック
@@ -353,41 +468,104 @@ function endPosition(e) {
     const endX = Math.max(0, Math.min(pos.x, canvas.width));
     const endY = Math.max(0, Math.min(pos.y, canvas.height));
 
+    if (currentTool === 'select' && isSelecting) {
+        isSelecting = false;
+        selectionEndX = endX;
+        selectionEndY = endY;
+
+        // 選択範囲が有効であればトリミング/コピー/カットボタンを有効にする
+        const width = Math.abs(selectionEndX - selectionStartX);
+        const height = Math.abs(selectionEndY - selectionStartY);
+        if (width > 0 && height > 0) {
+            trimBtn.disabled = false;
+            copyBtn.disabled = false;
+            cutBtn.disabled = false;
+        } else {
+            trimBtn.disabled = true;
+            copyBtn.disabled = true;
+            cutBtn.disabled = true;
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        }
+        return; // 選択モードの場合はここで終了
+    }
 
     let actuallyDrew = false; // 実際に描画が行われたかのフラグ
 
     // 図形をメインキャンバスに確定描画
-    if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'image') {
+    if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         applyContextSettings(ctx);
         ctx.beginPath();
 
         if (currentTool === 'line') {
-            if (startX !== endX || startY !== endY) { // ゼロ距離でないか
+            if (e.shiftKey) {
+                const deltaX = endX - startX;
+                const deltaY = endY - startY;
+                const angleRadians = Math.atan2(deltaY, deltaX);
+                const angleDegrees = angleRadians * 180 / Math.PI;
+                const roundedAngleDegrees = Math.round(angleDegrees / 45) * 45;
+                const roundedAngleRadians = roundedAngleDegrees * Math.PI / 180;
+                const distance = Math.hypot(deltaX, deltaY);
+                const newX = startX + distance * Math.cos(roundedAngleRadians);
+                const newY = startY + distance * Math.sin(roundedAngleRadians);
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(newX, newY);
+            } else {
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
-                ctx.stroke();
-                actuallyDrew = true; // 描画した
             }
+            ctx.stroke();
+            actuallyDrew = true; // 描画した
         } else if (currentTool === 'rect') {
-            if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
+            if (e.shiftKey) {
+                const side = Math.max(Math.abs(endX - startX), Math.abs(endY - startY));
+                const width = Math.sign(endX - startX) * side;
+                const height = Math.sign(endY - startY) * side;
+                ctx.rect(startX, startY, width, height);
+            } else {
                 ctx.rect(startX, startY, endX - startX, endY - startY);
-                ctx.stroke();
-                actuallyDrew = true; // 描画した
             }
+            if (fillCheckbox.checked) {
+                ctx.fill(); // 塗りつぶし
+            } else {
+                ctx.stroke(); // 線描画
+            }
+            actuallyDrew = true; // 描画した
         } else if (currentTool === 'circle') {
-            const radius = Math.hypot(endX - startX, endY - startY);
-            if (radius > 0) { // 半径がゼロでないか
-                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-                ctx.stroke();
-                actuallyDrew = true; // 描画した
+            const centerX = startX + (endX - startX) / 2;
+            const centerY = startY + (endY - startY) / 2;
+            const radiusX = Math.abs(endX - startX) / 2;
+            const radiusY = Math.abs(endY - startY) / 2;
+
+            if (e.shiftKey) {
+                const radius = Math.max(radiusX, radiusY);
+                ctx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
+            } else {
+                ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
             }
-        } else if (currentTool === 'image' && imageToInsert) {
-            if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
-                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                ctx.drawImage(imageToInsert, startX, startY, endX - startX, endY - startY);
-                actuallyDrew = true;
+            if (fillCheckbox.checked) {
+                ctx.fill(); // 塗りつぶし
+            } else {
+                ctx.stroke(); // 線描画
             }
+            actuallyDrew = true; // 描画した
+        }
+    } else if (currentTool === 'image' && imageToInsert) {
+        let width = endX - startX;
+        let height = endY - startY;
+
+        if (e.shiftKey && originalImageWidth && originalImageHeight) {
+            const aspectRatio = originalImageWidth / originalImageHeight;
+            if (Math.abs(width) > Math.abs(height) * aspectRatio) {
+                height = Math.sign(height) * Math.abs(width) / aspectRatio;
+            } else {
+                width = Math.sign(width) * Math.abs(height) * aspectRatio;
+            }
+        }
+        if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            ctx.drawImage(imageToInsert, startX, startY, width, height);
+            actuallyDrew = true;
         }
     }
     // ペン/消しゴムの場合、mousemove中に描画済み
@@ -406,7 +584,6 @@ function endPosition(e) {
         saveState();
     }
 }
-
 // 画像を読み込んでキャンバスに描画する関数
 function loadImageToCanvas(event) {
     const file = event.target.files[0];
@@ -439,6 +616,8 @@ function loadImageForInsertion(event) {
             imageToInsert = new Image();
             imageToInsert.onload = function () {
                 // 画像が読み込まれたら、描画開始を許可
+                originalImageWidth = this.width;
+                originalImageHeight = this.height;
             };
             imageToInsert.src = e.target.result;
         }
@@ -464,6 +643,77 @@ function resizeCanvas() {
     ctx.putImageData(oldImageData, 0, 0);
 }
 
+function trimCanvas() {
+    if (!trimBtn.disabled) {
+        const x = Math.min(selectionStartX, selectionEndX);
+        const y = Math.min(selectionStartY, selectionEndY);
+        const width = Math.abs(selectionEndX - selectionStartX);
+        const height = Math.abs(selectionEndY - selectionStartY);
+
+        const imageData = ctx.getImageData(x, y, width, height);
+
+        // リサイズ
+        canvasContainer.style.width = width + 'px';
+        canvasContainer.style.height = height + 'px';
+        canvas.width = width;
+        canvas.height = height;
+        previewCanvas.width = width;
+        previewCanvas.height = height;
+        widthInput.value = width;
+        heightInput.value = height;
+
+        // 描画
+        ctx.putImageData(imageData, 0, 0);
+
+        // 状態保存
+        saveState();
+        saveLocal();
+
+        // 選択解除とボタン無効化
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        trimBtn.disabled = true;
+        copyBtn.disabled = true;
+        cutBtn.disabled = true;
+    }
+}
+function copySelection() {
+    if (!copyBtn.disabled) {
+        const x = Math.min(selectionStartX, selectionEndX);
+        const y = Math.min(selectionStartY, selectionEndY);
+        const width = Math.abs(selectionEndX - selectionStartX);
+        const height = Math.abs(selectionEndY - selectionStartY);
+
+        clipboard = ctx.getImageData(x, y, width, height);
+        updateUndoRedoButtons(); // 貼り付けボタンの状態を更新
+    }
+}
+
+function cutSelection() {
+    if (!cutBtn.disabled) {
+        const x = Math.min(selectionStartX, selectionEndX);
+        const y = Math.min(selectionStartY, selectionEndY);
+        const width = Math.abs(selectionEndX - selectionStartX);
+        const height = Math.abs(selectionEndY - selectionStartY);
+
+        clipboard = ctx.getImageData(x, y, width, height);
+        ctx.clearRect(x, y, width, height);
+        saveState();
+        saveLocal();
+        updateUndoRedoButtons(); // 貼り付けボタンの状態を更新
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        trimBtn.disabled = true;
+        copyBtn.disabled = true;
+        cutBtn.disabled = true;
+    }
+}
+
+function pasteImage() {
+    if (clipboard) {
+        setActiveTool('paste'); // 貼り付けモードに設定
+        canvas.style.cursor = 'copy';
+    }
+}
+
 // --- イベントリスナー設定 ---
 canvas.addEventListener('mousedown', startPosition);
 canvas.addEventListener('mousemove', draw);
@@ -477,6 +727,7 @@ canvas.addEventListener('mouseout', (e) => {
 });
 
 // ツール選択ボタン
+selectBtn.addEventListener('click', () => setActiveTool('select'));
 penBtn.addEventListener('click', () => setActiveTool('pen'));
 lineBtn.addEventListener('click', () => setActiveTool('line'));
 rectBtn.addEventListener('click', () => setActiveTool('rect'));
@@ -553,6 +804,14 @@ saveBtn.addEventListener('click', () => {
 
 uploadBtn.addEventListener('click', () => imageUpload.click());
 imageUpload.addEventListener('change', loadImageToCanvas);
+// トリミングボタン
+trimBtn.addEventListener('click', trimCanvas);
+// コピーボタン
+copyBtn.addEventListener('click', copySelection);
+// カットボタン
+cutBtn.addEventListener('click', cutSelection);
+// 貼り付けボタン
+pasteBtn.addEventListener('click', pasteImage);
 
 // --- 初期化実行 ---
 initializeCanvas();
