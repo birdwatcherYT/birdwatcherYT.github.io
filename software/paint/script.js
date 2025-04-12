@@ -8,9 +8,11 @@ let drawing = false;
 let eraser = false; // 消しゴムモードかどうかのフラグ
 let history = [];
 let redoStack = [];
-let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser')
+let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser', 'text', 'image')
 let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
+let imageToInsert = null; // 挿入する画像オブジェクト
+let insertingImage = false; // 画像挿入モードかどうか
 
 const storageKey = "birdwatcheryt_github_io_software_paint";
 
@@ -34,6 +36,8 @@ const heightInput = document.getElementById('canvasHeight');
 const resizeBtn = document.getElementById('resizeBtn');
 const uploadBtn = document.getElementById('uploadBtn');
 const imageUpload = document.getElementById('imageUpload');
+const imageBtn = document.getElementById('imageBtn');
+const imageInsert = document.getElementById('imageInsert');
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -152,9 +156,10 @@ function updateUndoRedoButtons() {
 function setActiveTool(toolName) {
     currentTool = toolName;
     eraser = (toolName === 'eraser'); // 消しゴムツールが選択されたか
+    insertingImage = (toolName === 'image'); // 画像挿入モードを設定
 
     // ボタンのハイライト処理
-    const buttons = [penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn];
+    const buttons = [penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn];
     buttons.forEach(btn => {
         if (btn) { // ボタンが存在するか確認
             btn.classList.remove('active');
@@ -165,14 +170,18 @@ function setActiveTool(toolName) {
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
+    if (currentTool === 'image') {
+        // 画像挿入モードの場合、ファイル選択をトリガー
+        imageInsert.click();
+    }
 
-    // 消しゴムボタンのテキスト
-    eraserBtn.textContent = '消しゴム'; // デフォルトに戻す
-
-    // カーソルの変更（任意）
-    canvas.style.cursor = toolName === 'eraser' ? 'cell' : 'crosshair';
-    if (toolName === 'text') {
+    // カーソルの変更
+    if (toolName === 'eraser') {
+        canvas.style.cursor = 'cell'; // 消しゴムカーソル
+    } else if (toolName === 'text') {
         canvas.style.cursor = 'text'; // テキストカーソル
+    } else {
+        canvas.style.cursor = 'crosshair'; // 画像挿入時のカーソル
     }
 }
 
@@ -287,7 +296,6 @@ function drawPenLine(e) {
         ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill(); // fill() で描画する
     }
-    // --- ここまで ---
 
     // 次の描画のために座標を更新
     lastX = currentX;
@@ -314,6 +322,9 @@ function drawShapePreview(e) {
     } else if (currentTool === 'circle') {
         const radius = Math.hypot(currentX - startX, currentY - startY);
         previewCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+    } else if (currentTool === 'image' && imageToInsert) {
+        // 画像挿入プレビュー（ドラッグでサイズ変更）
+        previewCtx.drawImage(imageToInsert, startX, startY, currentX - startX, currentY - startY);
     }
     previewCtx.stroke();
 }
@@ -324,7 +335,7 @@ function draw(e) {
 
     if (currentTool === 'pen' || currentTool === 'eraser') {
         drawPenLine(e);
-    } else if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
+    } else if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || (currentTool === 'image' && imageToInsert)) {
         drawShapePreview(e);
     }
 }
@@ -346,7 +357,7 @@ function endPosition(e) {
     let actuallyDrew = false; // 実際に描画が行われたかのフラグ
 
     // 図形をメインキャンバスに確定描画
-    if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
+    if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'image') {
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         applyContextSettings(ctx);
         ctx.beginPath();
@@ -371,6 +382,12 @@ function endPosition(e) {
                 ctx.stroke();
                 actuallyDrew = true; // 描画した
             }
+        } else if (currentTool === 'image' && imageToInsert) {
+            if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
+                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                ctx.drawImage(imageToInsert, startX, startY, endX - startX, endY - startY);
+                actuallyDrew = true;
+            }
         }
     }
     // ペン/消しゴムの場合、mousemove中に描画済み
@@ -388,9 +405,6 @@ function endPosition(e) {
     if (actuallyDrew && currentTool !== 'text') { // テキストの場合は startPosition で保存済み
         saveState();
     }
-
-    // Undo/Redoボタンの状態更新 (saveState内で行うので不要かも)
-    // updateUndoRedoButtons();
 }
 
 // 画像を読み込んでキャンバスに描画する関数
@@ -411,6 +425,22 @@ function loadImageToCanvas(event) {
                 saveLocal();
             };
             img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// 画像を読み込んで挿入する関数
+function loadImageForInsertion(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            imageToInsert = new Image();
+            imageToInsert.onload = function () {
+                // 画像が読み込まれたら、描画開始を許可
+            };
+            imageToInsert.src = e.target.result;
         }
         reader.readAsDataURL(file);
     }
@@ -453,6 +483,8 @@ rectBtn.addEventListener('click', () => setActiveTool('rect'));
 circleBtn.addEventListener('click', () => setActiveTool('circle'));
 eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
 textBtn.addEventListener('click', () => setActiveTool('text'));
+imageBtn.addEventListener('click', () => setActiveTool('image'));
+imageInsert.addEventListener('change', loadImageForInsertion);
 
 // クリアボタン
 clearBtn.addEventListener('click', () => {
