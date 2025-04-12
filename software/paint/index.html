@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <title>ペイント</title>
+  <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+  <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+  <style>
+    /* --- スタイル追加・変更 --- */
+    #main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    #toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 20px;
+      padding: 10px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      max-width: 960px;
+      margin-bottom: 10px;
+      /* キャンバスとの間隔 */
+    }
+
+    #toolbar label,
+    #toolbar button,
+    #toolbar select {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    #toolbar input[type="color"],
+    #toolbar input[type="range"],
+    #toolbar input[type="number"],
+    #toolbar select {
+      height: 28px;
+    }
+
+    #toolbar button {
+      padding: 6px 12px;
+      background: #e0e0e0;
+      /* デフォルトの背景色を変更 */
+      color: #333;
+      /* デフォルトの文字色 */
+      border: 1px solid #ccc;
+      /* 枠線を追加 */
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #toolbar button.active {
+      /* 選択中のツールのスタイル */
+      background: #0078D7;
+      color: white;
+      border: 1px solid #005bb5;
+    }
+
+    #toolbar button#eraserBtn.active {
+      /* 消しゴム選択中のスタイル */
+      background: #f8d7da;
+      color: #721c24;
+      border-color: #f5c6cb;
+    }
+
+    #toolbar button:hover:not(.active) {
+      /* ホバー時のスタイル (アクティブでない場合) */
+      background: #d4d4d4;
+    }
+
+    .line-break {
+      flex-basis: 100%;
+      height: 0;
+    }
+
+    #canvasContainer {
+      /* キャンバスを囲むコンテナ */
+      position: relative;
+      /* 子要素の絶対位置指定のため */
+      border: 1px solid #ccc;
+      /* 枠線をコンテナに移動 */
+    }
+
+    canvas {
+      /* border: 1px solid #ccc; */
+      /* 枠線はコンテナに */
+      background: white;
+      /* 背景色はメインキャンバスのみ */
+      display: block;
+      /* 余計な隙間をなくす */
+    }
+
+    #previewCanvas {
+      background: transparent;
+      /* プレビューは透明 */
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      /* 下のキャンバスへのイベントを透過 */
+    }
+
+    /* --- ここまで --- */
+  </style>
+</head>
+
+<body>
+  <p><a href="../index.html">←Softwares</a></p>
+  <div id="main">
+    <h1>ペイント</h1>
+
+    <div id="toolbar">
+      <button id="penBtn">ペン</button>
+      <button id="lineBtn">直線</button>
+      <button id="rectBtn">長方形</button>
+      <button id="circleBtn">円</button>
+      <button id="eraserBtn">消しゴム</button>
+
+      <label>色:
+        <input type="color" id="colorPicker" value="#000000">
+      </label>
+      <label>透明度:
+        <input type="range" id="alphaPicker" min="0" max="1" step="0.01" value="1">
+      </label>
+      <label>太さ:
+        <input type="range" id="sizePicker" min="1" max="50" value="5">
+      </label>
+
+      <div class="line-break"></div>
+
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
+      <button id="clearBtn">クリア</button>
+
+
+      <label>幅:
+        <input type="number" id="canvasWidth" value="800" min="100" max="10000">
+      </label>
+      <label>高さ:
+        <input type="number" id="canvasHeight" value="400" min="100" max="10000">
+      </label>
+      <button id="resizeBtn">サイズ変更</button>
+
+      <label>形式:
+        <select id="saveFormat">
+          <option value="png-transparent">PNG(透過)</option>
+          <option value="png-opaque">PNG(不透明)</option>
+          <option value="jpeg">JPG</option>
+        </select>
+      </label>
+      <button id="saveBtn">保存</button>
+    </div>
+
+    <div id="canvasContainer">
+      <canvas id="drawCanvas" width="800" height="400"></canvas>
+      <canvas id="previewCanvas" width="800" height="400"></canvas>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+  <footer></footer>
+</body>
+
+</html>
