@@ -132,14 +132,15 @@
       <button id="penBtn">ペン</button>
       <button id="lineBtn">直線</button>
       <button id="rectBtn">矩形</button>
-      <button id="circleBtn">円</button>
+      <button id="circleBtn">楕円</button>
       <button id="textBtn">文字</button>
       <button id="eraserBtn">消しゴム</button>
-      <button id="imageBtn">画像</button>
+      <button id="imageBtn">挿入</button>
       <button id="selectBtn">選択</button>
-      <label>
-        <input type="checkbox" id="fillCheckbox"> Fill
-      </label>
+      <button id="pasteBtn" disabled>貼り付け</button>
+
+      <div class="line-break"></div>
+
       <label>色:
         <input type="color" id="colorPicker" value="#000000">
       </label>
@@ -149,25 +150,27 @@
       <label>サイズ:
         <input type="range" id="sizePicker" min="1" max="50" value="5">
       </label>
-
-      <div class="line-break"></div>
-
-      <button id="undoBtn">Undo</button>
-      <button id="redoBtn">Redo</button>
-      <button id="clearBtn">クリア</button>
+      <label>
+        <input type="checkbox" id="fillCheckbox"> 塗りつぶし
+      </label>
       <button id="trimBtn" disabled>トリミング</button>
       <button id="copyBtn" disabled>コピー</button>
       <button id="cutBtn" disabled>カット</button>
-      <button id="pasteBtn" disabled>貼り付け</button>
 
       <div class="line-break"></div>
+
+
+      <div class="line-break"></div>
+      <button id="undoBtn">Undo</button>
+      <button id="redoBtn">Redo</button>
       <label>幅:
-        <input type="number" id="canvasWidth" value="800" min="100" max="10000">
+        <input type="number" id="canvasWidth" value="800" min="100" max="9999">
       </label>
       <label>高さ:
-        <input type="number" id="canvasHeight" value="400" min="100" max="10000">
+        <input type="number" id="canvasHeight" value="400" min="100" max="9999">
       </label>
       <button id="resizeBtn">サイズ変更</button>
+      <button id="scaleBtn">拡大/縮小</button>
 
       <label>形式:
         <select id="saveFormat">
@@ -178,6 +181,7 @@
       </label>
       <button id="saveBtn">保存</button>
       <button id="uploadBtn">読込</button>
+      <button id="clearBtn">消去</button>
       <input type="file" id="imageUpload" accept="image/*" style="display: none;">
       <input type="file" id="imageInsert" accept="image/*" style="display: none;">
     </div>

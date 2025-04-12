@@ -47,6 +47,7 @@ const copyBtn = document.getElementById('copyBtn');
 const cutBtn = document.getElementById('cutBtn');
 const pasteBtn = document.getElementById('pasteBtn');
 const fillCheckbox = document.getElementById('fillCheckbox'); // 追加
+const scaleBtn = document.getElementById('scaleBtn');
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -65,9 +66,6 @@ function initializeCanvas() {
                 initialHeight = parseInt(lastState.height, 10);
                 initialImageData = lastState.imageData;
 
-                // input要素にも復元したサイズを反映
-                widthInput.value = initialWidth;
-                heightInput.value = initialHeight;
             }
         }
     } catch (error) {
@@ -83,6 +81,8 @@ function initializeCanvas() {
     canvas.height = initialHeight;
     previewCanvas.width = initialWidth;
     previewCanvas.height = initialHeight;
+    widthInput.value = initialWidth;
+    heightInput.value = initialHeight;
 
     // 画像データがあれば復元
     if (initialImageData) {
@@ -240,8 +240,18 @@ function startPosition(e) {
         }
         drawing = false; // テキスト入力はドラッグではないので即終了
     } else if (currentTool === 'paste' && clipboard) {
-        // 貼り付けを実行
-        ctx.putImageData(clipboard, startX, startY);
+        // この書き方では透過が維持されない
+        // ctx.globalCompositeOperation = 'source-over';
+        // ctx.putImageData(clipboard, startX, startY);
+
+        // 透過を維持するために、別のキャンバスを使用
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = clipboard.width;
+        tempCanvas.height = clipboard.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.putImageData(clipboard, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(tempCanvas, startX, startY);
         saveState();
         saveLocal();
     } else {
@@ -262,7 +272,7 @@ function applyContextSettings(context) {
         // strokeStyleはdestination-outでは効果がないが一応設定
         context.strokeStyle = 'rgba(0,0,0,1)';
         context.fillStyle = 'rgba(0,0,0,1)';
-    } else { // 通常のペンまたはプレビュー
+    } else {// 通常描画処理
         context.globalCompositeOperation = 'source-over';
         context.globalAlpha = parseFloat(alphaPicker.value);
         context.strokeStyle = colorPicker.value;
@@ -392,7 +402,11 @@ function drawImagePreviewOrFinal(context, startX, startY, endX, endY, e, image) 
             width = Math.sign(width) * Math.abs(height) * aspectRatio;
         }
     }
+    // ここで透明度を設定
+    context.globalAlpha = parseFloat(alphaPicker.value);
     context.drawImage(image, startX, startY, width, height);
+    // 描画後、念のためグローバルアルファをリセット (他の描画に影響を与えないように)
+    context.globalAlpha = 1.0;
 }
 
 
@@ -429,7 +443,11 @@ function drawSelectionPreview(e) {
 
     previewCtx.strokeStyle = '#000';
     previewCtx.lineWidth = 1;
+    // 破線を設定
+    previewCtx.setLineDash([5, 5]); // [線の長さ, 空白の長さ]
     previewCtx.strokeRect(x, y, width, height);
+    // 破線をリセット (他の描画に影響を与えないように)
+    previewCtx.setLineDash([]);
 }
 
 function drawPastePreview(e) {
@@ -449,8 +467,6 @@ function draw(e) {
         drawShapePreview(e);
     } else if (currentTool === 'select') {
         drawSelectionPreview(e);
-    } else if (clipboard) {
-        drawPastePreview(e);
     }
 }
 
@@ -499,15 +515,11 @@ function endPosition(e) {
     } else if (currentTool === 'image' && imageToInsert) {
         if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
             previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            applyContextSettings(ctx);
             drawImagePreviewOrFinal(ctx, startX, startY, endX, endY, e, imageToInsert);
             actuallyDrew = true;
         }
-    }
-    // ペン/消しゴムの場合、mousemove中に描画済み
-    // クリックしただけ（移動なし）の場合もstartPositionで点描画済み
-    else if (currentTool === 'pen' || currentTool === 'eraser') {
-        // startPositionで点を描画しているので、mouseupだけでも描画とみなす
-        // (厳密にはmousemoveがあったかどうかも判定できるが、シンプルにする)
+    } else if (currentTool === 'pen' || currentTool === 'eraser') {
         actuallyDrew = true;
     }
 
@@ -515,7 +527,7 @@ function endPosition(e) {
     saveLocal();
 
     // 実際に描画が行われた場合のみ、その状態を履歴に保存
-    if (actuallyDrew && currentTool !== 'text') { // テキストの場合は startPosition で保存済み
+    if (actuallyDrew) {
         saveState();
     }
 }
@@ -642,13 +654,6 @@ function cutSelection() {
     }
 }
 
-function pasteImage() {
-    if (clipboard) {
-        setActiveTool('paste'); // 貼り付けモードに設定
-        canvas.style.cursor = 'copy';
-    }
-}
-
 // --- イベントリスナー設定 ---
 canvas.addEventListener('mousedown', startPosition);
 canvas.addEventListener('mousemove', draw);
@@ -670,6 +675,7 @@ circleBtn.addEventListener('click', () => setActiveTool('circle'));
 eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
 textBtn.addEventListener('click', () => setActiveTool('text'));
 imageBtn.addEventListener('click', () => setActiveTool('image'));
+pasteBtn.addEventListener('click', () => setActiveTool('paste'));
 imageInsert.addEventListener('change', loadImageForInsertion);
 
 // クリアボタン
@@ -745,8 +751,41 @@ trimBtn.addEventListener('click', trimCanvas);
 copyBtn.addEventListener('click', copySelection);
 // カットボタン
 cutBtn.addEventListener('click', cutSelection);
-// 貼り付けボタン
-pasteBtn.addEventListener('click', pasteImage);
+// 拡大縮小ボタン
+scaleBtn.addEventListener('click', () => {
+    const magnification = prompt("変更後の倍率をパーセントで入力してください:", 100);
+    if (magnification !== null) {
+        const zoomFactor = parseFloat(magnification) / 100;
+        if (!isNaN(zoomFactor) && zoomFactor > 0) {
+            const newWidth = Math.round(canvas.width * zoomFactor); // originalCanvasWidth を使用
+            const newHeight = Math.round(canvas.height * zoomFactor); // originalCanvasHeight を使用
 
-// --- 初期化実行 ---
+            // 現在のキャンバス内容を一時的なキャンバスに保存
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, 0);
+
+            // サイズを変更
+            canvasContainer.style.width = newWidth + 'px';
+            canvasContainer.style.height = newHeight + 'px';
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            previewCanvas.width = newWidth;
+            previewCanvas.height = newHeight;
+            widthInput.value = newWidth;
+            heightInput.value = newHeight;
+
+            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, canvas.width, canvas.height);
+
+            // 状態保存
+            saveState();
+            saveLocal();
+        } else {
+            alert('有効な倍率（0より大きい数値）を入力してください。');
+        }
+    }
+});
+
 initializeCanvas();
