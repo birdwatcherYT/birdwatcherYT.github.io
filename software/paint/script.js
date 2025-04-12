@@ -336,6 +336,76 @@ function drawPenLine(e) {
     lastY = currentY;
 }
 
+function drawShape(context, tool, startX, startY, endX, endY, e) {
+    context.beginPath();
+    if (tool === 'line') {
+        if (e.shiftKey) {
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const angleRadians = Math.atan2(deltaY, deltaX);
+            const angleDegrees = angleRadians * 180 / Math.PI;
+            const roundedAngleDegrees = Math.round(angleDegrees / 45) * 45;
+            const roundedAngleRadians = roundedAngleDegrees * Math.PI / 180;
+            const distance = Math.hypot(deltaX, deltaY);
+            const newX = startX + distance * Math.cos(roundedAngleRadians);
+            const newY = startY + distance * Math.sin(roundedAngleRadians);
+            context.moveTo(startX, startY);
+            context.lineTo(newX, newY);
+        } else {
+            context.moveTo(startX, startY);
+            context.lineTo(endX, endY);
+        }
+        context.stroke();
+    } else if (tool === 'rect') {
+        if (e.shiftKey) {
+            const side = Math.max(Math.abs(endX - startX), Math.abs(endY - startY));
+            const width = Math.sign(endX - startX) * side;
+            const height = Math.sign(endY - startY) * side;
+            context.rect(startX, startY, width, height);
+        } else {
+            context.rect(startX, startY, endX - startX, endY - startY);
+        }
+        if (fillCheckbox.checked) {
+            context.fill(); // 塗りつぶし
+        } else {
+            context.stroke(); // 線描画
+        }
+    } else if (tool === 'circle') {
+        const centerX = startX + (endX - startX) / 2;
+        const centerY = startY + (endY - startY) / 2;
+        const radiusX = Math.abs(endX - startX) / 2;
+        const radiusY = Math.abs(endY - startY) / 2;
+
+        if (e.shiftKey) {
+            const radius = Math.max(radiusX, radiusY);
+            context.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
+        } else {
+            context.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+        }
+        if (fillCheckbox.checked) {
+            context.fill(); // 塗りつぶし
+        } else {
+            context.stroke(); // 線描画
+        }
+    }
+}
+
+function drawImagePreviewOrFinal(context, startX, startY, endX, endY, e, image) {
+    let width = endX - startX;
+    let height = endY - startY;
+
+    if (e.shiftKey && originalImageWidth && originalImageHeight) {
+        const aspectRatio = originalImageWidth / originalImageHeight;
+        if (Math.abs(width) > Math.abs(height) * aspectRatio) {
+            height = Math.sign(height) * Math.abs(width) / aspectRatio;
+        } else {
+            width = Math.sign(width) * Math.abs(height) * aspectRatio;
+        }
+    }
+    context.drawImage(image, startX, startY, width, height);
+}
+
+
 // 図形のプレビューを描画する関数
 function drawShapePreview(e) {
     if (!drawing) return;
@@ -346,71 +416,11 @@ function drawShapePreview(e) {
     const currentY = pos.y;
 
     applyContextSettings(previewCtx); // プレビューに設定適用
-    previewCtx.beginPath();
 
-    if (currentTool === 'line') {
-        if (e.shiftKey) {
-            const deltaX = currentX - startX;
-            const deltaY = currentY - startY;
-            const angleRadians = Math.atan2(deltaY, deltaX);
-            const angleDegrees = angleRadians * 180 / Math.PI;
-            const roundedAngleDegrees = Math.round(angleDegrees / 45) * 45;
-            const roundedAngleRadians = roundedAngleDegrees * Math.PI / 180;
-            const distance = Math.hypot(deltaX, deltaY);
-            const newX = startX + distance * Math.cos(roundedAngleRadians);
-            const newY = startY + distance * Math.sin(roundedAngleRadians);
-            previewCtx.moveTo(startX, startY);
-            previewCtx.lineTo(newX, newY);
-        } else {
-            previewCtx.moveTo(startX, startY);
-            previewCtx.lineTo(currentX, currentY);
-        }
-        previewCtx.stroke();
-    } else if (currentTool === 'rect') {
-        if (e.shiftKey) {
-            const side = Math.max(Math.abs(currentX - startX), Math.abs(currentY - startY));
-            const width = Math.sign(currentX - startX) * side;
-            const height = Math.sign(currentY - startY) * side;
-            previewCtx.rect(startX, startY, width, height);
-        } else {
-            previewCtx.rect(startX, startY, currentX - startX, currentY - startY);
-        }
-        if (fillCheckbox.checked) {
-            previewCtx.fill(); // 塗りつぶし
-        } else {
-            previewCtx.stroke(); // 線描画
-        }
-    } else if (currentTool === 'circle') {
-        const centerX = startX + (currentX - startX) / 2;
-        const centerY = startY + (currentY - startY) / 2;
-        const radiusX = Math.abs(currentX - startX) / 2;
-        const radiusY = Math.abs(currentY - startY) / 2;
-
-        if (e.shiftKey) {
-            const radius = Math.max(radiusX, radiusY);
-            previewCtx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
-        } else {
-            previewCtx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
-        }
-        if (fillCheckbox.checked) {
-            previewCtx.fill(); // 塗りつぶし
-        } else {
-            previewCtx.stroke(); // 線描画
-        }
+    if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
+        drawShape(previewCtx, currentTool, startX, startY, currentX, currentY, e);
     } else if (currentTool === 'image' && imageToInsert) {
-        let width = currentX - startX;
-        let height = currentY - startY;
-
-        if (e.shiftKey && originalImageWidth && originalImageHeight) {
-            const aspectRatio = originalImageWidth / originalImageHeight;
-            if (Math.abs(width) > Math.abs(height) * aspectRatio) {
-                height = Math.sign(height) * Math.abs(width) / aspectRatio;
-            } else {
-                width = Math.sign(width) * Math.abs(height) * aspectRatio;
-            }
-        }
-        // 画像挿入プレビュー（ドラッグでサイズ変更）
-        previewCtx.drawImage(imageToInsert, startX, startY, width, height);
+        drawImagePreviewOrFinal(previewCtx, startX, startY, currentX, currentY, e, imageToInsert);
     }
 }
 
@@ -495,76 +505,13 @@ function endPosition(e) {
     if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         applyContextSettings(ctx);
-        ctx.beginPath();
-
-        if (currentTool === 'line') {
-            if (e.shiftKey) {
-                const deltaX = endX - startX;
-                const deltaY = endY - startY;
-                const angleRadians = Math.atan2(deltaY, deltaX);
-                const angleDegrees = angleRadians * 180 / Math.PI;
-                const roundedAngleDegrees = Math.round(angleDegrees / 45) * 45;
-                const roundedAngleRadians = roundedAngleDegrees * Math.PI / 180;
-                const distance = Math.hypot(deltaX, deltaY);
-                const newX = startX + distance * Math.cos(roundedAngleRadians);
-                const newY = startY + distance * Math.sin(roundedAngleRadians);
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(newX, newY);
-            } else {
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(endX, endY);
-            }
-            ctx.stroke();
-            actuallyDrew = true; // 描画した
-        } else if (currentTool === 'rect') {
-            if (e.shiftKey) {
-                const side = Math.max(Math.abs(endX - startX), Math.abs(endY - startY));
-                const width = Math.sign(endX - startX) * side;
-                const height = Math.sign(endY - startY) * side;
-                ctx.rect(startX, startY, width, height);
-            } else {
-                ctx.rect(startX, startY, endX - startX, endY - startY);
-            }
-            if (fillCheckbox.checked) {
-                ctx.fill(); // 塗りつぶし
-            } else {
-                ctx.stroke(); // 線描画
-            }
-            actuallyDrew = true; // 描画した
-        } else if (currentTool === 'circle') {
-            const centerX = startX + (endX - startX) / 2;
-            const centerY = startY + (endY - startY) / 2;
-            const radiusX = Math.abs(endX - startX) / 2;
-            const radiusY = Math.abs(endY - startY) / 2;
-
-            if (e.shiftKey) {
-                const radius = Math.max(radiusX, radiusY);
-                ctx.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
-            } else {
-                ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
-            }
-            if (fillCheckbox.checked) {
-                ctx.fill(); // 塗りつぶし
-            } else {
-                ctx.stroke(); // 線描画
-            }
-            actuallyDrew = true; // 描画した
-        }
+        drawShape(ctx, currentTool, startX, startY, endX, endY, e);
+        actuallyDrew = true; // 描画した
     } else if (currentTool === 'image' && imageToInsert) {
-        let width = endX - startX;
-        let height = endY - startY;
-
-        if (e.shiftKey && originalImageWidth && originalImageHeight) {
-            const aspectRatio = originalImageWidth / originalImageHeight;
-            if (Math.abs(width) > Math.abs(height) * aspectRatio) {
-                height = Math.sign(height) * Math.abs(width) / aspectRatio;
-            } else {
-                width = Math.sign(width) * Math.abs(height) * aspectRatio;
-            }
-        }
         if (startX !== endX && startY !== endY) { // 幅高さがゼロでないか
             previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-            ctx.drawImage(imageToInsert, startX, startY, width, height);
+            // ctx.drawImage(imageToInsert, startX, startY, width, height);
+            drawImagePreviewOrFinal(ctx, startX, startY, endX, endY, e, imageToInsert);
             actuallyDrew = true;
         }
     }
