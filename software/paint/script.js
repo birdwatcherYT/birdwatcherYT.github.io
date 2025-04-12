@@ -32,8 +32,9 @@ const saveFormat = document.getElementById('saveFormat');
 const widthInput = document.getElementById('canvasWidth');
 const heightInput = document.getElementById('canvasHeight');
 const resizeBtn = document.getElementById('resizeBtn');
+const uploadBtn = document.getElementById('uploadBtn');
+const imageUpload = document.getElementById('imageUpload');
 
-// --- 初期化処理 ---
 // --- 初期化処理 ---
 function initializeCanvas() {
     let initialWidth = 800; // デフォルト幅
@@ -392,6 +393,47 @@ function endPosition(e) {
     // updateUndoRedoButtons();
 }
 
+// 画像を読み込んでキャンバスに描画する関数
+function loadImageToCanvas(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = new Image();
+            img.onload = function () {
+                // 画像のサイズに合わせてキャンバスをリサイズする
+                widthInput.value = img.width;
+                heightInput.value = img.height;
+                resizeCanvas(); // キャンバスのリサイズ処理を実行
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                saveState();
+                saveLocal();
+            };
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// キャンバスのリサイズ処理を関数化
+function resizeCanvas() {
+    const oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const newWidth = parseInt(widthInput.value);
+    const newHeight = parseInt(heightInput.value);
+
+    // 各要素のリサイズ
+    canvasContainer.style.width = newWidth + 'px';
+    canvasContainer.style.height = newHeight + 'px';
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    previewCanvas.width = newWidth;
+    previewCanvas.height = newHeight;
+
+    // 内容を復元
+    ctx.putImageData(oldImageData, 0, 0);
+}
+
 // --- イベントリスナー設定 ---
 canvas.addEventListener('mousedown', startPosition);
 canvas.addEventListener('mousemove', draw);
@@ -448,25 +490,11 @@ redoBtn.addEventListener('click', () => {
 });
 
 resizeBtn.addEventListener('click', () => {
-    const oldImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const newWidth = parseInt(widthInput.value);
-    const newHeight = parseInt(heightInput.value);
-
-    // 各要素のリサイズ
-    canvasContainer.style.width = newWidth + 'px';
-    canvasContainer.style.height = newHeight + 'px';
-    canvas.width = newWidth;
-    canvas.height = newHeight;
-    previewCanvas.width = newWidth;
-    previewCanvas.height = newHeight;
-
-    // 内容を復元
-    ctx.putImageData(oldImageData, 0, 0);
-
+    resizeCanvas();
+    saveState();
     saveLocal();
-    saveState(); // リサイズ時にも状態を保存
-    updateUndoRedoButtons(); // ボタン状態は更新
 });
+
 
 
 // 保存ボタン
@@ -490,6 +518,9 @@ saveBtn.addEventListener('click', () => {
     link.href = exportCanvas.toDataURL(format, 1.0);
     link.click();
 });
+
+uploadBtn.addEventListener('click', () => imageUpload.click());
+imageUpload.addEventListener('change', loadImageToCanvas);
 
 // --- 初期化実行 ---
 initializeCanvas();
