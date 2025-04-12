@@ -1,15 +1,15 @@
 const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
-const previewCanvas = document.getElementById('previewCanvas'); // ★追加
-const previewCtx = previewCanvas.getContext('2d'); // ★追加
-const canvasContainer = document.getElementById('canvasContainer'); // ★追加
+const previewCanvas = document.getElementById('previewCanvas');
+const previewCtx = previewCanvas.getContext('2d');
+const canvasContainer = document.getElementById('canvasContainer');
 
 let drawing = false;
 let eraser = false; // 消しゴムモードかどうかのフラグ
 let history = [];
 let redoStack = [];
-let currentTool = 'pen'; // ★追加: 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser')
-let startX, startY; // ★追加: 描画開始座標
+let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser')
+let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
 
 const storageKey = "birdwatcheryt_github_io_software_paint";
@@ -18,10 +18,10 @@ const storageKey = "birdwatcheryt_github_io_software_paint";
 const colorPicker = document.getElementById('colorPicker');
 const sizePicker = document.getElementById('sizePicker');
 const alphaPicker = document.getElementById('alphaPicker');
-const penBtn = document.getElementById('penBtn'); // ★追加
-const lineBtn = document.getElementById('lineBtn'); // ★追加
-const rectBtn = document.getElementById('rectBtn'); // ★追加
-const circleBtn = document.getElementById('circleBtn'); // ★追加
+const penBtn = document.getElementById('penBtn');
+const lineBtn = document.getElementById('lineBtn');
+const rectBtn = document.getElementById('rectBtn');
+const circleBtn = document.getElementById('circleBtn');
 const eraserBtn = document.getElementById('eraserBtn');
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
@@ -33,41 +33,66 @@ const heightInput = document.getElementById('canvasHeight');
 const resizeBtn = document.getElementById('resizeBtn');
 
 // --- 初期化処理 ---
+// --- 初期化処理 ---
 function initializeCanvas() {
-    // コンテナのサイズを設定
-    canvasContainer.style.width = canvas.width + 'px';
-    canvasContainer.style.height = canvas.height + 'px';
-
-    // プレビューキャンバスのサイズも合わせる
-    previewCanvas.width = canvas.width;
-    previewCanvas.height = canvas.height;
+    let initialWidth = 800; // デフォルト幅
+    let initialHeight = 400; // デフォルト高さ
+    let initialImageData = null;
 
     // 以前の状態を復元 or 初期化
     try {
-        const lastState = localStorage.getItem(storageKey);
-        if (lastState) {
-            restoreState(lastState);
-            // 復元後、現在の状態を最初の履歴として追加する必要がある場合がある
-            // restoreState内でhistoryをクリアするか、ここでpushするか検討
-            // ここでは、restoreState完了後に最初のhistoryを追加するようにする
-            if (history.length === 0) history.push(canvas.toDataURL());
+        const lastStateString = localStorage.getItem(storageKey);
+        if (lastStateString) {
+            const lastState = JSON.parse(lastStateString); // JSONをパース
+            // 保存されたデータに width と height が含まれているか確認
+            if (lastState && typeof lastState === 'object' && lastState.width && lastState.height && lastState.imageData) {
+                initialWidth = parseInt(lastState.width, 10);
+                initialHeight = parseInt(lastState.height, 10);
+                initialImageData = lastState.imageData;
 
-        } else {
-            // 何もない状態を最初の履歴として保存
-            history.push(canvas.toDataURL());
+                // input要素にも復元したサイズを反映
+                widthInput.value = initialWidth;
+                heightInput.value = initialHeight;
+            }
         }
     } catch (error) {
-        console.error("LocalStorage Error:", error);
-        // エラー時も初期履歴を追加
-        if (history.length === 0) history.push(canvas.toDataURL());
-    };
-    setActiveTool('pen'); // 初期ツールを設定
-}
+        console.error("LocalStorage Load/Parse Error:", error);
+        // エラー発生時はLocalStorageの該当データを削除（推奨）
+        localStorage.removeItem(storageKey);
+    }
 
+    // 取得したサイズまたはデフォルトサイズでキャンバスを設定
+    canvasContainer.style.width = initialWidth + 'px';
+    canvasContainer.style.height = initialHeight + 'px';
+    canvas.width = initialWidth;
+    canvas.height = initialHeight;
+    previewCanvas.width = initialWidth;
+    previewCanvas.height = initialHeight;
+
+    // 画像データがあれば復元
+    if (initialImageData) {
+        // restoreState は画像データのみを受け取る
+        restoreState({ imageData: initialImageData, width: initialWidth, height: initialHeight });
+        // ローカルストレージから復元した場合、それを最初の履歴として保存
+        history = [{ imageData: initialImageData, width: initialWidth, height: initialHeight }];
+    } else {
+        // 何もない状態を最初の履歴として保存 (背景は白とする場合)
+        history = [{ imageData: canvas.toDataURL(), width: canvas.width, height: canvas.height }]; // 新しい履歴を開始
+    }
+
+    setActiveTool('pen'); // 初期ツールを設定
+    updateUndoRedoButtons(); // ボタン状態を初期化
+}
 // --- 状態管理 ---
 function saveLocal() {
     try {
-        localStorage.setItem(storageKey, canvas.toDataURL());
+        const state = {
+            imageData: canvas.toDataURL(),
+            width: canvas.width,
+            height: canvas.height
+        };
+        // JSON文字列としてLocalStorageに保存
+        localStorage.setItem(storageKey, JSON.stringify(state));
     } catch (error) {
         console.error("LocalStorage Save Error:", error);
     };
@@ -75,19 +100,34 @@ function saveLocal() {
 
 function saveState() {
     if (history.length >= 50) history.shift();
-    history.push(canvas.toDataURL());
+    history.push({
+        imageData: canvas.toDataURL(),
+        width: canvas.width,
+        height: canvas.height
+    });
     redoStack = []; // 新しい操作をしたらRedo履歴はクリア
     // ボタンの状態更新などが必要ならここで行う (例: Undo/Redoボタンの有効/無効)
     updateUndoRedoButtons();
 }
 
-function restoreState(dataURL) {
+function restoreState(state) {
     const img = new Image();
     img.onload = () => {
+        // キャンバスのサイズを復元
+        canvasContainer.style.width = state.width + 'px';
+        canvasContainer.style.height = state.height + 'px';
+        canvas.width = state.width;
+        canvas.height = state.height;
+        previewCanvas.width = state.width;
+        previewCanvas.height = state.height;
+        widthInput.value = state.width;
+        heightInput.value = state.height;
+
         // globalAlphaをリセット (前回修正済み)
         ctx.globalAlpha = 1.0;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
+
         // ローカルストレージにも反映
         saveLocal();
         // ボタンの状態更新
@@ -98,7 +138,7 @@ function restoreState(dataURL) {
         // エラー時もボタン状態は更新
         updateUndoRedoButtons();
     }
-    img.src = dataURL;
+    img.src = state.imageData;
 }
 
 function updateUndoRedoButtons() {
@@ -407,6 +447,7 @@ resizeBtn.addEventListener('click', () => {
     ctx.putImageData(oldImageData, 0, 0);
 
     saveLocal();
+    saveState(); // リサイズ時にも状態を保存
     updateUndoRedoButtons(); // ボタン状態は更新
 });
 
