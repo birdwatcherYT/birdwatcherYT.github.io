@@ -311,8 +311,8 @@ function updatePenPreview() {
 // コンテキストに現在の設定を適用するヘルパー関数
 function applyContextSettings(context) {
     context.lineWidth = sizePicker.value;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
+    // context.lineCap = 'round';
+    // context.lineJoin = 'round';
 
     // オフスクリーンキャンバス(offscreenCtx)の場合は常にsource-over
     if (context === offscreenCtx) {
