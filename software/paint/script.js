@@ -52,6 +52,7 @@ const cutBtn = document.getElementById('cutBtn');
 const pasteBtn = document.getElementById('pasteBtn');
 const fillCheckbox = document.getElementById('fillCheckbox'); // 追加
 const scaleBtn = document.getElementById('scaleBtn');
+const rotateBtn = document.getElementById('rotateBtn'); // 追加: 回転ボタン
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -725,6 +726,55 @@ function cutSelection() {
     }
 }
 
+function rotateCanvas() {
+    const angleDegrees = parseFloat(prompt("回転角度を入力してください (度):", 0));
+    if (!isNaN(angleDegrees)) {
+        const angleRadians = angleDegrees * Math.PI / 180;
+
+        // 現在のキャンバス内容を一時的なキャンバスに保存
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // 回転後のサイズを計算
+        const rotatedWidth = Math.round(Math.abs(canvas.width * Math.cos(angleRadians)) + Math.abs(canvas.height * Math.sin(angleRadians)));
+        const rotatedHeight = Math.round(Math.abs(canvas.width * Math.sin(angleRadians)) + Math.abs(canvas.height * Math.cos(angleRadians)));
+
+        // 一時的なキャンバスのサイズを回転後のサイズに合わせる
+        const rotatedTempCanvas = document.createElement('canvas');
+        rotatedTempCanvas.width = rotatedWidth;
+        rotatedTempCanvas.height = rotatedHeight;
+        const rotatedTempCtx = rotatedTempCanvas.getContext('2d');
+
+        // 回転の中心を一時的なキャンバスの中心に移動
+        rotatedTempCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
+        // 回転
+        rotatedTempCtx.rotate(angleRadians);
+        // 元の位置に戻す
+        rotatedTempCtx.translate(-tempCanvas.width / 2, -tempCanvas.height / 2);
+        // 元のキャンバスの内容を回転した一時的なキャンバスに描画
+        rotatedTempCtx.drawImage(tempCanvas, 0, 0);
+
+        // メインキャンバスのサイズを変更
+        canvas.width = rotatedWidth;
+        canvas.height = rotatedHeight;
+        previewCanvas.width = rotatedWidth;
+        previewCanvas.height = rotatedHeight;
+        widthInput.value = rotatedWidth;
+        heightInput.value = rotatedHeight;
+
+        // 回転した一時的なキャンバスの内容をメインキャンバスに描画
+        ctx.drawImage(rotatedTempCanvas, 0, 0);
+
+        // 状態保存
+        saveState();
+        saveLocal();
+    } else {
+        alert("有効な数値を入力してください。");
+    }
+}
 // --- イベントリスナー設定 ---
 canvas.addEventListener('mousedown', startPosition);
 canvas.addEventListener('mousemove', draw);
@@ -889,5 +939,8 @@ scaleBtn.addEventListener('click', () => {
         }
     }
 });
+
+// 回転ボタンのイベントリスナー
+rotateBtn.addEventListener('click', rotateCanvas);
 
 initializeCanvas();
