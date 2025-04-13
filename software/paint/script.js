@@ -50,9 +50,10 @@ const trimBtn = document.getElementById('trimBtn');
 const copyBtn = document.getElementById('copyBtn');
 const cutBtn = document.getElementById('cutBtn');
 const pasteBtn = document.getElementById('pasteBtn');
-const fillCheckbox = document.getElementById('fillCheckbox'); // 追加
+const fillCheckbox = document.getElementById('fillCheckbox');
 const scaleBtn = document.getElementById('scaleBtn');
-const rotateBtn = document.getElementById('rotateBtn'); // 追加: 回転ボタン
+const rotateBtn = document.getElementById('rotateBtn');
+const flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -776,6 +777,29 @@ function rotateCanvas() {
         alert("有効な数値を入力してください。");
     }
 }
+
+function flipHorizontalCanvas() {
+    // 一時的なキャンバスで水平方向に反転
+    const flippedTempCanvas = document.createElement('canvas');
+    flippedTempCanvas.width = canvas.width;
+    flippedTempCanvas.height = canvas.height;
+    const flippedTempCtx = flippedTempCanvas.getContext('2d');
+
+    // 反転
+    flippedTempCtx.scale(-1, 1);
+    flippedTempCtx.drawImage(canvas, -canvas.width, 0);
+
+    // メインキャンバスをクリア
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 反転した一時的なキャンバスの内容をメインキャンバスに描画
+    ctx.drawImage(flippedTempCanvas, 0, 0);
+
+    // 状態保存
+    saveState();
+    saveLocal();
+}
+
+
 // --- イベントリスナー設定 ---
 canvas.addEventListener('mousedown', startPosition);
 canvas.addEventListener('mousemove', draw);
@@ -943,5 +967,6 @@ scaleBtn.addEventListener('click', () => {
 
 // 回転ボタンのイベントリスナー
 rotateBtn.addEventListener('click', rotateCanvas);
+flipHorizontalBtn.addEventListener('click', flipHorizontalCanvas);
 
 initializeCanvas();
