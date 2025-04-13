@@ -7,7 +7,7 @@ const canvasContainer = document.getElementById('canvasContainer');
 let drawing = false;
 let history = [];
 let redoStack = [];
-let currentTool = 'pen'; // 現在のツール ('pen', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select')
+let currentTool = 'pen'; // 現在のツール ('pen', 'marker', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select')
 let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
 let imageToInsert = null; // 挿入する画像オブジェクト
@@ -16,6 +16,9 @@ let selectionEndX, selectionEndY;
 let clipboard = null; // コピーまたはカットされたImageDataを保存
 let originalImageWidth; // 挿入する画像の元の幅
 let originalImageHeight; // 挿入する画像の元の高さ
+// オフスクリーンキャンバス用変数 (strokeモードで使用)
+let offscreenCanvas = null;
+let offscreenCtx = null;
 
 const storageKey = "birdwatcheryt_github_io_software_paint";
 
@@ -24,6 +27,7 @@ const colorPicker = document.getElementById('colorPicker');
 const sizePicker = document.getElementById('sizePicker');
 const alphaPicker = document.getElementById('alphaPicker');
 const penBtn = document.getElementById('penBtn');
+const markerBtn = document.getElementById('markerBtn');
 const lineBtn = document.getElementById('lineBtn');
 const rectBtn = document.getElementById('rectBtn');
 const circleBtn = document.getElementById('circleBtn');
@@ -91,7 +95,8 @@ function initializeCanvas() {
         // ローカルストレージから復元した場合、それを最初の履歴として保存
         history = [{ imageData: initialImageData, width: initialWidth, height: initialHeight }];
     } else {
-        // 何もない状態を最初の履歴として保存 (背景は白とする場合)
+        // 何もない状態を最初の履歴として保存
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 念のためクリア
         history = [{ imageData: canvas.toDataURL(), width: canvas.width, height: canvas.height }]; // 新しい履歴を開始
     }
 
@@ -137,8 +142,9 @@ function restoreState(state) {
         widthInput.value = state.width;
         heightInput.value = state.height;
 
-        // globalAlphaをリセット (前回修正済み)
+        // globalAlphaをリセット
         ctx.globalAlpha = 1.0;
+        ctx.globalCompositeOperation = 'source-over';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
 
@@ -166,7 +172,7 @@ function setActiveTool(toolName) {
     currentTool = toolName;
 
     // ボタンのハイライト処理
-    const buttons = [selectBtn, penBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn];
+    const buttons = [selectBtn, penBtn, markerBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn];
     buttons.forEach(btn => {
         if (btn) { // ボタンが存在するか確認
             btn.classList.remove('active');
@@ -230,15 +236,30 @@ function startPosition(e) {
     const pos = getMousePos(e);
     startX = pos.x;
     startY = pos.y;
+    lastX = startX;
+    lastY = startY;
 
     if (currentTool === 'select') {
         selectionStartX = startX;
         selectionStartY = startY;
-    } else if (currentTool === 'pen' || currentTool === 'eraser') {
-        lastX = startX;
-        lastY = startY;
-        applyContextSettings(ctx);
-        drawPenPoint(ctx, startX, startY);
+    } else if (currentTool === 'pen') {
+        // オフスクリーンキャンバス準備
+        if (!offscreenCanvas) {
+            offscreenCanvas = document.createElement('canvas');
+        }
+        offscreenCanvas.width = canvas.width;
+        offscreenCanvas.height = canvas.height;
+        offscreenCtx = offscreenCanvas.getContext('2d');
+        offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+        applyContextSettings(offscreenCtx); // オフスクリーンコンテキストに設定適用
+        drawPenPoint(offscreenCtx, startX, startY); // offscreenCtx に描画
+        updatePenPreview();
+    } else if (currentTool === 'marker') {
+        applyContextSettings(ctx); // メインコンテキストに設定適用
+        drawPenPoint(ctx, startX, startY); // 開始点に点を描画
+    } else if (currentTool === 'eraser') {
+        applyContextSettings(ctx); // メインコンテキストに設定適用
+        drawPenPoint(ctx, startX, startY); // 消しゴムは常にarcFill方式で点を描画
     } else if (currentTool === 'text') {
         // テキスト入力処理
         const text = prompt("テキストを入力してください:", "");
@@ -262,25 +283,47 @@ function startPosition(e) {
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.putImageData(clipboard, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0; // 貼り付けは不透明
         ctx.drawImage(tempCanvas, startX, startY);
         saveState();
         saveLocal();
+        drawing = false; // 貼り付けもドラッグではない
     } else {
         // 図形ツールの場合、プレビュー設定
         applyContextSettings(previewCtx);
     }
 }
 
+// ペンのプレビュー更新関数
+function updatePenPreview() {
+    // プレビューキャンバスをクリア
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+    if (offscreenCanvas) { // オフスクリーンが存在すれば
+        // プレビューにはユーザー指定の透明度を適用
+        previewCtx.globalAlpha = parseFloat(alphaPicker.value);
+        // 合成モードもメインキャンバス合成時と同じものを適用
+        previewCtx.globalCompositeOperation = 'source-over';
+        // オフスクリーン内容をプレビューに描画
+        previewCtx.drawImage(offscreenCanvas, 0, 0);
+    }
+}
 // コンテキストに現在の設定を適用するヘルパー関数
 function applyContextSettings(context) {
     context.lineWidth = sizePicker.value;
     context.lineCap = 'round';
     context.lineJoin = 'round';
 
-    if (currentTool === 'eraser' && context === ctx) { // メインキャンバスでの消しゴム処理
+    // オフスクリーンキャンバス(offscreenCtx)の場合は常にsource-over
+    if (context === offscreenCtx) {
+        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = parseFloat(alphaPicker.value);
+        context.strokeStyle = colorPicker.value;
+        context.fillStyle = colorPicker.value;
+    } else if (currentTool === 'eraser' && context === ctx) {
+        // メインキャンバス(ctx)の場合のみ消しゴム処理を考慮
         context.globalCompositeOperation = 'destination-out';
         context.globalAlpha = 1.0; // 消しゴムは常に不透明
-        // strokeStyleはdestination-outでは効果がないが一応設定
         context.strokeStyle = 'rgba(0,0,0,1)';
         context.fillStyle = 'rgba(0,0,0,1)';
     } else {// 通常描画処理
@@ -289,45 +332,29 @@ function applyContextSettings(context) {
         context.strokeStyle = colorPicker.value;
         context.fillStyle = colorPicker.value; // fill用にも色を設定
         context.textAlign = 'start'; // テキストの揃えを左上に設定
+        context.textBaseline = 'top'; // テキストのベースラインを上端に設定
     }
 }
 
-// 点を描画する関数 (ペン/消しゴムの開始点・クリック時)
+// 点を描画する関数 (ペン/消しゴムの開始点・クリック時 - arcFillメソッド用)
 function drawPenPoint(context, x, y) {
+    // applyContextSettings が事前に呼び出されている前提
     context.beginPath();
     context.arc(x, y, context.lineWidth / 2, 0, Math.PI * 2);
     context.fill(); // fillStyleが適用される
 }
 
-// ペン/消しゴムの描画処理を最初の実装（補間 + arc/fill）
-function drawPenLine(e) {
+// ペン/消しゴムの描画処理
+function drawPenLine(e, context, step = 1) {
     if (!drawing) return;
     const pos = getMousePos(e);
     const currentX = pos.x;
     const currentY = pos.y;
 
-    // --- 設定を ctx に適用 ---
-    ctx.lineWidth = sizePicker.value;
-    ctx.lineCap = 'round'; // 丸い先端
-
-    // 消しゴムかペンかで設定を分ける
-    if (currentTool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out'; // 消しゴム効果
-        ctx.globalAlpha = 1.0; // 消しゴムは常に不透明
-        // destination-out では色は影響しないが、念のため設定
-        ctx.fillStyle = 'rgba(0,0,0,1)';
-    } else {
-        ctx.globalCompositeOperation = 'source-over'; // 通常描画
-        ctx.globalAlpha = parseFloat(alphaPicker.value); // 透明度を適用
-        ctx.fillStyle = colorPicker.value; // fillStyle に描画色を設定
-    }
-
     // --- 座標補間と描画 (最初の実装から流用) ---
     const dx = currentX - lastX;
     const dy = currentY - lastY;
     const distance = Math.hypot(dx, dy);
-    // stepの値が小さいほど滑らかになるが、処理負荷が上がる可能性がある
-    const step = 1;
 
     for (let i = 0; i <= distance; i += step) {
         // ゼロ除算を避ける
@@ -336,10 +363,10 @@ function drawPenLine(e) {
         const y = lastY + dy * t;
 
         // 各補間点に円を描画して塗りつぶす
-        ctx.beginPath();
+        context.beginPath();
         // 半径は線の太さ(lineWidth)の半分
-        ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fill(); // fill() で描画する
+        context.arc(x, y, context.lineWidth / 2, 0, Math.PI * 2);
+        context.fill(); // fill() で描画する (fillStyleとglobalAlphaが使われる)
     }
 
     // 次の描画のために座標を更新
@@ -350,7 +377,7 @@ function drawPenLine(e) {
 function drawShape(context, tool, startX, startY, endX, endY, e) {
     context.beginPath();
     if (tool === 'line') {
-        if (e.shiftKey) {
+        if (e.shiftKey) { // 水平・垂直・45度線
             const deltaX = endX - startX;
             const deltaY = endY - startY;
             const angleRadians = Math.atan2(deltaY, deltaX);
@@ -368,14 +395,15 @@ function drawShape(context, tool, startX, startY, endX, endY, e) {
         }
         context.stroke();
     } else if (tool === 'rect') {
-        if (e.shiftKey) {
-            const side = Math.max(Math.abs(endX - startX), Math.abs(endY - startY));
-            const width = Math.sign(endX - startX) * side;
-            const height = Math.sign(endY - startY) * side;
-            context.rect(startX, startY, width, height);
-        } else {
-            context.rect(startX, startY, endX - startX, endY - startY);
+        let width = endX - startX;
+        let height = endY - startY;
+        if (e.shiftKey) { // 正方形
+            const side = Math.max(Math.abs(width), Math.abs(height));
+            width = Math.sign(width) * side;
+            height = Math.sign(height) * side;
         }
+        context.rect(startX, startY, width, height);
+
         if (fillCheckbox.checked) {
             context.fill(); // 塗りつぶし
         } else {
@@ -384,15 +412,15 @@ function drawShape(context, tool, startX, startY, endX, endY, e) {
     } else if (tool === 'circle') {
         const centerX = startX + (endX - startX) / 2;
         const centerY = startY + (endY - startY) / 2;
-        const radiusX = Math.abs(endX - startX) / 2;
-        const radiusY = Math.abs(endY - startY) / 2;
+        let radiusX = Math.abs(endX - startX) / 2;
+        let radiusY = Math.abs(endY - startY) / 2;
 
-        if (e.shiftKey) {
+        if (e.shiftKey) { // 正円
             const radius = Math.max(radiusX, radiusY);
-            context.ellipse(centerX, centerY, radius, radius, 0, 0, 2 * Math.PI);
-        } else {
-            context.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+            radiusX = radius;
+            radiusY = radius;
         }
+        context.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
         if (fillCheckbox.checked) {
             context.fill(); // 塗りつぶし
         } else {
@@ -452,8 +480,10 @@ function drawSelectionPreview(e) {
     const width = Math.abs(selectionEndX - selectionStartX);
     const height = Math.abs(selectionEndY - selectionStartY);
 
-    previewCtx.strokeStyle = '#000';
-    previewCtx.lineWidth = 1;
+    previewCtx.strokeStyle = '#000'; // 選択範囲の枠線は黒
+    previewCtx.lineWidth = 1; // 選択範囲の枠線は1px
+    previewCtx.globalAlpha = 1.0; // 選択範囲の枠線は不透明
+    previewCtx.globalCompositeOperation = 'source-over'; // 通常描画モード
     // 破線を設定
     previewCtx.setLineDash([5, 5]); // [線の長さ, 空白の長さ]
     previewCtx.strokeRect(x, y, width, height);
@@ -461,19 +491,20 @@ function drawSelectionPreview(e) {
     previewCtx.setLineDash([]);
 }
 
-function drawPastePreview(e) {
-    if (!clipboard) return;
-    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-    const pos = getMousePos(e);
-    previewCtx.putImageData(clipboard, pos.x, pos.y);
-}
-
 // mousemove イベントハンドラ
 function draw(e) {
     if (!drawing) return;
 
-    if (currentTool === 'pen' || currentTool === 'eraser') {
-        drawPenLine(e);
+    if (currentTool === 'pen') {
+        applyContextSettings(offscreenCtx); // オフスクリーンコンテキストに設定適用
+        drawPenLine(e, offscreenCtx);
+        updatePenPreview();
+    } else if (currentTool === 'marker') {
+        const step = Math.max(1, ctx.lineWidth / 10);
+        drawPenLine(e, ctx, step);
+    } else if (currentTool === 'eraser') {
+        // 消しゴムは常にarcFill方式
+        drawPenLine(e, ctx);
     } else if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle' || (currentTool === 'image' && imageToInsert)) {
         drawShapePreview(e);
     } else if (currentTool === 'select') {
@@ -486,7 +517,7 @@ function endPosition(e) {
     // mouseoutイベントの場合、buttonプロパティがないことがあるので drawing フラグのみチェック
     if (!drawing) return;
     // buttonプロパティが存在し、かつそれが左ボタン(0)でない場合は無視 (mouseout対策)
-    if (e.button !== undefined && e.button !== 0) return;
+    if (e.button !== undefined && e.button !== 0 && !(e.type === 'touchend')) return; // touchendも考慮
 
     drawing = false;
 
@@ -494,6 +525,7 @@ function endPosition(e) {
     // mouseoutで座標がcanvas外になる場合があるため、範囲内に収める（任意）
     const endX = Math.max(0, Math.min(pos.x, canvas.width));
     const endY = Math.max(0, Math.min(pos.y, canvas.height));
+    let actuallyDrew = false; // 実際に描画が行われたかのフラグ
 
     if (currentTool === 'select') {
         selectionEndX = endX;
@@ -513,11 +545,12 @@ function endPosition(e) {
             previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         }
         return; // 選択モードの場合はここで終了
+    } else if (currentTool === 'paste') {
+        // 貼り付けはstartPositionで行われるため、ここでは何もしない
+        return;
     }
 
-    let actuallyDrew = false; // 実際に描画が行われたかのフラグ
-
-    // 図形をメインキャンバスに確定描画
+    // 図形や画像をメインキャンバスに確定描画
     if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         applyContextSettings(ctx);
@@ -530,9 +563,35 @@ function endPosition(e) {
             drawImagePreviewOrFinal(ctx, startX, startY, endX, endY, e, imageToInsert);
             actuallyDrew = true;
         }
-    } else if (currentTool === 'pen' || currentTool === 'eraser') {
-        actuallyDrew = true;
+    } else if (currentTool === 'pen') {
+        // オフスクリーンキャンバスの内容をメインキャンバスに転写
+        if (offscreenCanvas) {
+            // メインキャンバスにオフスクリーン内容を合成
+            ctx.globalAlpha = parseFloat(alphaPicker.value); // 透明度適用
+            ctx.globalCompositeOperation = 'source-over'; // 合成モード適用
+            ctx.drawImage(offscreenCanvas, 0, 0); // 合成！
+
+            // 後処理
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height); // プレビュー消去
+            // オフスクリーンもクリアしておく (次の描画のため)
+            if (offscreenCtx) {
+                offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+            }
+            actuallyDrew = true;
+        }
+    } else if (currentTool === 'marker') {
+        // mousemove中に描画済み
+        if (lastX !== null) actuallyDrew = true;
+    } else if (currentTool === 'eraser') {
+        // 消しゴムはmousemove中に描画済み
+        if (lastX !== null) actuallyDrew = true;
     }
+    // ペン/消しゴムの後処理
+    lastX = null;
+    lastY = null;
+    // 描画後のコンテキスト設定をリセット（特にglobalCompositeOperation）
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
 
     // 描画後の状態をローカルストレージに保存
     saveLocal();
@@ -542,7 +601,8 @@ function endPosition(e) {
         saveState();
     }
 }
-// 画像を読み込んでキャンバスに描画する関数
+
+// 画像を読み込んでキャンバスに描画する関数 (ファイルを開く)
 function loadImageToCanvas(event) {
     const file = event.target.files[0];
     if (file) {
@@ -710,6 +770,7 @@ canvas.addEventListener('touchend', (e) => {
 // ツール選択ボタン
 selectBtn.addEventListener('click', () => setActiveTool('select'));
 penBtn.addEventListener('click', () => setActiveTool('pen'));
+markerBtn.addEventListener('click', () => setActiveTool('marker'));
 lineBtn.addEventListener('click', () => setActiveTool('line'));
 rectBtn.addEventListener('click', () => setActiveTool('rect'));
 circleBtn.addEventListener('click', () => setActiveTool('circle'));
