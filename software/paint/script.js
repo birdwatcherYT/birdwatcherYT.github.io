@@ -623,6 +623,7 @@ function loadImageToCanvas(event) {
             img.src = e.target.result;
         }
         reader.readAsDataURL(file);
+        imageUpload.value = '';
     }
 }
 
