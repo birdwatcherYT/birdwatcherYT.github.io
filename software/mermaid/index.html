@@ -50,8 +50,17 @@
         <textarea id="input" placeholder="type mermaid code"></textarea>
         <div id="preview"></div>
     </div>
+    <div style="margin: 10px 0;">
+        <select id="formatSelect">
+            <option value="png">PNG(透過)</option>
+            <option value="png-bg">PNG(不透明)</option>
+            <option value="svg">SVG</option>
+        </select>
+        <button id="saveImageBtn">保存</button>
+    </div>
     <p>Mermaid.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
     <script>
         const input = document.getElementById('input');
         function rendering(mermaidCode) {
@@ -93,6 +102,48 @@
         });
 
         rendering(input.value);
+
+        // 画像保存機能
+        document.getElementById('saveImageBtn').addEventListener('click', () => {
+            const preview = document.getElementById('preview');
+            const mermaidDiv = preview.querySelector('.mermaid');
+            const format = document.getElementById('formatSelect').value;
+            
+            if (!mermaidDiv) {
+                alert('表示中のMermaid図がありません');
+                return;
+            }
+
+            let savePromise;
+            let extension;
+            const originalBg = mermaidDiv.style.backgroundColor;
+
+            switch(format) {
+                case 'svg':
+                    savePromise = domtoimage.toSvg(mermaidDiv);
+                    extension = 'svg';
+                    break;
+                case 'png-bg':
+                    mermaidDiv.style.backgroundColor = 'white';
+                case 'png':
+                    savePromise = domtoimage.toPng(mermaidDiv);
+                    extension = 'png';
+            }
+
+
+            savePromise
+                .then(function (dataUrl) {
+                    const link = document.createElement('a');
+                    link.download = `mermaid-diagram.${extension}`;
+                    link.href = dataUrl;
+                    link.click();
+                    mermaidDiv.style.backgroundColor = originalBg;
+                })
+                .catch(function (error) {
+                    console.error('画像保存エラー:', error);
+                    alert('画像の保存に失敗しました');
+                });
+        });
     </script>
     <footer></footer>
 </body>
