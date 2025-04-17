@@ -62,8 +62,17 @@
         <textarea id="input" placeholder="type markdown code"></textarea>
         <div id="preview"></div>
     </div>
+    <div style="margin: 10px 0;">
+        <select id="formatSelect">
+            <option value="png">PNG(透過)</option>
+            <option value="png-bg">PNG(不透明)</option>
+            <option value="svg">SVG</option>
+        </select>
+        <button id="saveImageBtn">保存</button>
+    </div>
     <p>Marked.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
         const input = document.getElementById('input');
@@ -115,6 +124,46 @@ int a; // comment
         });
 
         rendering(input.value);
+
+        // 画像保存機能
+        document.getElementById('saveImageBtn').addEventListener('click', () => {
+            const preview = document.getElementById('preview');
+            const format = document.getElementById('formatSelect').value;
+            
+            if (!preview.innerHTML) {
+                alert('表示中のMarkdownがありません');
+                return;
+            }
+
+            let savePromise;
+            let extension;
+            const originalBg = preview.style.backgroundColor;
+
+            switch(format) {
+                case 'svg':
+                    savePromise = domtoimage.toSvg(preview);
+                    extension = 'svg';
+                    break;
+                case 'png-bg':
+                    preview.style.backgroundColor = 'white';
+                case 'png':
+                    savePromise = domtoimage.toPng(preview);
+                    extension = 'png';
+            }
+
+            savePromise
+                .then(function (dataUrl) {
+                    const link = document.createElement('a');
+                    link.download = `markdown-preview.${extension}`;
+                    link.href = dataUrl;
+                    link.click();
+                    preview.style.backgroundColor = originalBg;
+                })
+                .catch(function (error) {
+                    console.error('画像保存エラー:', error);
+                    alert('画像の保存に失敗しました');
+                });
+        });
     </script>
     <footer></footer>
 </body>
