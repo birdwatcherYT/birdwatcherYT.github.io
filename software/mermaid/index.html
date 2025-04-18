@@ -36,6 +36,19 @@
             tab-size: 4;
             /* Tab文字の幅をスペース4文字分として表示 */
         }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        #scaleValue {
+            width: 100px;
+        }
+
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -50,7 +63,9 @@
         <textarea id="input" placeholder="type mermaid code"></textarea>
         <div id="preview"></div>
     </div>
-    <div style="margin: 10px 0;">
+    <div class="controls">
+        <label for="scaleValue"> 表示・保存倍率:</label>
+        <input type="number" id="scaleValue" min="0.1" step="0.1" value="1">
         <select id="formatSelect">
             <option value="svg">SVG</option>
             <option value="png">PNG(透過)</option>
@@ -58,15 +73,29 @@
         </select>
         <button id="saveImageBtn">保存</button>
     </div>
-    <p><a href="https://mermaid.js.org/intro/" target="_blank">Mermaid.js</a>を使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+    <p><a href="https://mermaid.js.org/intro/"
+            target="_blank">Mermaid.js</a>を使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
     <script>
         const input = document.getElementById('input');
+        const scaleValue = document.getElementById('scaleValue');
+        const preview = document.getElementById('preview'); // Get preview element reference
+
+        // Function to apply scale transform to the mermaid diagram
+        function applyScale() {
+            const scale = parseFloat(scaleValue.value) || 1;
+            const mermaidDiv = preview.querySelector('.mermaid');
+            if (mermaidDiv) {
+                mermaidDiv.style.transform = `scale(${scale})`;
+                mermaidDiv.style.transformOrigin = 'top left';
+            }
+        }
+
         function rendering(mermaidCode) {
-            const preview = document.getElementById('preview');
             preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
             mermaid.contentLoaded(); // Mermaid.jsで描画
+            applyScale(); // Apply scale after rendering
         }
         const storageKey = "birdwatcheryt_github_io_software_marmaid";
         const defaultValue = "graph LR\n\ta-->b\n";
@@ -75,7 +104,7 @@
         } catch (error) {
             input.value = defaultValue;
         };
-        function saveLocal(){
+        function saveLocal() {
             try {
                 localStorage.setItem(storageKey, input.value);
             } catch (error) { };
@@ -101,14 +130,17 @@
             }
         });
 
-        rendering(input.value);
+        rendering(input.value); // Initial rendering
+
+        // Add event listener for scale input changes
+        scaleValue.addEventListener('input', applyScale);
 
         // 画像保存機能
         document.getElementById('saveImageBtn').addEventListener('click', () => {
             const preview = document.getElementById('preview');
             const mermaidDiv = preview.querySelector('.mermaid');
             const format = document.getElementById('formatSelect').value;
-            
+
             if (!mermaidDiv) {
                 alert('表示中のMermaid図がありません');
                 return;
@@ -117,17 +149,41 @@
             let savePromise;
             let extension;
             const originalBg = mermaidDiv.style.backgroundColor;
+            const scale = parseFloat(scaleValue.value);
+            const rect = mermaidDiv.getBoundingClientRect();
 
-            switch(format) {
+            // Calculate the target dimensions
+            const targetWidth = Math.round(rect.width);
+            const targetHeight = Math.round(rect.height);
+
+            const options = {
+                width: targetWidth,
+                height: targetHeight,
+                style: {
+                    // Apply scale transform to the node during capture
+                    'transform': `scale(${scale})`,
+                    'transform-origin': 'top left',
+                    // Ensure the base dimensions are set correctly for the scaling context
+                    'width': `${rect.width}px`,
+                    'height': `${rect.height}px`,
+                    // Optional: Ensure no clipping from the element itself
+                    'overflow': 'visible'
+                }
+            };
+
+
+            switch (format) {
                 case 'svg':
-                    savePromise = domtoimage.toSvg(mermaidDiv);
+                    savePromise = domtoimage.toSvg(mermaidDiv, options);
                     extension = 'svg';
                     break;
                 case 'png-bg':
                     mermaidDiv.style.backgroundColor = 'white';
+                // Fall through
                 case 'png':
-                    savePromise = domtoimage.toPng(mermaidDiv);
+                    savePromise = domtoimage.toPng(mermaidDiv, options);
                     extension = 'png';
+                    break;
             }
 
 
