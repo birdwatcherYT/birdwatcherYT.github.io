@@ -20,7 +20,6 @@
             font-family: monospace;
             /* #inputが縮まないように */
             flex-shrink: 0;
-            tab-size: 4;
         }
 
         #preview {
@@ -33,27 +32,9 @@
             flex-grow: 1;
         }
 
-        #preview .mermaid {
-            transform-origin: top left;
-            display: inline-block;
-        }
-
-        #preview .mermaid svg {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 15px;
-            margin: 10px 0;
-        }
-
-        #scaleValue {
-            width: 100px;
+        textarea {
+            tab-size: 4;
+            /* Tab文字の幅をスペース4文字分として表示 */
         }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
@@ -69,10 +50,7 @@
         <textarea id="input" placeholder="type mermaid code"></textarea>
         <div id="preview"></div>
     </div>
-
-    <div class="controls">
-        <label for="scaleValue"> 表示・保存倍率:</label>
-        <input type="number" id="scaleValue" min="0.1" step="0.1" value="1">
+    <div style="margin: 10px 0;">
         <select id="formatSelect">
             <option value="svg">SVG</option>
             <option value="png">PNG(透過)</option>
@@ -80,185 +58,91 @@
         </select>
         <button id="saveImageBtn">保存</button>
     </div>
-
-    <p><a href="https://mermaid.js.org/intro/"
-            target="_blank">Mermaid.js</a>を使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+    <p><a href="https://mermaid.js.org/intro/" target="_blank">Mermaid.js</a>を使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
-
     <script>
-        // --- DOM Elements ---
         const input = document.getElementById('input');
-        const preview = document.getElementById('preview');
-        const scaleValue = document.getElementById('scaleValue');
+        function rendering(mermaidCode) {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
+            mermaid.contentLoaded(); // Mermaid.jsで描画
+        }
         const storageKey = "birdwatcheryt_github_io_software_marmaid";
         const defaultValue = "graph LR\n\ta-->b\n";
-
-        // --- Mermaid Rendering ---
-        mermaid.initialize({ startOnLoad: false });
-
-        async function renderMermaid(mermaidCode) {
-            // Clear previous content and errors
-            preview.innerHTML = '';
-            const container = document.createElement('div');
-            container.className = 'mermaid'; // Mermaid will look for this class
-            container.textContent = mermaidCode; // Put the code inside
-            preview.appendChild(container);
-
+        try {
+            input.value = localStorage.getItem(storageKey) || defaultValue;
+        } catch (error) {
+            input.value = defaultValue;
+        };
+        function saveLocal(){
             try {
-                await mermaid.run({
-                    nodes: [container], // Pass the container element
-                    suppressErrors: false, // Show errors in console
-                });
-                applyScale();
-            } catch (error) {
-                console.error("Mermaid rendering error:", error);
-                preview.innerHTML = `<div class="mermaid-error" style="color: red; padding: 10px; border: 1px solid red;">Error rendering diagram:<br><pre>${error.message || error}</pre></div>`;
-            }
+                localStorage.setItem(storageKey, input.value);
+            } catch (error) { };
         }
-
-        // --- Scaling ---
-        function applyScale() {
-            const scale = scaleValue.value;
-            const mermaidContainer = preview.querySelector('.mermaid'); // Find the container
-            if (mermaidContainer) {
-                mermaidContainer.style.transform = `scale(${scale})`;
-            }
-        }
-
-        scaleValue.addEventListener('input', applyScale);
-
-        // --- Local Storage ---
-        function saveLocal() {
-            try {
-                if (input.value.trim() === "") {
-                    localStorage.removeItem(storageKey);
-                } else {
-                    localStorage.setItem(storageKey, input.value);
-                }
-            } catch (error) {
-                console.warn("Could not save to localStorage:", error);
-            }
-        }
-
-        function loadLocal() {
-            try {
-                input.value = localStorage.getItem(storageKey) || defaultValue;
-            } catch (error) {
-                console.warn("Could not load from localStorage:", error);
-                input.value = defaultValue;
-            };
-        }
-
-        // --- Event Listeners for Input ---
-        input.addEventListener('input', async () => {
-            await renderMermaid(input.value);
+        input.addEventListener('input', (event) => {
+            rendering(input.value);
             saveLocal();
         });
-
-        input.addEventListener('keydown', async (event) => {
+        input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
-                event.preventDefault();
+                event.preventDefault(); // デフォルトの動作をキャンセル
 
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
+
                 // Tab文字を挿入
                 input.value = input.value.substring(0, start) + '\t' + input.value.substring(end);
 
                 // カーソル位置を調整
                 input.selectionStart = input.selectionEnd = start + 1;
-
-                // Re-render the diagram
-                await renderMermaid(input.value);
+                rendering(input.value);
                 saveLocal();
             }
         });
 
-        // --- Image Saving Logic ---
-        document.getElementById('saveImageBtn').addEventListener('click', async () => {
+        rendering(input.value);
+
+        // 画像保存機能
+        document.getElementById('saveImageBtn').addEventListener('click', () => {
+            const preview = document.getElementById('preview');
             const mermaidDiv = preview.querySelector('.mermaid');
             const format = document.getElementById('formatSelect').value;
-            const scale = parseFloat(scaleValue.value);
-
-            // Ensure there's an SVG rendered inside the container
-            const svgElement = mermaidDiv ? mermaidDiv.querySelector('svg') : null;
-            if (!svgElement) {
-                alert('表示中のMermaid図がありません (SVGが見つかりません)');
+            
+            if (!mermaidDiv) {
+                alert('表示中のMermaid図がありません');
                 return;
             }
-
-            const nodeToCapture = mermaidDiv;
-            let baseWidth, baseHeight;
-            try {
-                const svgBBox = svgElement.getBBox();
-                baseWidth = svgBBox.width;
-                baseHeight = svgBBox.height;
-            } catch (e) {
-                console.warn("Could not get SVG BBox, using getBoundingClientRect as fallback.", e);
-                const svgRect = svgElement.getBoundingClientRect(); // Size as currently rendered
-                const currentScale = parseFloat(mermaidDiv.style.transform.replace(/scale\(/, '').replace(')', '')) || 1;
-                baseWidth = svgRect.width / currentScale;
-                baseHeight = svgRect.height / currentScale;
-            }
-
-            if (!baseWidth || !baseHeight) {
-                alert('図のサイズの取得に失敗しました。');
-                return;
-            }
-
-            const buffer = 16;
-            const targetWidth = Math.round((baseWidth + buffer) * scale);
-            const targetHeight = Math.round((baseHeight + buffer) * scale);
-
-            const options = {
-                width: targetWidth,
-                height: targetHeight,
-                style: {
-                    'transform': `scale(${scale})`,
-                    'transform-origin': 'top left',
-                }
-            };
 
             let savePromise;
             let extension;
+            const originalBg = mermaidDiv.style.backgroundColor;
 
-            try {
-                switch (format) {
-                    case 'svg':
-                        // Capture SVG with scale transform applied
-                        savePromise = domtoimage.toSvg(nodeToCapture, options);
-                        extension = 'svg';
-                        break;
-                    case 'png-bg':
-                        // PNG with white background
-                        options.style['background-color'] = 'white';
-                        savePromise = domtoimage.toPng(nodeToCapture, options);
-                        extension = 'png';
-                        break;
-                    case 'png':
-                        // PNG with transparent background
-                        options.style['background-color'] = 'transparent';
-                        savePromise = domtoimage.toPng(nodeToCapture, options);
-                        extension = 'png';
-                        break;
-                }
-
-                const dataUrl = await savePromise;
-                const link = document.createElement('a');
-                link.download = `mermaid-diagram.${extension}`;
-                link.href = dataUrl;
-                link.click(); // Trigger download
-            } catch (error) {
-                console.error('画像保存エラー (dom-to-image):', error);
-                alert(`画像の保存に失敗しました: ${error.message}`);
+            switch(format) {
+                case 'svg':
+                    savePromise = domtoimage.toSvg(mermaidDiv);
+                    extension = 'svg';
+                    break;
+                case 'png-bg':
+                    mermaidDiv.style.backgroundColor = 'white';
+                case 'png':
+                    savePromise = domtoimage.toPng(mermaidDiv);
+                    extension = 'png';
             }
-        });
 
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            loadLocal();
-            await renderMermaid(input.value);
-            applyScale();
+
+            savePromise
+                .then(function (dataUrl) {
+                    const link = document.createElement('a');
+                    link.download = `mermaid-diagram.${extension}`;
+                    link.href = dataUrl;
+                    link.click();
+                    mermaidDiv.style.backgroundColor = originalBg;
+                })
+                .catch(function (error) {
+                    console.error('画像保存エラー:', error);
+                    alert('画像の保存に失敗しました');
+                });
         });
     </script>
     <footer></footer>
