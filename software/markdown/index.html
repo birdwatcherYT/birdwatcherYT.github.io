@@ -47,6 +47,19 @@
             tab-size: 4;
             /* Tab文字の幅をスペース4文字分として表示 */
         }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+
+        #scaleValue {
+            width: 100px;
+        }
+
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -62,7 +75,9 @@
         <textarea id="input" placeholder="type markdown code"></textarea>
         <div id="preview"></div>
     </div>
-    <div style="margin: 10px 0;">
+    <div class="controls">
+        <label for="scaleValue"> 表示・保存倍率:</label>
+        <input type="number" id="scaleValue" min="0.1" step="0.1" value="1">
         <select id="formatSelect">
             <option value="svg">SVG</option>
             <option value="png">PNG(透過)</option>
@@ -76,11 +91,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
         const input = document.getElementById('input');
+        const scaleValue = document.getElementById('scaleValue');
+        const preview = document.getElementById('preview'); // Get preview element reference
+
+        // Function to apply scale transform to the content inside preview
+        function applyScale() {
+            const scale = parseFloat(scaleValue.value) || 1;
+            const markdownContent = preview.querySelector('.markdown-content');
+            if (markdownContent) {
+                markdownContent.style.transform = `scale(${scale})`;
+                markdownContent.style.transformOrigin = 'top left';
+            }
+        }
+
         function rendering(markdownCode) {
             const preview = document.getElementById('preview');
+            // Create a div to contain markdown content for scaling
+            preview.innerHTML = '<div class="markdown-content"></div>';
+            const markdownContent = preview.querySelector('.markdown-content');
             const html = marked.parse(markdownCode);
-            preview.innerHTML = html;
+            markdownContent.innerHTML = html;
             hljs.highlightAll();
+            applyScale(); // Apply scale after rendering
         }
         const storageKey = "birdwatcheryt_github_io_software_markdown";
         const defaultValue = `# Example
@@ -97,7 +129,7 @@ int a; // comment
         } catch (error) {
             input.value = defaultValue;
         };
-        function saveLocal(){
+        function saveLocal() {
             try {
                 localStorage.setItem(storageKey, input.value);
             } catch (error) { };
@@ -125,12 +157,16 @@ int a; // comment
 
         rendering(input.value);
 
+        // Add event listener for scale input changes
+        scaleValue.addEventListener('input', applyScale);
+
         // 画像保存機能
         document.getElementById('saveImageBtn').addEventListener('click', () => {
             const preview = document.getElementById('preview');
+            const markdownDiv = preview.querySelector('.markdown-content');
             const format = document.getElementById('formatSelect').value;
-            
-            if (!preview.innerHTML) {
+
+            if (!markdownDiv) {
                 alert('表示中のMarkdownがありません');
                 return;
             }
@@ -138,18 +174,43 @@ int a; // comment
             let savePromise;
             let extension;
             const originalBg = preview.style.backgroundColor;
+            const scale = parseFloat(scaleValue.value);
+            const rect = markdownDiv.getBoundingClientRect();
 
-            switch(format) {
+            // Calculate the target dimensions
+            const targetWidth = Math.round(rect.width);
+            const targetHeight = Math.round(rect.height);
+
+            const options = {
+                width: targetWidth,
+                height: targetHeight,
+                style: {
+                    // Apply scale transform to the node during capture
+                    'transform': `scale(${scale})`,
+                    'transform-origin': 'top left',
+                    // Ensure the base dimensions are set correctly for the scaling context
+                    'width': `${rect.width}px`,
+                    'height': `${rect.height}px`,
+                    // Optional: Ensure no clipping from the element itself
+                    'overflow': 'visible'
+                }
+            };
+
+
+            switch (format) {
                 case 'svg':
-                    savePromise = domtoimage.toSvg(preview);
+                    savePromise = domtoimage.toSvg(markdownDiv, options);
                     extension = 'svg';
                     break;
                 case 'png-bg':
-                    preview.style.backgroundColor = 'white';
+                    markdownDiv.style.backgroundColor = 'white';
+                // Fall through
                 case 'png':
-                    savePromise = domtoimage.toPng(preview);
+                    savePromise = domtoimage.toPng(markdownDiv, options);
                     extension = 'png';
+                    break;
             }
+
 
             savePromise
                 .then(function (dataUrl) {
@@ -157,7 +218,7 @@ int a; // comment
                     link.download = `markdown-preview.${extension}`;
                     link.href = dataUrl;
                     link.click();
-                    preview.style.backgroundColor = originalBg;
+                    markdownDiv.style.backgroundColor = originalBg;
                 })
                 .catch(function (error) {
                     console.error('画像保存エラー:', error);
