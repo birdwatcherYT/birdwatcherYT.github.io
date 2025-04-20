@@ -217,17 +217,10 @@ json.dumps(__pyodide_result)
 
 		input.addEventListener('keydown', (event) => {
 			if (event.key === 'Tab') {
-				event.preventDefault(); // デフォルトの動作をキャンセル
-
-				const start = input.selectionStart;
-				const end = input.selectionEnd;
-
-				// Tab文字を挿入
-				input.value = input.value.substring(0, start) + '\t' + input.value.substring(end);
-
-				// カーソル位置を調整
-				input.selectionStart = input.selectionEnd = start + 1;
-				saveLocal();
+				event.preventDefault(); // Prevent default Tab behavior (changing focus)
+				// Use execCommand to insert the tab character, preserving undo history
+				document.execCommand('insertText', false, '\t');
+				// The 'input' event listener will automatically handle saving
 			}
 		});
 
