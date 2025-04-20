@@ -49,6 +49,9 @@
             width: 100px;
         }
 
+        .error {
+            color: red;
+        }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -94,8 +97,12 @@
 
         function rendering(mermaidCode) {
             preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
-            mermaid.contentLoaded(); // Mermaid.jsで描画
-            applyScale(); // Apply scale after rendering
+            mermaid.init({}, ".mermaid").then(() => {
+                applyScale();
+            }).catch(error => {
+                console.log(error);
+                preview.innerHTML = `<pre class="error">${error.error}</pre>`;
+            });
         }
         const storageKey = "birdwatcheryt_github_io_software_marmaid";
         const defaultValue = "graph LR\n\ta-->b\n";
