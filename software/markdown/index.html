@@ -84,6 +84,8 @@
             <option value="png-bg">PNG(不透明)</option>
         </select>
         <button id="saveImageBtn">保存</button>
+        <input type="checkbox" id="tabAsSpace">
+        <label for="tabAsSpace">Tab as 4 spaces</label>
     </div>
     <p>Marked.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -92,7 +94,8 @@
     <script>
         const input = document.getElementById('input');
         const scaleValue = document.getElementById('scaleValue');
-        const preview = document.getElementById('preview'); // Get preview element reference
+        const preview = document.getElementById('preview');
+        const tabAsSpaceCheckbox = document.getElementById('tabAsSpace');
 
         // Function to apply scale transform to the content inside preview
         function applyScale() {
@@ -141,9 +144,8 @@ int a; // comment
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
                 event.preventDefault(); // Prevent default Tab behavior (changing focus)
-                // Use execCommand to insert the tab character, preserving undo history
-                document.execCommand('insertText', false, '\t');
-                // The 'input' event listener will automatically handle rendering and saving
+                const textToInsert = tabAsSpaceCheckbox.checked ? '    ' : '\t';
+                document.execCommand('insertText', false, textToInsert);
             }
         });
 
