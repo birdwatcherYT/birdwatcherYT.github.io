@@ -7,7 +7,7 @@ const canvasContainer = document.getElementById('canvasContainer');
 let drawing = false;
 let history = [];
 let redoStack = [];
-let currentTool = 'pen'; // 現在のツール ('pen', 'marker', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select')
+let currentTool = 'pen'; // 現在のツール ('pen', 'marker', 'line', 'rect', 'circle', 'eraser', 'text', 'image', 'select', 'eyedropper')
 let startX, startY; // 描画開始座標
 let lastX = null, lastY = null; // ペンツール用
 let imageToInsert = null; // 挿入する画像オブジェクト
@@ -54,6 +54,7 @@ const fillCheckbox = document.getElementById('fillCheckbox');
 const scaleBtn = document.getElementById('scaleBtn');
 const rotateBtn = document.getElementById('rotateBtn');
 const flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
+const eyedropperBtn = document.getElementById('eyedropperBtn'); // スポイトボタン取得
 
 // --- 初期化処理 ---
 function initializeCanvas() {
@@ -174,7 +175,7 @@ function setActiveTool(toolName) {
     currentTool = toolName;
 
     // ボタンのハイライト処理
-    const buttons = [selectBtn, penBtn, markerBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn];
+    const buttons = [selectBtn, penBtn, markerBtn, lineBtn, rectBtn, circleBtn, eraserBtn, textBtn, imageBtn, pasteBtn, eyedropperBtn]; // スポイトボタン追加
     buttons.forEach(btn => {
         if (btn) { // ボタンが存在するか確認
             btn.classList.remove('active');
@@ -198,7 +199,7 @@ function setActiveTool(toolName) {
     } else if (toolName === 'paste' && clipboard) {
         canvas.style.cursor = 'copy'; // 貼り付けカーソル
     } else {
-        canvas.style.cursor = 'crosshair'; // 画像挿入時のカーソル
+        canvas.style.cursor = 'crosshair'; // デフォルトカーソル
     }
     // 選択ツールが非アクティブになったらプレビューをクリアし、トリミングボタンを無効化
     if (currentTool !== 'select') {
@@ -238,6 +239,22 @@ function startPosition(e) {
     const pos = getMousePos(e);
     startX = pos.x;
     startY = pos.y;
+
+    // スポイトツールの処理
+    if (currentTool === 'eyedropper') {
+        const pixelData = ctx.getImageData(startX, startY, 1, 1).data;
+        const r = pixelData[0];
+        const g = pixelData[1];
+        const b = pixelData[2];
+        // alpha (pixelData[3]) は無視
+        const hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        colorPicker.value = hexColor;
+        drawing = false; // スポイトはクリックのみで描画しない
+        // 必要であれば、色選択後に前のツールに戻すなどの処理を追加
+        // setActiveTool('pen'); // 例: ペンツールに戻す
+        return; // スポイトの場合はここで処理終了
+    }
+
     lastX = startX;
     lastY = startY;
 
@@ -844,6 +861,7 @@ canvas.addEventListener('touchend', (e) => {
 
 // ツール選択ボタン
 selectBtn.addEventListener('click', () => setActiveTool('select'));
+eyedropperBtn.addEventListener('click', () => setActiveTool('eyedropper')); // スポイトボタンのリスナー追加
 penBtn.addEventListener('click', () => setActiveTool('pen'));
 markerBtn.addEventListener('click', () => setActiveTool('marker'));
 lineBtn.addEventListener('click', () => setActiveTool('line'));
