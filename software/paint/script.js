@@ -246,9 +246,11 @@ function startPosition(e) {
         const r = pixelData[0];
         const g = pixelData[1];
         const b = pixelData[2];
-        // alpha (pixelData[3]) は無視
+        const a = pixelData[3]; // アルファ値を取得
+        const alphaValue = a / 255; // アルファ値を0-1の範囲に変換
         const hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
         colorPicker.value = hexColor;
+        alphaPicker.value = alphaValue; // 透明度スライダーに値を設定
         drawing = false; // スポイトはクリックのみで描画しない
         // 必要であれば、色選択後に前のツールに戻すなどの処理を追加
         // setActiveTool('pen'); // 例: ペンツールに戻す
