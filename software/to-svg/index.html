@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>画像SVG変換</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div id="status-container">
+      <div id="spinner" class="spinner"></div>
+      <span id="status-text"></span>
+    </div>
+
+  	<p><a href="../index.html">←Softwares</a></p>
+    <h1>画像SVG変換</h1>
+    <p>Pythonコードを直接ブラウザ上で実行し、高品質なSVGを生成します。</p>
+
+    <div class="container">
+      <div class="options-panel">
+        <div class="option-group">
+          <h4>1. 画像のアップロード</h4>
+          <input type="file" id="file-input" accept="image/png, image/jpeg" />
+        </div>
+
+        <div class="option-group">
+          <h4>2. 変換オプション</h4>
+          <div class="control">
+            <label
+              >輪郭近似の係数:
+              <span id="epsilon-factor-value">0.0010</span></label
+            >
+            <input
+              type="range"
+              id="epsilon-factor"
+              min="0.0001"
+              max="0.01"
+              value="0.001"
+              step="0.0001"
+            />
+          </div>
+          <div class="control">
+            <label>透明領域の背景色:</label>
+            <input type="color" id="bg-color" value="#FFFFFF" />
+          </div>
+          <div class="control">
+            <label
+              ><input type="checkbox" id="apply-resizing" />
+              画像サイズを調整</label
+            >
+          </div>
+          <div class="control">
+            <label
+              >最大辺の長さ(px):
+              <span id="max-side-length-value">1024</span></label
+            >
+            <input
+              type="range"
+              id="max-side-length"
+              min="32"
+              max="4096"
+              value="1024"
+              step="64"
+            />
+          </div>
+        </div>
+
+        <div class="option-group">
+          <h4>3. 画像処理オプション</h4>
+          <div class="control">
+            <label>色の数: <span id="num-colors-value">16</span></label>
+            <input
+              type="range"
+              id="num-colors"
+              min="2"
+              max="128"
+              value="16"
+              step="1"
+            />
+          </div>
+          <div class="control">
+            <label
+              ><input type="checkbox" id="apply-sharpening" />
+              シャープニングを適用</label
+            >
+          </div>
+          <div class="control">
+            <label
+              >メディアンブラー:
+              <span id="median-blur-ksize-value">5</span></label
+            >
+            <input
+              type="range"
+              id="median-blur-ksize"
+              min="0"
+              max="21"
+              value="5"
+              step="1"
+            />
+          </div>
+          <div class="control">
+            <label
+              >ガウシアンブラー:
+              <span id="gaussian-blur-ksize-value">0</span></label
+            >
+            <input
+              type="range"
+              id="gaussian-blur-ksize"
+              min="0"
+              max="21"
+              value="0"
+              step="1"
+            />
+          </div>
+          <div class="control">
+            <label
+              >輪郭膨張の回数:
+              <span id="dilate-iterations-value">1</span></label
+            >
+            <input
+              type="range"
+              id="dilate-iterations"
+              min="0"
+              max="5"
+              value="1"
+              step="1"
+            />
+          </div>
+        </div>
+
+        <div class="option-group">
+          <h4>4. ストローク設定</h4>
+          <div class="control">
+            <label
+              ><input type="checkbox" id="add-stroke" />
+              ストローク（線）を追加</label
+            >
+          </div>
+          <div class="control">
+            <label>ストロークの色:</label>
+            <input type="color" id="stroke-color" value="#000000" />
+          </div>
+          <div class="control">
+            <label
+              >ストロークの太さ: <span id="stroke-width-value">1.0</span></label
+            >
+            <input
+              type="range"
+              id="stroke-width"
+              min="0.1"
+              max="5.0"
+              value="1.0"
+              step="0.1"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-panel">
+        <div class="option-group">
+          <h4>5. SVG変換</h4>
+          <button id="convert-button" disabled>
+            画像をアップロードしてください
+          </button>
+        </div>
+        <div class="preview-box">
+          <h4>アップロードされた画像</h4>
+          <img
+            id="image-preview"
+            src=""
+            alt="画像のプレビューがここに表示されます"
+            style="display: none"
+          />
+        </div>
+        <div id="svg-preview-container" class="preview-box">
+          <h4>変換結果</h4>
+          <img id="svg-preview-img" src="" alt="SVGのプレビュー" />
+          <br />
+          <a id="download-button" href="#" download="converted.svg"
+            >SVGファイルをダウンロード</a
+          >
+        </div>
+      </div>
+    </div>
+    <footer></footer>
+  </body>
+</html>
