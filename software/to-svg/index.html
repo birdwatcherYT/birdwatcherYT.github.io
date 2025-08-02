@@ -20,7 +20,7 @@
 
   <p><a href="../index.html">←Softwares</a></p>
   <h1>画像SVG変換</h1>
-  <p>Pythonコードを直接ブラウザ上で実行し、高品質なSVGを生成します。</p>
+  <p>Pythonコードを直接ブラウザ上で実行し、高品質なSVGを生成します。画像処理後の中間ファイルをPNGとしても保存できます。</p>
 
   <div class="container">
     <div class="options-panel">
@@ -97,7 +97,7 @@
 
     <div class="preview-panel">
       <div class="option-group">
-        <h4>5. SVG変換</h4>
+        <h4>5. 変換実行</h4>
         <button id="convert-button" disabled>
           画像をアップロードしてください
         </button>
@@ -107,10 +107,13 @@
         <img id="image-preview" src="" alt="画像のプレビューがここに表示されます" style="display: none" />
       </div>
       <div id="svg-preview-container" class="preview-box">
-        <h4>変換結果</h4>
+        <h4>変換結果プレビュー (SVG)</h4>
         <img id="svg-preview-img" src="" alt="SVGのプレビュー" />
         <br />
-        <a id="download-button" href="#" download="converted.svg">SVGファイルをダウンロード</a>
+        <div class="download-buttons">
+          <a id="download-svg-button" href="#" download="converted.svg">SVGをダウンロード</a>
+          <a id="download-png-button" href="#" download="processed.png">PNGをダウンロード</a>
+        </div>
       </div>
     </div>
   </div>

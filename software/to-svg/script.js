@@ -6,7 +6,8 @@ const imagePreview = document.getElementById("image-preview");
 const convertButton = document.getElementById("convert-button");
 const svgPreviewContainer = document.getElementById("svg-preview-container");
 const svgPreviewImg = document.getElementById("svg-preview-img");
-const downloadButton = document.getElementById("download-button");
+const downloadSvgButton = document.getElementById("download-svg-button");
+const downloadPngButton = document.getElementById("download-png-button");
 
 let uploadedFile = null;
 let uploadedFileName = "image.png";
@@ -25,33 +26,26 @@ let worker;
 
 document.addEventListener("DOMContentLoaded", () => {
   showStatus("実行環境の準備を開始します...");
-  // Web Workerを作成
   worker = new Worker("worker.js");
 
-  // ワーカーからのメッセージを待ち受ける
   worker.onmessage = (event) => {
     const { type, payload } = event.data;
 
     switch (type) {
       case "status":
-        // ワーカーからの進捗状況をUIに表示
         showStatus(payload.message);
         break;
       case "ready":
-        // ワーカーの準備が完了した
         hideStatus();
         console.log("Pyodide (Worker) is ready.");
-        // ここで初めてファイル入力が可能になる
         fileInput.disabled = false;
         break;
       case "result":
-        // 変換が成功した
         hideStatus();
-        displayResult(payload.svgData, payload.fileName);
+        displayResult(payload);
         convertButton.disabled = false;
         break;
       case "error":
-        // エラーが発生した
         hideStatus();
         alert(`エラーが発生しました: ${payload.message}`);
         console.error(payload.message);
@@ -61,21 +55,27 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-function displayResult(svgData, fileName) {
-  const blob = new Blob([svgData], { type: "image/svg+xml" });
-  const url = URL.createObjectURL(blob);
+function displayResult({ svgData, pngData, svgFileName, pngFileName }) {
+  // SVGプレビューとダウンロードリンクの設定
+  const svgBlob = new Blob([svgData], { type: "image/svg+xml" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+  svgPreviewImg.src = svgUrl;
+  downloadSvgButton.href = svgUrl;
+  downloadSvgButton.download = svgFileName;
 
-  svgPreviewImg.src = url;
-  downloadButton.href = url;
-  downloadButton.download = fileName;
+  // PNGダウンロードリンクの設定
+  const pngBlob = new Blob([pngData], { type: "image/png" });
+  const pngUrl = URL.createObjectURL(pngBlob);
+  downloadPngButton.href = pngUrl;
+  downloadPngButton.download = pngFileName;
 
+  // 結果コンテナとダウンロードボタンを表示
   svgPreviewContainer.style.display = "block";
-  downloadButton.style.display = "inline-block";
+  downloadSvgButton.style.display = "inline-block";
+  downloadPngButton.style.display = "inline-block";
 }
 
 // --- UIイベントリスナー ---
-
-// スライダーの値表示を更新
 const setupRangeValueDisplay = (rangeId, valueId, decimals = 0) => {
   const range = document.getElementById(rangeId);
   const value = document.getElementById(valueId);
@@ -101,7 +101,7 @@ const setupRangeValueDisplay = (rangeId, valueId, decimals = 0) => {
 });
 
 fileInput.addEventListener("change", (e) => {
-  fileInput.disabled = true; // プレビュー表示中に再度変更されるのを防ぐ
+  fileInput.disabled = true;
   if (e.target.files && e.target.files[0]) {
     uploadedFile = e.target.files[0];
     uploadedFileName = uploadedFile.name;
@@ -110,8 +110,12 @@ fileInput.addEventListener("change", (e) => {
       imagePreview.src = event.target.result;
       imagePreview.style.display = "block";
       convertButton.disabled = false;
-      convertButton.textContent = "SVGに変換";
+      convertButton.textContent = "変換実行";
       fileInput.disabled = false;
+      // 新しい画像をアップロードしたら、前の結果を隠す
+      svgPreviewContainer.style.display = "none";
+      downloadSvgButton.style.display = "none";
+      downloadPngButton.style.display = "none";
     };
     reader.readAsDataURL(uploadedFile);
   } else {
@@ -139,7 +143,6 @@ convertButton.addEventListener("click", () => {
   reader.onload = (event) => {
     const arrayBuffer = event.target.result;
 
-    // UIからパラメータを収集
     const params = {
       num_colors: parseInt(document.getElementById("num-colors").value, 10),
       apply_sharpening: document.getElementById("apply-sharpening").checked,
@@ -169,8 +172,6 @@ convertButton.addEventListener("click", () => {
       stroke_width: parseFloat(document.getElementById("stroke-width").value),
     };
 
-    // ワーカーに処理を依頼するメッセージを送信
-    // ArrayBufferはコピーされずに転送されるため効率的
     worker.postMessage(
       {
         type: "convert",
@@ -181,7 +182,7 @@ convertButton.addEventListener("click", () => {
         },
       },
       [arrayBuffer]
-    ); // 第2引数で所有権を移譲
+    );
   };
   reader.readAsArrayBuffer(uploadedFile);
 });

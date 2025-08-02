@@ -42,15 +42,16 @@ const pyodideReadyPromise = setupPyodide();
 
 // メインスレッドからのメッセージを待ち受ける
 self.onmessage = async (event) => {
-  // まずはPyodideの初期化が完了するのを待つ
   await pyodideReadyPromise;
 
   const { type, payload } = event.data;
 
   if (type === "convert") {
     const { fileName, fileData, params } = payload;
+    const baseName = fileName.replace(/\.[^/.]+$/, "");
     const inputPath = `/tmp/${fileName}`;
-    const outputPath = `/tmp/${fileName.replace(/\.[^/.]+$/, ".svg")}`;
+    const outputSvgPath = `/tmp/${baseName}.svg`;
+    const outputPngPath = `/tmp/${baseName}_processed.png`;
 
     try {
       postStatus("画像データをPython環境に転送中...");
@@ -59,12 +60,13 @@ self.onmessage = async (event) => {
       });
 
       postStatus(
-        "Pythonコードを実行してSVGを生成中... (時間がかかる場合があります)"
+        "Pythonコードを実行して画像を処理中... (時間がかかる場合があります)"
       );
 
       const fullParams = {
         input_path: inputPath,
-        output_path: outputPath,
+        output_svg_path: outputSvgPath,
+        output_png_path: outputPngPath,
         ...params,
       };
 
@@ -76,23 +78,24 @@ result = main.run_conversion(**params)
 result
 `;
       await pyodide.runPythonAsync(run_script);
-      postStatus("SVGデータを取得中...");
+      postStatus("処理結果を取得中...");
 
-      const svgData = pyodide.FS.readFile(outputPath, { encoding: "binary" });
+      const svgData = pyodide.FS.readFile(outputSvgPath, { encoding: "binary" });
+      const pngData = pyodide.FS.readFile(outputPngPath, { encoding: "binary" });
 
-      // 成功結果をメインスレッドに送信
       self.postMessage(
         {
           type: "result",
           payload: {
             svgData: svgData,
-            fileName: outputPath.split("/").pop(),
+            pngData: pngData,
+            svgFileName: outputSvgPath.split("/").pop(),
+            pngFileName: outputPngPath.split("/").pop(),
           },
         },
-        [svgData.buffer]
-      ); // ArrayBufferの所有権を移譲
+        [svgData.buffer, pngData.buffer] // ArrayBufferの所有権を移譲
+      );
     } catch (error) {
-      // エラーをメインスレッドに送信
       self.postMessage({ type: "error", payload: { message: error.message } });
     }
   }
