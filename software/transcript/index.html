@@ -76,92 +76,142 @@
             <option value="vi-VN">ベトナム語</option>
         </select>
 
-        <!-- 区切り文字選択のUIを追加 -->
         <label for="separatorSelect">区切り文字を選択:</label>
         <select id="separatorSelect">
             <option value="newline">改行</option>
             <option value="space">スペース</option>
+            <option value="kuten">。</option>
+            <option value="touten">、</option>
+            <option value="period">.</option>
+            <option value="comma">,</option>
         </select>
 
         <div id="output"></div>
         <button id="start">🎤 開始</button>
         <button id="stop" disabled>⏹ 停止</button>
-        <button id="save" disabled>💾 保存</button>
-        <button id="clear" disabled>🧹 クリア</button>
+        <button id="save">💾 保存</button>
+        <button id="copy">📋 コピー</button>
+        <button id="clear">🧹 クリア</button>
     </div>
 
     <script>
-        let recognition;
+        let recognition = null;
         let finalTranscript = "";
+        let isRecording = false;
         const output = document.getElementById("output");
         const startButton = document.getElementById("start");
         const stopButton = document.getElementById("stop");
         const saveButton = document.getElementById("save");
+        const copyButton = document.getElementById("copy");
         const clearButton = document.getElementById("clear");
         const languageSelect = document.getElementById("languageSelect");
         const separatorSelect = document.getElementById("separatorSelect");
 
-        if ("webkitSpeechRecognition" in window) {
+        const separatorMap = {
+            'newline': '\n',
+            'space': ' ',
+            'kuten': '。',
+            'touten': '、',
+            'period': '.',
+            'comma': ','
+        };
+
+        function getCurrentSeparator() {
+            return separatorMap[separatorSelect.value] || '\n';
+        }
+
+        function startRecognition() {
+            if (isRecording) return;
+
+            if (!("webkitSpeechRecognition" in window)) {
+                alert("このブラウザは音声認識をサポートしていません。");
+                return;
+            }
+
+            isRecording = true;
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            languageSelect.disabled = true;
+
+            const separator = getCurrentSeparator();
+            let currentText = output.textContent;
+            if (currentText && !Object.values(separatorMap).some(sep => currentText.endsWith(sep))) {
+                currentText += separator;
+            }
+            finalTranscript = currentText;
+
             recognition = new webkitSpeechRecognition();
+            recognition.lang = languageSelect.value;
             recognition.continuous = true;
             recognition.interimResults = true;
 
             recognition.onresult = (event) => {
                 let interimTranscript = "";
+                const currentSeparator = getCurrentSeparator();
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     if (event.results[i].isFinal) {
-                        // セレクトボックスの値に応じて区切り文字を設定
-                        const separator = separatorSelect.value === "newline" ? "\n" : " ";
-                        finalTranscript += event.results[i][0].transcript + separator;
+                        finalTranscript += event.results[i][0].transcript + currentSeparator;
                     } else {
                         interimTranscript += event.results[i][0].transcript;
                     }
                 }
-                output.textContent = finalTranscript + "\n" + interimTranscript;
+                output.textContent = finalTranscript + interimTranscript;
             };
 
             recognition.onend = () => {
-                startButton.disabled = false;
-                stopButton.disabled = true;
-                saveButton.disabled = false;
-                clearButton.disabled = false;
+                if (isRecording) {
+                    recognition.start();
+                } else {
+                    recognition = null;
+                    startButton.disabled = false;
+                    stopButton.disabled = true;
+                    languageSelect.disabled = false;
+                }
             };
-        } else {
-            alert("このブラウザは音声認識をサポートしていません。");
+
+            recognition.onerror = (event) => {
+                console.error("音声認識エラー:", event.error);
+                isRecording = false;
+            };
+
+            recognition.start();
         }
 
-        startButton.onclick = () => {
+        function stopRecognition() {
             if (recognition) {
-                finalTranscript = output.textContent + "\n";
-                recognition.lang = languageSelect.value;
-                recognition.start();
-                startButton.disabled = true;
-                stopButton.disabled = false;
-                saveButton.disabled = true;
-                clearButton.disabled = true;
-            }
-        };
-
-        stopButton.onclick = () => {
-            if (recognition) {
+                isRecording = false;
                 recognition.stop();
-                startButton.disabled = false;
-                stopButton.disabled = true;
             }
-        };
+        }
+
+        startButton.onclick = startRecognition;
+        stopButton.onclick = stopRecognition;
 
         saveButton.onclick = () => {
-            const blob = new Blob([finalTranscript], { type: "text/plain;charset=utf-8" });
+            const blob = new Blob([output.textContent], { type: "text/plain;charset=utf-8" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "transcript.txt";
             link.click();
         };
 
+        copyButton.onclick = () => {
+            navigator.clipboard.writeText(output.textContent).then(() => {
+                const originalText = copyButton.innerHTML;
+                copyButton.innerHTML = "✅ コピー完了";
+                copyButton.disabled = true;
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                    copyButton.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('コピーに失敗しました: ', err);
+            });
+        };
+
         clearButton.onclick = () => {
             finalTranscript = "";
             output.textContent = "";
-            clearButton.disabled = true;
         };
     </script>
     <footer></footer>
