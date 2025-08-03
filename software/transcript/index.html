@@ -149,10 +149,14 @@
                 let interimTranscript = "";
                 const currentSeparator = getCurrentSeparator();
                 for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript + currentSeparator;
+                        // 結果が空文字や空白のみでない場合だけ、区切り文字を追加する
+                        if (transcript.trim() !== '') {
+                            finalTranscript += transcript + currentSeparator;
+                        }
                     } else {
-                        interimTranscript += event.results[i][0].transcript;
+                        interimTranscript += transcript;
                     }
                 }
                 output.textContent = finalTranscript + interimTranscript;
@@ -171,7 +175,9 @@
 
             recognition.onerror = (event) => {
                 console.error("音声認識エラー:", event.error);
-                isRecording = false;
+                if (event.error !== 'no-speech') {
+                    isRecording = false;
+                }
             };
 
             recognition.start();
