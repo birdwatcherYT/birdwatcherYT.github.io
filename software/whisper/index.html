@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
     <title>Whisperによる音声書き起こし</title>
     <style>
         body {
@@ -70,6 +73,7 @@
 </head>
 
 <body>
+	<p><a href="../index.html">←Softwares</a></p>
     <h1>Whisperによる音声書き起こし</h1>
     <p>transformers.jsとwhisperを使い、サーバーにアップロードされることなく完全にローカルで動作します。</p>
 
@@ -97,11 +101,11 @@
         </div>
         <div class="setting-item">
             <label for="chunk-length">チャンク長 (秒)</label>
-            <input type="number" id="chunk-length" value="10" max="30" min="5">
+            <input type="number" id="chunk-length" value="30" max="30" min="6">
         </div>
         <div class="setting-item">
             <label for="stride-length">オーバーラップ長 (秒)</label>
-            <input type="number" id="stride-length" value="1" max="4" min="1">
+            <input type="number" id="stride-length" value="5" max="5" min="1">
         </div>
 
         <div class="setting-item"
@@ -259,6 +263,7 @@
             }
         };
     </script>
+	<footer></footer>
 </body>
 
 </html>
