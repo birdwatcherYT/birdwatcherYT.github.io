@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Whisperによる音声書き起こし</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f4f4f4;
+            padding: 1em;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1em;
+            margin-bottom: 1.5em;
+            padding: 1em;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-item.checkbox {
+            flex-direction: row;
+            align-items: center;
+        }
+
+        label {
+            margin-bottom: 0.3em;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            padding: 0.5em;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        #saveButton {
+            margin-top: 0.5em;
+            padding: 0.5em 1em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: none;
+            /* 初期状態では非表示 */
+        }
+
+        #saveButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Whisperによる音声書き起こし</h1>
+    <p>transformers.jsとwhisperを使い、サーバーにアップロードされることなく完全にローカルで動作します。</p>
+
+    <div class="settings">
+        <div class="setting-item">
+            <label for="language-select">言語</label>
+            <select id="language-select">
+                <option value="japanese" selected>Japanese</option>
+                <option value="english">English</option>
+                <option value="chinese">Chinese</option>
+                <option value="korean">Korean</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="spanish">Spanish</option>
+                <option value="russian">Russian</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <label for="model-select">モデル</label>
+            <select id="model-select">
+                <option value="Xenova/whisper-tiny" selected>Whisper Tiny</option>
+                <option value="Xenova/whisper-base">Whisper Base</option>
+                <option value="Xenova/whisper-small">Whisper Small</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <label for="chunk-length">チャンク長 (秒)</label>
+            <input type="number" id="chunk-length" value="10" max="30" min="5">
+        </div>
+        <div class="setting-item">
+            <label for="stride-length">オーバーラップ長 (秒)</label>
+            <input type="number" id="stride-length" value="1" max="4" min="1">
+        </div>
+
+        <div class="setting-item"
+            title="同じ単語の並び（N-gram）が指定した回数以上繰り返されることを防ぎます。0に設定するとこの機能は無効になります。値を大きくすると抑制が緩やかになります。">
+            <label for="no-repeat-ngram-size">N-gram反復防止 (0で無効)</label>
+            <input type="number" id="no-repeat-ngram-size" value="3" min="0">
+        </div>
+        <div class="setting-item" title="書き起こし結果の「確からしさ」がこの値を下回る場合、その結果を破棄します。値を大きくする（例: -0.8）と、信頼性の低い結果が抑制されやすくなります。">
+            <label for="logprob-threshold">対数確率しきい値</label>
+            <input type="number" id="logprob-threshold" value="-1.0" step="0.1">
+        </div>
+        <div class="setting-item" title="テキストが異常に圧縮しやすい（＝繰り返しが多い）場合に結果を破棄します。値を小さくする（例: 2.0）と、反復的な出力が抑制されやすくなります。">
+            <label for="compression-ratio-threshold">圧縮率しきい値</label>
+            <input type="number" id="compression-ratio-threshold" value="2.4" step="0.1">
+        </div>
+
+        <div class="setting-item checkbox">
+            <label for="show-timestamps" style="margin-bottom: 0; margin-right: 0.5em;">秒数を表示</label>
+            <input type="checkbox" id="show-timestamps">
+        </div>
+    </div>
+
+    <input type="file" id="audioFile" accept="audio/*">
+    <button id="transcribeButton">書き起こし開始</button>
+
+    <h2>ステータス</h2>
+    <div id="status">待機中。音声ファイルを選択してください。</div>
+
+    <h2>書き起こし結果</h2>
+    <pre id="result"></pre>
+    <button id="saveButton" style="display: none;">テキストを保存</button>
+
+    <script type="module">
+        const audioFileInput = document.getElementById('audioFile');
+        const transcribeButton = document.getElementById('transcribeButton');
+        const statusDiv = document.getElementById('status');
+        const resultPre = document.getElementById('result');
+        const modelSelect = document.getElementById('model-select');
+        const languageSelect = document.getElementById('language-select');
+        const chunkLengthInput = document.getElementById('chunk-length');
+        const strideLengthInput = document.getElementById('stride-length');
+        const showTimestampsCheckbox = document.getElementById('show-timestamps');
+        const noRepeatNgramSizeInput = document.getElementById('no-repeat-ngram-size');
+        const logprobThresholdInput = document.getElementById('logprob-threshold');
+        const compressionRatioThresholdInput = document.getElementById('compression-ratio-threshold');
+        const saveButton = document.getElementById('saveButton');
+
+        const worker = new Worker('./worker.js', { type: 'module' });
+
+        transcribeButton.addEventListener('click', async () => {
+            const file = audioFileInput.files[0];
+            if (!file) { return alert('音声ファイルを選択してください。'); }
+
+            transcribeButton.disabled = true;
+            resultPre.textContent = '';
+            saveButton.style.display = 'none'; // 保存ボタンを非表示にする
+            statusDiv.textContent = '音声ファイルをデコード中...';
+
+            try {
+                const decodedAudio = await decodeAudio(file);
+                statusDiv.textContent = 'ワーカースレッドにデータを転送中...';
+
+                worker.postMessage({
+                    audio: decodedAudio.audioData,
+                    duration: decodedAudio.duration,
+                    model: modelSelect.value,
+                    language: languageSelect.value,
+                    chunkLength: chunkLengthInput.valueAsNumber,
+                    strideLength: strideLengthInput.valueAsNumber,
+                    returnTimestamps: showTimestampsCheckbox.checked,
+                    noRepeatNgramSize: noRepeatNgramSizeInput.valueAsNumber,
+                    logprobThreshold: logprobThresholdInput.valueAsNumber,
+                    compressionRatioThreshold: compressionRatioThresholdInput.valueAsNumber,
+                }, [decodedAudio.audioData.buffer]);
+
+            } catch (error) {
+                statusDiv.textContent = `エラー: ${error.message}`;
+                transcribeButton.disabled = false;
+            }
+        });
+
+        async function decodeAudio(file) {
+            const audioContext = new AudioContext({ sampleRate: 16000 });
+            const arrayBuffer = await file.arrayBuffer();
+            const decoded = await audioContext.decodeAudioData(arrayBuffer);
+            return {
+                audioData: decoded.getChannelData(0),
+                duration: decoded.duration
+            };
+        }
+
+        function formatTimestamp(seconds) {
+            if (seconds == null) return '';
+            return new Date(seconds * 1000).toISOString().substr(11, 8);
+        }
+
+        // テキストをファイルとして保存する関数
+        function saveTextToFile(text, filename) {
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // 保存ボタンのイベントリスナー
+        saveButton.addEventListener('click', () => {
+            const resultText = resultPre.textContent;
+            const fileName = `transcription_${Date.now()}.txt`;
+            saveTextToFile(resultText, fileName);
+        });
+
+        worker.onmessage = (event) => {
+            const message = event.data;
+            switch (message.type) {
+                case 'STATUS_UPDATE':
+                    statusDiv.textContent = message.data;
+                    break;
+                case 'PROGRESS':
+                    statusDiv.textContent = `書き起こし中... (${message.data}%)`;
+                    break;
+                case 'CHUNK_DECODED':
+                    const segments = message.data;
+                    segments.forEach(segment => {
+                        if (showTimestampsCheckbox.checked && segment.timestamp) {
+                            const start = formatTimestamp(segment.timestamp[0]);
+                            const end = formatTimestamp(segment.timestamp[1]);
+                            resultPre.textContent += `[${start} -> ${end}] ${segment.text}\n`;
+                        } else {
+                            resultPre.textContent += segment.text + '\n';
+                        }
+                    });
+                    break;
+                case 'COMPLETE':
+                    statusDiv.textContent = '完了';
+                    if (showTimestampsCheckbox.checked && message.data.chunks) {
+                        let formattedText = '';
+                        message.data.chunks.forEach(chunk => {
+                            const start = formatTimestamp(chunk.timestamp[0]);
+                            const end = formatTimestamp(chunk.timestamp[1]);
+                            formattedText += `[${start} -> ${end}] ${chunk.text.trim()}\n`;
+                        });
+                        resultPre.textContent = formattedText;
+                    } else {
+                        resultPre.textContent = message.data.text;
+                    }
+                    transcribeButton.disabled = false;
+                    saveButton.style.display = 'block'; // 完了時に保存ボタンを表示する
+                    break;
+                case 'ERROR':
+                    statusDiv.textContent = `エラー: ${message.data}`;
+                    transcribeButton.disabled = false;
+                    break;
+            }
+        };
+    </script>
+</body>
+
+</html>
