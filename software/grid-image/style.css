@@ -1,0 +1,171 @@
+:root {
+    /* CSS変数でグリッドの線を管理 */
+    --grid-gap: 2px;
+    --grid-color: #cccccc;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    width: 100%;
+}
+
+.main-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.settings-panel {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-width: 280px;
+}
+
+.control-group {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+.control-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+h2,
+h3 {
+    margin-top: 0;
+}
+
+.settings-panel label {
+    display: block;
+    margin: 10px 0 5px;
+}
+
+.settings-panel input[type="number"],
+.settings-panel input[type="range"],
+.settings-panel input[type="color"] {
+    width: 100%;
+    box-sizing: border-box;
+    /* paddingを含めて幅を100%にする */
+}
+
+.settings-panel button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.settings-panel button:hover {
+    background-color: #0056b3;
+}
+
+.grid-preview {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#grid-container {
+    display: grid;
+    /* 修正点: borderを削除し、paddingとbackground-colorで外枠を表現 */
+    background-color: var(--grid-color);
+    gap: var(--grid-gap);
+    padding: var(--grid-gap);
+}
+
+.grid-item {
+    position: relative;
+    overflow: hidden;
+    background-color: #e9e9e9;
+    width: 250px;
+    height: 250px;
+    cursor: pointer;
+}
+
+.image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+.grid-item img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: none;
+    transform-origin: center center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.grid-item img.loaded {
+    opacity: 1;
+}
+
+.item-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 8px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+}
+
+.grid-item:hover .item-controls {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.item-controls input[type="file"] {
+    display: none;
+}
+
+.item-controls label {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 8px;
+    width: 90%;
+    font-size: 14px;
+}
+
+.item-controls label:hover {
+    background-color: #0056b3;
+}
+
+.item-controls input[type="range"] {
+    width: 90%;
+}

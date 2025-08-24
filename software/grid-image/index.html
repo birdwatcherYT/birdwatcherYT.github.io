@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+    <title>画像グリッドジェネレーター</title>
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<p><a href="../index.html">←Softwares</a></p>
+    <h1>画像グリッドジェネレーター</h1>
+
+    <div class="main-container">
+        <!-- 左側の設定パネル -->
+        <div class="settings-panel">
+            <h2>設定</h2>
+            <div class="control-group">
+                <h3>グリッド設定</h3>
+                <label for="rows">行数:</label>
+                <input type="number" id="rows" value="2" min="1">
+                <label for="cols">列数:</label>
+                <input type="number" id="cols" value="2" min="1">
+                <button id="create-grid">グリッド作成</button>
+            </div>
+
+            <div class="control-group">
+                <h3>グリッド線</h3>
+                <label for="grid-gap">線の幅 (px):</label>
+                <input type="range" id="grid-gap" min="0" max="50" value="2">
+                <label for="grid-color">線の色:</label>
+                <input type="color" id="grid-color" value="#cccccc">
+            </div>
+
+            <div class="control-group">
+                <h3>出力設定</h3>
+                <label for="export-width">出力画像の幅 (px):</label>
+                <input type="number" id="export-width" value="1500" min="100">
+                <button id="export-image">画像を出力</button>
+            </div>
+
+            <a id="download-link" style="display:none;"></a>
+        </div>
+
+        <!-- 右側のグリッドプレビュー -->
+        <div class="grid-preview">
+            <div id="grid-container"></div>
+        </div>
+    </div>
+
+    <!-- html2canvasライブラリを読み込みます -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+	<footer></footer>
+</body>
+
+</html>
