@@ -183,6 +183,9 @@ async function startPipRender(mode, requestNewWindow = false) {
 	const ctx = canvas.getContext('2d');
 	let renderCanvas;
 
+	// 解像度を向上させるためのスケールファクター
+	const scaleFactor = 5;
+
 	const getTextWidth = (text, font) => {
 		const context = document.createElement('canvas').getContext('2d');
 		context.font = font;
@@ -193,17 +196,17 @@ async function startPipRender(mode, requestNewWindow = false) {
 		const dateElement = document.getElementById("date");
 		const timeElement = document.getElementById("time");
 		
-		const dateFontSize = 36;
-		const timeFontSize = 96;
+		const dateFontSize = 36 * scaleFactor;
+		const timeFontSize = 96 * scaleFactor;
 		const dateFont = `${dateFontSize}px monospace, serif`;
 		const timeFont = `bold ${timeFontSize}px monospace, serif`;
 
 		const dateWidth = getTextWidth(dateElement.textContent, dateFont);
 		const timeWidth = getTextWidth(timeElement.textContent, timeFont);
 		
-		const horizontalPadding = 40;
-		const verticalPadding = 20;
-		const lineSpacing = 10;
+		const horizontalPadding = 40 * scaleFactor;
+		const verticalPadding = 20 * scaleFactor;
+		const lineSpacing = 10 * scaleFactor;
 		
 		canvas.width = Math.max(dateWidth, timeWidth) + horizontalPadding;
 		canvas.height = dateFontSize + timeFontSize + lineSpacing + verticalPadding * 2;
@@ -225,14 +228,15 @@ async function startPipRender(mode, requestNewWindow = false) {
 		};
 	} else if (mode === 'timer') {
 		const timerElement = document.getElementById("timer");
-		const timerFontSize = 96;
+		
+		const timerFontSize = 96 * scaleFactor;
 		const timerFont = `bold ${timerFontSize}px monospace, serif`;
 		const timerText = timerElement.innerHTML || "0:00";
 		
 		const timerWidth = getTextWidth(timerText, timerFont);
 		
-		const horizontalPadding = 40;
-		const verticalPadding = 10;
+		const horizontalPadding = 40 * scaleFactor;
+		const verticalPadding = 10 * scaleFactor;
 
 		canvas.width = timerWidth + horizontalPadding;
 		canvas.height = timerFontSize + verticalPadding * 2;
@@ -285,7 +289,6 @@ function initializePip() {
 		updatePipButtonsState();
 	});
 }
-// --- PIP機能 ここまで ---
 
 clock();
 setTimeout(() => {
