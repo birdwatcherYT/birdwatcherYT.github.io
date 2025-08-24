@@ -77,7 +77,7 @@
             // もし、まだ何も選択されていない（初回読み込みなど）場合
             if (!targetVoiceName) {
                 // 利用可能な音声から日本語のものを探す
-                const japaneseVoice = voices.find(voice => voice.lang === 'ja-JP');
+                const japaneseVoice = voices.find(voice => voice.lang === 'ja-JP' || voice.lang === 'ja_JP');
                 if (japaneseVoice) {
                     // 見つかったら、それをターゲットにする
                     targetVoiceName = japaneseVoice.name;
