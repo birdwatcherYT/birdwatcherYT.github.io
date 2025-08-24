@@ -117,22 +117,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let isDragging = false, startX, startY, initialTx, initialTy;
-        imageContainer.addEventListener('mousedown', (e) => {
-            if (!img.src) return; e.preventDefault();
-            isDragging = true; startX = e.clientX; startY = e.clientY;
-            initialTx = state.translateX; initialTy = state.translateY;
+
+        // --- ドラッグ開始処理 (マウスとタッチで共通化) ---
+        const dragStart = (e) => {
+            if (!img.src) return;
+            isDragging = true;
+            // マウスイベントかタッチイベントかで座標の取得元を切り替える
+            const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            startX = currentX;
+            startY = currentY;
+            initialTx = state.translateX;
+            initialTy = state.translateY;
             imageContainer.style.cursor = 'grabbing';
-        });
-        window.addEventListener('mousemove', (e) => {
+        };
+
+        // --- ドラッグ中処理 (マウスとタッチで共通化) ---
+        const dragMove = (e) => {
             if (!isDragging) return;
-            state.translateX = initialTx + (e.clientX - startX);
-            state.translateY = initialTy + (e.clientY - startY);
+            // タッチ操作中の画面スクロールを抑制する
+            if (e.type.includes('touch')) {
+                e.preventDefault();
+            }
+            const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            state.translateX = initialTx + (currentX - startX);
+            state.translateY = initialTy + (currentY - startY);
             if (clampToggle.checked) clampTranslate();
             updateTransform();
-        });
-        window.addEventListener('mouseup', () => {
-            if (isDragging) { isDragging = false; imageContainer.style.cursor = 'grab'; }
-        });
+        };
+
+        // --- ドラッグ終了処理 (マウスとタッチで共通化) ---
+        const dragEnd = () => {
+            if (isDragging) {
+                isDragging = false;
+                imageContainer.style.cursor = 'grab';
+            }
+        };
+
+        // --- イベントリスナーの登録 ---
+        // マウスイベント
+        imageContainer.addEventListener('mousedown', dragStart);
+        window.addEventListener('mousemove', dragMove);
+        window.addEventListener('mouseup', dragEnd);
+
+        // タッチイベント
+        imageContainer.addEventListener('touchstart', dragStart, { passive: true });
+        window.addEventListener('touchmove', dragMove, { passive: false });
+        window.addEventListener('touchend', dragEnd);
+        window.addEventListener('touchcancel', dragEnd);
 
         // 各要素に固有の関数と状態を関連付ける
         gridItem.state = state;
