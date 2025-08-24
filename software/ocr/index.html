@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>OCR（画像文字認識）</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <title>OCR（画像文字認識）</title>
+    <style>
+        #preview {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+
+        #result-area {
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+
+    <h1>OCR（画像文字認識）</h1>
+    <p>Tesseract.jsを使用して、画像から文字を認識します。</p>
+    <input type="file" id="image-input" accept="image/*">
+    <br>
+    <button id="run-ocr-button" style="margin-top: 10px;">文字認識を実行</button>
+    <p id="progress-text">処理待機中</p>
+
+    <h2>プレビュー</h2>
+    <img id="preview" src="" alt="画像プレビュー">
+
+    <h2>認識結果</h2>
+    <div id="result-area">
+        <p id="result-text"></p>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+
+    <script>
+        const imageInput = document.getElementById('image-input');
+        const runOcrButton = document.getElementById('run-ocr-button');
+        const previewImage = document.getElementById('preview');
+        const progressText = document.getElementById('progress-text');
+        const resultText = document.getElementById('result-text');
+
+        let selectedImage = null;
+
+        // 1. ファイルが選択されたときの処理
+        imageInput.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files[0]) {
+                selectedImage = event.target.files[0];
+                // 画像をプレビュー表示
+                previewImage.src = URL.createObjectURL(selectedImage);
+                resultText.textContent = ''; // 前回の結果をクリア
+                progressText.textContent = '画像が選択されました。ボタンを押して処理を開始してください。';
+            }
+        });
+
+        // 2. 「文字認識を実行」ボタンが押されたときの処理
+        runOcrButton.addEventListener('click', async () => {
+            if (!selectedImage) {
+                alert('先に画像ファイルを選択してください。');
+                return;
+            }
+
+            resultText.textContent = '';
+            progressText.textContent = 'OCRワーカーを初期化しています...';
+
+            // Tesseractのワーカーを作成
+            // 日本語('jpn')と英語('eng')の言語データを指定
+            const worker = await Tesseract.createWorker('jpn+eng', 1, {
+                logger: m => {
+                    // 進捗をコンソールと画面に表示
+                    console.log(m);
+                    if (m.status === 'recognizing text') {
+                        const progress = (m.progress * 100).toFixed(2);
+                        progressText.textContent = `文字を認識中... ${progress}%`;
+                    } else {
+                        progressText.textContent = `処理中: ${m.status}`;
+                    }
+                }
+            });
+
+            try {
+                // 画像から文字を認識
+                const { data: { text } } = await worker.recognize(selectedImage);
+
+                // 結果を表示
+                resultText.textContent = text;
+                progressText.textContent = '処理が完了しました。';
+
+            } catch (error) {
+                console.error('OCR処理中にエラーが発生しました:', error);
+                progressText.textContent = 'エラーが発生しました。';
+                resultText.textContent = 'エラー内容: ' + error.message;
+            } finally {
+                // ワーカーを終了してリソースを解放
+                await worker.terminate();
+            }
+        });
+    </script>
+    <footer></footer>
+</body>
+
+</html>
