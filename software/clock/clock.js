@@ -134,9 +134,90 @@ function timer_click() {
 	}
 }
 
+// --- PIP機能 ここから ---
+const pipButton = document.getElementById("pip-button");
+const videoElement = document.createElement('video');
+videoElement.autoplay = true;
+let pipWorker = null;
+
+async function pip_click() {
+	try {
+		if (document.pictureInPictureElement) {
+			await document.exitPictureInPicture();
+		} else {
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			const width = 450; // PIP時の横幅
+			const height = 180;
+			canvas.width = width;
+			canvas.height = height;
+
+			const dateElement = document.getElementById("date");
+			const timeElement = document.getElementById("time");
+
+			const renderCanvas = () => {
+				const bodyStyle = window.getComputedStyle(document.body);
+				// 背景
+				ctx.fillStyle = bodyStyle.backgroundColor;
+				ctx.fillRect(0, 0, width, height);
+
+				// 日付
+				ctx.fillStyle = bodyStyle.color;
+				ctx.font = '36px monospace, serif';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(dateElement.textContent, width / 2, height / 2 - 45);
+
+				// 時間
+				ctx.font = 'bold 96px monospace, serif';
+				ctx.fillText(timeElement.textContent, width / 2, height / 2 + 30);
+			};
+
+			renderCanvas(); // 初回描画
+
+			// Workerを使って定期的に描画更新
+			const code = `
+				onmessage = (e) => {
+					setInterval(() => self.postMessage(null), e.data);
+				};`;
+			pipWorker = new Worker("data:text/javascript;base64," + btoa(code));
+			pipWorker.onmessage = (e) => { renderCanvas(); };
+			pipWorker.postMessage(200); // 200msごとに更新
+
+			videoElement.srcObject = canvas.captureStream();
+			await videoElement.play();
+			await videoElement.requestPictureInPicture();
+		}
+	} catch (error) {
+		console.error("PiP mode failed: ", error);
+		alert('Failed to enter/exit PiP mode.');
+	}
+}
+
+function initializePip() {
+	if (!document.pictureInPictureEnabled) {
+		pipButton.disabled = true;
+		pipButton.textContent = 'PiP is not supported';
+		return;
+	}
+
+	videoElement.addEventListener('enterpictureinpicture', () => {
+		pipButton.textContent = 'Exit PiP mode';
+	});
+
+	videoElement.addEventListener('leavepictureinpicture', () => {
+		pipButton.textContent = 'Picture in Picture';
+		pipWorker?.terminate();
+		pipWorker = null;
+	});
+}
+// --- PIP機能 ここまで ---
+
+
 clock();
 setTimeout(() => {
 	clock();
+	initializePip(); // PIP機能の初期化
 	try {
 		// バックグラウンド対応
 		const code = `
@@ -155,4 +236,3 @@ setTimeout(() => {
 		const id = setInterval(() => { clock(); alerm_check(); }, 1000);
 	}
 }, 1000 - new Date().getMilliseconds());
-
