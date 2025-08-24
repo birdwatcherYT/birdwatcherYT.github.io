@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>テキスト読み上げ</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <style>
+    </style>
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+
+    <h1>テキスト読み上げ</h1>
+    <p>Web Speech APIのSpeechSynthesisを使ってテキストを読み上げます。オフラインかオンラインかはモデルに依存します。</p>
+    <textarea id="text-to-speak" rows="5" cols="50">ここに読み上げたいテキストを入力してください。</textarea>
+    <br>
+    <button id="speak-button">読み上げ</button>
+    <button id="pause-button">一時停止</button>
+    <button id="resume-button">再開</button>
+    <button id="cancel-button">停止</button>
+    <br>
+    <label for="voice-select">声を選択:</label>
+    <select id="voice-select"></select>
+
+    <script>
+
+        const textToSpeak = document.getElementById('text-to-speak');
+        const speakButton = document.getElementById('speak-button');
+        const pauseButton = document.getElementById('pause-button');
+        const resumeButton = document.getElementById('resume-button');
+        const cancelButton = document.getElementById('cancel-button');
+        const voiceSelect = document.getElementById('voice-select');
+
+        const synth = window.speechSynthesis;
+        let voices = [];
+        let selectedVoiceName = null;
+
+
+        function populateVoiceList() {
+            voices = synth.getVoices();
+            // ユーザーが既に何かを選択していた場合、その名前を保持しておく
+            const previouslySelected = selectedVoiceName || voiceSelect.selectedOptions[0]?.getAttribute('data-name');
+
+            voiceSelect.innerHTML = '';
+
+            // 言語ごとにグループ化してリストを作成
+            const groupedVoices = {};
+            for (const voice of voices) {
+                const lang = voice.lang;
+                if (!groupedVoices[lang]) {
+                    groupedVoices[lang] = [];
+                }
+                groupedVoices[lang].push(voice);
+            }
+            const sortedLangs = Object.keys(groupedVoices).sort();
+            for (const lang of sortedLangs) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = lang;
+                const voicesInGroup = groupedVoices[lang];
+                for (const voice of voicesInGroup) {
+                    const option = document.createElement('option');
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    option.setAttribute('data-lang', voice.lang);
+                    option.setAttribute('data-name', voice.name);
+                    optgroup.appendChild(option);
+                }
+                voiceSelect.appendChild(optgroup);
+            }
+
+            // 復元またはデフォルトで設定する音声の名前を決定する
+            let targetVoiceName = previouslySelected;
+
+            // もし、まだ何も選択されていない（初回読み込みなど）場合
+            if (!targetVoiceName) {
+                // 利用可能な音声から日本語のものを探す
+                const japaneseVoice = voices.find(voice => voice.lang === 'ja-JP');
+                if (japaneseVoice) {
+                    // 見つかったら、それをターゲットにする
+                    targetVoiceName = japaneseVoice.name;
+                }
+            }
+
+            // ターゲットとなった音声を選択状態にする
+            if (targetVoiceName) {
+                for (let i = 0; i < voiceSelect.options.length; i++) {
+                    if (voiceSelect.options[i].getAttribute('data-name') === targetVoiceName) {
+                        voiceSelect.selectedIndex = i;
+                        // 現在の選択としてグローバル変数も更新しておく
+                        selectedVoiceName = targetVoiceName;
+                        break;
+                    }
+                }
+            }
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        // ユーザーが声を選択したときに、その名前を記憶する
+        voiceSelect.addEventListener('change', () => {
+            selectedVoiceName = voiceSelect.selectedOptions[0].getAttribute('data-name');
+        });
+
+        speakButton.addEventListener('click', () => {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            const utterance = new SpeechSynthesisUtterance(textToSpeak.value);
+            const selectedOptionName = voiceSelect.selectedOptions[0]?.getAttribute('data-name') || selectedVoiceName;
+
+            for (let i = 0; i < voices.length; i++) {
+                if (voices[i].name === selectedOptionName) {
+                    utterance.voice = voices[i];
+                }
+            }
+            synth.speak(utterance);
+        });
+
+        pauseButton.addEventListener('click', () => {
+            synth.pause();
+        });
+
+        resumeButton.addEventListener('click', () => {
+            synth.resume();
+        });
+
+        cancelButton.addEventListener('click', () => {
+            synth.cancel();
+        });
+    </script>
+    <footer></footer>
+</body>
+
+</html>
