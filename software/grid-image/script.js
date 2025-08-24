@@ -129,7 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // ドラッグ開始処理
         const onDragStart = (e) => {
             if (!img.src) return;
-            // a.preventDefault(); // タッチイベントで個別に呼ぶためコメントアウト
+            if (e.type === 'mousedown') {
+                e.preventDefault();
+            }
             isDragging = true;
             const pos = getEventPosition(e);
             startX = pos.clientX;
