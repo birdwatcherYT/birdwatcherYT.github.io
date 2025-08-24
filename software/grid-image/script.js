@@ -118,54 +118,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let isDragging = false, startX, startY, initialTx, initialTy;
 
-        // --- ドラッグ開始処理 (マウスとタッチで共通化) ---
-        const dragStart = (e) => {
+        // イベントから座標を取得するヘルパー関数 (マウスとタッチで共通化)
+        const getEventPosition = (e) => {
+            if (e.touches && e.touches.length > 0) {
+                return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+            }
+            return { clientX: e.clientX, clientY: e.clientY };
+        };
+
+        // ドラッグ開始処理
+        const onDragStart = (e) => {
             if (!img.src) return;
+            // a.preventDefault(); // タッチイベントで個別に呼ぶためコメントアウト
             isDragging = true;
-            // マウスイベントかタッチイベントかで座標の取得元を切り替える
-            const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            startX = currentX;
-            startY = currentY;
+            const pos = getEventPosition(e);
+            startX = pos.clientX;
+            startY = pos.clientY;
             initialTx = state.translateX;
             initialTy = state.translateY;
             imageContainer.style.cursor = 'grabbing';
         };
 
-        // --- ドラッグ中処理 (マウスとタッチで共通化) ---
-        const dragMove = (e) => {
+        // ドラッグ中の処理
+        const onDragMove = (e) => {
             if (!isDragging) return;
-            // タッチ操作中の画面スクロールを抑制する
-            if (e.type.includes('touch')) {
+            // タッチ操作中に画面がスクロールするのを防ぐ
+            if (e.type === 'touchmove') {
                 e.preventDefault();
             }
-            const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            state.translateX = initialTx + (currentX - startX);
-            state.translateY = initialTy + (currentY - startY);
+            const pos = getEventPosition(e);
+            state.translateX = initialTx + (pos.clientX - startX);
+            state.translateY = initialTy + (pos.clientY - startY);
             if (clampToggle.checked) clampTranslate();
             updateTransform();
         };
 
-        // --- ドラッグ終了処理 (マウスとタッチで共通化) ---
-        const dragEnd = () => {
+        // ドラッグ終了処理
+        const onDragEnd = () => {
             if (isDragging) {
                 isDragging = false;
                 imageContainer.style.cursor = 'grab';
             }
         };
 
-        // --- イベントリスナーの登録 ---
-        // マウスイベント
-        imageContainer.addEventListener('mousedown', dragStart);
-        window.addEventListener('mousemove', dragMove);
-        window.addEventListener('mouseup', dragEnd);
+        // --- マウスイベントリスナー ---
+        imageContainer.addEventListener('mousedown', onDragStart);
 
-        // タッチイベント
-        imageContainer.addEventListener('touchstart', dragStart, { passive: true });
-        window.addEventListener('touchmove', dragMove, { passive: false });
-        window.addEventListener('touchend', dragEnd);
-        window.addEventListener('touchcancel', dragEnd);
+        // --- タッチイベントリスナー ---
+        // touchstart時にpreventDefaultを呼ぶとクリック等が無効になる可能性があるため、
+        // passive: false を指定し、moveイベントでpreventDefaultを呼ぶ
+        imageContainer.addEventListener('touchstart', onDragStart, { passive: true });
+
+
+        // windowにイベントを設定することで、画像の範囲外にカーソル/指が移動しても追従する
+        window.addEventListener('mousemove', onDragMove);
+        window.addEventListener('mouseup', onDragEnd);
+        // ドラッグ中にカーソルがウィンドウ外に出た場合もドラッグ終了とする
+        window.addEventListener('mouseleave', onDragEnd);
+
+        // passive: falseで、touchmove中のブラウザのスクロール動作をキャンセルする
+        window.addEventListener('touchmove', onDragMove, { passive: false });
+        window.addEventListener('touchend', onDragEnd);
+        window.addEventListener('touchcancel', onDragEnd);
 
         // 各要素に固有の関数と状態を関連付ける
         gridItem.state = state;
@@ -198,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 画像出力処理 (変更なし) ---
+    // --- 画像出力処理 ---
     const exportImage = async () => {
         const exportWidth = parseInt(document.getElementById('export-width').value, 10);
         if (isNaN(exportWidth) || exportWidth <= 0) { alert('有効な出力幅を入力してください。'); return; }

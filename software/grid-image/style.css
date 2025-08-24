@@ -89,8 +89,18 @@ h3 {
 
 .grid-preview {
     display: flex;
-    justify-content: center;
+    /* グリッドが画面からはみ出した際に、左端から表示されるように変更 */
+    justify-content: flex-start;
     align-items: flex-start;
+    /* はみ出した部分を横スクロールできるようにする */
+    overflow-x: auto;
+    /* iOSでの慣性スクロールを有効にする */
+    -webkit-overflow-scrolling: touch;
+    /* スクロールバーのための余白を追加 */
+    padding-bottom: 15px;
+    /* 親要素の幅を超えないように設定 */
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 #grid-container {
@@ -177,30 +187,4 @@ h3 {
 
 .item-controls input[type="range"] {
     width: 90%;
-}
-
-/* --- スマートフォン向けのレスポンシブ対応 --- */
-@media (max-width: 768px) {
-    body {
-        margin: 10px;
-    }
-
-    .main-container {
-        /* 設定パネルとグリッドを縦積みにする */
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .settings-panel {
-        /* 設定パネルの幅を画面に合わせる */
-        width: 90%;
-        min-width: 0; /* min-widthをリセット */
-    }
-
-    .grid-preview {
-        /* グリッドが画面からはみ出さないようにする */
-        width: 100%;
-        overflow-x: auto; /* グリッドが大きい場合は横スクロール可能にする */
-    }
 }
