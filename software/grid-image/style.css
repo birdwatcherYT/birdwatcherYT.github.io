@@ -53,6 +53,16 @@ h3 {
     margin: 10px 0 5px;
 }
 
+.toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
 .settings-panel input[type="number"],
 .settings-panel input[type="range"],
 .settings-panel input[type="color"] {
@@ -85,7 +95,6 @@ h3 {
 
 #grid-container {
     display: grid;
-    /* 修正点: borderを削除し、paddingとbackground-colorで外枠を表現 */
     background-color: var(--grid-color);
     gap: var(--grid-gap);
     padding: var(--grid-gap);
