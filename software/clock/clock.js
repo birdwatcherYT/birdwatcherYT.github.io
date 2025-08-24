@@ -52,7 +52,6 @@ function alerm_check() {
 	let date = new Date();
 	if (date.getTime() >= alerm_datetime.getTime()) {
 		play();
-		// alert(alerm_datetime.toLocaleString());
 		alerm_reset();
 	}
 }
@@ -136,90 +135,163 @@ function timer_click() {
 
 // --- PIP機能 ここから ---
 const pipButton = document.getElementById("pip-button");
+const timerPipButton = document.getElementById("timer-pip-button");
 const videoElement = document.createElement('video');
 videoElement.autoplay = true;
-let pipWorker = null;
 
-async function pip_click() {
+let pipCanvasWorker = null;
+let activePipMode = null; // 'clock' or 'timer'
+
+function updatePipButtonsState() {
+	if (activePipMode === 'clock') {
+		pipButton.textContent = 'Exit PiP mode';
+		timerPipButton.textContent = 'Picture in Picture';
+	} else if (activePipMode === 'timer') {
+		pipButton.textContent = 'Picture in Picture';
+		timerPipButton.textContent = 'Exit PiP mode';
+	} else {
+		pipButton.textContent = 'Picture in Picture';
+		timerPipButton.textContent = 'Picture in Picture';
+	}
+}
+
+async function pip_click(mode) {
 	try {
 		if (document.pictureInPictureElement) {
-			await document.exitPictureInPicture();
+			if (activePipMode === mode) {
+				await document.exitPictureInPicture();
+			} else {
+				pipCanvasWorker?.terminate();
+				activePipMode = mode;
+				updatePipButtonsState();
+				await startPipRender(mode, false);
+			}
 		} else {
-			const canvas = document.createElement('canvas');
-			const ctx = canvas.getContext('2d');
-			const width = 450; // PIP時の横幅
-			const height = 180;
-			canvas.width = width;
-			canvas.height = height;
-
-			const dateElement = document.getElementById("date");
-			const timeElement = document.getElementById("time");
-
-			const renderCanvas = () => {
-				const bodyStyle = window.getComputedStyle(document.body);
-				// 背景
-				ctx.fillStyle = bodyStyle.backgroundColor;
-				ctx.fillRect(0, 0, width, height);
-
-				// 日付
-				ctx.fillStyle = bodyStyle.color;
-				ctx.font = '36px monospace, serif';
-				ctx.textAlign = 'center';
-				ctx.textBaseline = 'middle';
-				ctx.fillText(dateElement.textContent, width / 2, height / 2 - 45);
-
-				// 時間
-				ctx.font = 'bold 96px monospace, serif';
-				ctx.fillText(timeElement.textContent, width / 2, height / 2 + 30);
-			};
-
-			renderCanvas(); // 初回描画
-
-			// Workerを使って定期的に描画更新
-			const code = `
-				onmessage = (e) => {
-					setInterval(() => self.postMessage(null), e.data);
-				};`;
-			pipWorker = new Worker("data:text/javascript;base64," + btoa(code));
-			pipWorker.onmessage = (e) => { renderCanvas(); };
-			pipWorker.postMessage(200); // 200msごとに更新
-
-			videoElement.srcObject = canvas.captureStream();
-			await videoElement.play();
-			await videoElement.requestPictureInPicture();
+			activePipMode = mode;
+			await startPipRender(mode, true);
 		}
 	} catch (error) {
 		console.error("PiP mode failed: ", error);
 		alert('Failed to enter/exit PiP mode.');
+		activePipMode = null;
+		updatePipButtonsState();
+	}
+}
+
+async function startPipRender(mode, requestNewWindow = false) {
+	const canvas = document.createElement('canvas');
+	const ctx = canvas.getContext('2d');
+	let renderCanvas;
+
+	const getTextWidth = (text, font) => {
+		const context = document.createElement('canvas').getContext('2d');
+		context.font = font;
+		return context.measureText(text).width;
+	};
+
+	if (mode === 'clock') {
+		const dateElement = document.getElementById("date");
+		const timeElement = document.getElementById("time");
+		
+		const dateFontSize = 36;
+		const timeFontSize = 96;
+		const dateFont = `${dateFontSize}px monospace, serif`;
+		const timeFont = `bold ${timeFontSize}px monospace, serif`;
+
+		const dateWidth = getTextWidth(dateElement.textContent, dateFont);
+		const timeWidth = getTextWidth(timeElement.textContent, timeFont);
+		
+		const horizontalPadding = 40;
+		const verticalPadding = 20;
+		const lineSpacing = 10;
+		
+		canvas.width = Math.max(dateWidth, timeWidth) + horizontalPadding;
+		canvas.height = dateFontSize + timeFontSize + lineSpacing + verticalPadding * 2;
+		
+		const dateY = verticalPadding + dateFontSize / 2;
+		const timeY = verticalPadding + dateFontSize + lineSpacing + timeFontSize / 2;
+
+		renderCanvas = () => {
+			const bodyStyle = window.getComputedStyle(document.body);
+			ctx.fillStyle = bodyStyle.backgroundColor;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = bodyStyle.color;
+			ctx.font = dateFont;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(dateElement.textContent, canvas.width / 2, dateY);
+			ctx.font = timeFont;
+			ctx.fillText(timeElement.textContent, canvas.width / 2, timeY);
+		};
+	} else if (mode === 'timer') {
+		const timerElement = document.getElementById("timer");
+		const timerFontSize = 96;
+		const timerFont = `bold ${timerFontSize}px monospace, serif`;
+		const timerText = timerElement.innerHTML || "0:00";
+		
+		const timerWidth = getTextWidth(timerText, timerFont);
+		
+		const horizontalPadding = 40;
+		const verticalPadding = 10;
+
+		canvas.width = timerWidth + horizontalPadding;
+		canvas.height = timerFontSize + verticalPadding * 2;
+
+		renderCanvas = () => {
+			const bodyStyle = window.getComputedStyle(document.body);
+			ctx.fillStyle = bodyStyle.backgroundColor;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = bodyStyle.color;
+			ctx.font = timerFont;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			const currentTimerText = timerElement.innerHTML || "0:00";
+			ctx.fillText(currentTimerText, canvas.width / 2, canvas.height / 2);
+		};
+	}
+
+	renderCanvas();
+
+	const code = `onmessage = (e) => { setInterval(() => self.postMessage(null), e.data); };`;
+	pipCanvasWorker = new Worker("data:text/javascript;base64," + btoa(code));
+	pipCanvasWorker.onmessage = () => { renderCanvas(); };
+	pipCanvasWorker.postMessage(200);
+
+	videoElement.srcObject = canvas.captureStream();
+	await videoElement.play();
+
+	if (requestNewWindow) {
+		await videoElement.requestPictureInPicture();
 	}
 }
 
 function initializePip() {
 	if (!document.pictureInPictureEnabled) {
 		pipButton.disabled = true;
-		pipButton.textContent = 'PiP is not supported';
+		timerPipButton.disabled = true;
+		pipButton.textContent = 'PiP not supported';
+		timerPipButton.textContent = 'PiP not supported';
 		return;
 	}
 
 	videoElement.addEventListener('enterpictureinpicture', () => {
-		pipButton.textContent = 'Exit PiP mode';
+		updatePipButtonsState();
 	});
 
 	videoElement.addEventListener('leavepictureinpicture', () => {
-		pipButton.textContent = 'Picture in Picture';
-		pipWorker?.terminate();
-		pipWorker = null;
+		pipCanvasWorker?.terminate();
+		pipCanvasWorker = null;
+		activePipMode = null;
+		updatePipButtonsState();
 	});
 }
 // --- PIP機能 ここまで ---
-
 
 clock();
 setTimeout(() => {
 	clock();
 	initializePip(); // PIP機能の初期化
 	try {
-		// バックグラウンド対応
 		const code = `
 			onmessage = (e) => {
 				setInterval(() => self.postMessage(null), e.data);
@@ -231,8 +303,7 @@ setTimeout(() => {
 		};
 		worker.postMessage(1000);
 	} catch (_) {
-		// Workerが使えないとき
 		console.log("cannot use worker");
-		const id = setInterval(() => { clock(); alerm_check(); }, 1000);
+		setInterval(() => { clock(); alerm_check(); }, 1000);
 	}
 }, 1000 - new Date().getMilliseconds());

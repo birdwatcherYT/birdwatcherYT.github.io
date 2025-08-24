@@ -80,7 +80,7 @@
 	<div style="text-align:center;">
 		<div id="date" class="date"></div>
 		<div id="time" class="time"></div>
-		<button id="pip-button" onclick="pip_click();" style="margin-top: 10px;">Picture in Picture</button>
+		<button id="pip-button" onclick="pip_click('clock');" style="margin-top: 10px;">Picture in Picture</button>
 	</div>
 	<h2>Alerm</h2>
 	<input id="alerm_date" type="datetime-local" step="1" />
@@ -89,6 +89,7 @@
 	<p>
 		<select id="minute_selector"></select>分<select id="second_selector"></select>秒
 		<button id="timer_button" onclick="timer_click();">Set</button>
+		<button id="timer-pip-button" onclick="pip_click('timer')" style="margin-left: 10px;">Picture in Picture</button>
 	</p>
 	<div id="timer" class="timer"></div>
 
