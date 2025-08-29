@@ -73,20 +73,21 @@ document.addEventListener('DOMContentLoaded', () => {
         imageContainer.appendChild(img);
         const controls = document.createElement('div');
         controls.classList.add('item-controls');
-        const fileInputId = `file-${Math.random().toString(36).substr(2, 9)}`;
+
+        const fileInputId = `file-${Math.random().toString(36).slice(2, 11)}`;
+
         controls.innerHTML = `
-            <label for="${fileInputId}">画像を選択</label>
-            <input type="file" id="${fileInputId}" accept="image/*">
             <div class="button-group">
-                <button class="fit-btn">フィット</button>
-                <button class="fill-btn">全表示</button>
-            </div>
-            <div class="button-group">
-                <button class="align-h-btn">横調整</button>
-                <button class="align-v-btn">縦調整</button>
+                <label for="${fileInputId}" class="upload-btn" title="画像を選択">➕</label>
+                <input type="file" id="${fileInputId}" accept="image/*">
+                <button class="fit-btn" title="フィット">🔳</button>
+                <button class="fill-btn" title="全表示">🖼️</button>
+                <button class="align-h-btn" title="横に合わせる">↔️</button>
+                <button class="align-v-btn" title="縦に合わせる">↕️</button>
             </div>
             <input type="range" min="0.1" max="3" step="0.01" value="1" class="scale-slider">
         `;
+
         gridItem.appendChild(imageContainer);
         gridItem.appendChild(controls);
         gridContainer.appendChild(gridItem);
@@ -114,15 +115,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const cellHeight = gridItem.offsetHeight;
             const scaledWidth = state.naturalWidth * state.scale;
             const scaledHeight = state.naturalHeight * state.scale;
-            const maxX = Math.max(0, (scaledWidth - cellWidth) / 2);
-            const maxY = Math.max(0, (scaledHeight - cellHeight) / 2);
+
+            const maxX = Math.abs(cellWidth - scaledWidth) / 2;
+            const maxY = Math.abs(cellHeight - scaledHeight) / 2;
+
             state.translateX = Math.max(-maxX, Math.min(maxX, state.translateX));
             state.translateY = Math.max(-maxY, Math.min(maxY, state.translateY));
         };
 
         const updateSliderRange = () => {
             if (state.fitScale === 0) return;
-            // 「移動範囲を制限する」の設定に関わらず、スライダーの下限は常に固定値とする
             scaleSlider.min = 0.1;
             scaleSlider.max = state.fitScale * 4;
         };
@@ -278,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     clampToggle.addEventListener('change', () => {
-        // チェックがオンになった場合は、全ての画像の位置を再評価して範囲内に収める
         if (clampToggle.checked) {
             gridContainer.querySelectorAll('.grid-item').forEach(gridItem => {
                 if (gridItem.state?.fitScale > 0) {

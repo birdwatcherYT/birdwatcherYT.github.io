@@ -115,7 +115,6 @@ h3 {
     width: 100%;
     height: 100%;
     min-width: 50px;
-    /* 最小サイズを小さく変更 */
     min-height: 50px;
     cursor: pointer;
     box-sizing: border-box;
@@ -150,11 +149,12 @@ h3 {
     left: 10px;
     right: 10px;
     background: rgba(255, 255, 255, 0.85);
-    padding: 8px;
+    padding: 5px;
     border-radius: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 5px;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
@@ -171,46 +171,45 @@ h3 {
     display: none;
 }
 
-.item-controls label {
-    background-color: #007bff;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-    margin-bottom: 8px;
-    width: 90%;
-    font-size: 14px;
-}
-
-.item-controls label:hover {
-    background-color: #0056b3;
-}
-
-.item-controls input[type="range"] {
-    width: 90%;
-    margin-top: 8px;
-}
-
 .button-group {
     display: flex;
     justify-content: space-between;
-    width: 90%;
-    margin-bottom: 8px;
+    width: 100%;
 }
 
-.button-group button {
-    width: 48%;
-    padding: 6px;
-    font-size: 12px;
-    background-color: #6c757d;
+.button-group button,
+.button-group label {
+    width: 18%;
+    padding: 5px 0;
+    font-size: 18px;
     border: none;
     color: white;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.button-group button {
+    background-color: #6c757d;
 }
 
 .button-group button:hover {
     background-color: #5a6268;
+}
+
+.button-group label.upload-btn {
+    background-color: #007bff;
+}
+
+.button-group label.upload-btn:hover {
+    background-color: #0056b3;
+}
+
+.item-controls input[type="range"] {
+    width: 100%;
+    margin: 0;
 }
