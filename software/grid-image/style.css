@@ -53,13 +53,16 @@ h3 {
     margin: 10px 0 5px;
 }
 
-.toggle-label {
+.toggle-label,
+.radio-label {
     display: flex;
     align-items: center;
     cursor: pointer;
+    margin-bottom: 5px;
 }
 
-.toggle-label input[type="checkbox"] {
+.toggle-label input[type="checkbox"],
+.radio-label input[type="radio"] {
     margin-right: 8px;
 }
 
@@ -108,15 +111,23 @@ h3 {
     background-color: var(--grid-color);
     gap: var(--grid-gap);
     padding: var(--grid-gap);
+    /* コンテナ自体のサイズがコンテンツに合わせて変わるように */
+    align-self: start;
 }
 
 .grid-item {
     position: relative;
     overflow: hidden;
     background-color: #e9e9e9;
-    width: 250px;
-    height: 250px;
+    /* JSでグリッドトラックのサイズを制御するため、アイテム自身は100%で追従する */
+    width: 100%;
+    height: 100%;
+    min-width: 250px;
+    /* 画像がない場合の最小サイズ */
+    min-height: 250px;
+    /* 画像がない場合の最小サイズ */
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .image-container {
