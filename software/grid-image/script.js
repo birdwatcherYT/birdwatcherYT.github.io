@@ -7,52 +7,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridColorInput = document.getElementById('grid-color');
     const root = document.documentElement;
     const clampToggle = document.getElementById('clamp-toggle');
-    const layoutModeRadios = document.querySelectorAll('input[name="layout-mode"]');
+    const rowsInput = document.getElementById('rows');
+    const colsInput = document.getElementById('cols');
 
     const CELL_SIZE = 250; // 基本サイズ
-    let currentLayoutMode = 'fixed';
+    let rowHeights, colWidths;
 
-    // --- グリッド全体のレイアウトを更新する関数 ---
-    const updateGridLayout = () => {
-        if (currentLayoutMode !== 'flexible') return; // 可変モードでなければ何もしない
-
-        const rows = parseInt(document.getElementById('rows').value, 10);
-        const cols = parseInt(document.getElementById('cols').value, 10);
-        if (isNaN(rows) || isNaN(cols)) return;
-
-        const items = Array.from(gridContainer.querySelectorAll('.grid-item'));
-        const rowHeights = new Array(rows).fill(CELL_SIZE);
-        const colWidths = new Array(cols).fill(CELL_SIZE);
-
-        // 各行・各列の最大サイズを計算
-        items.forEach((item, index) => {
-            const row = Math.floor(index / cols);
-            const col = index % cols;
-
-            // itemに保存された目標サイズ、なければデフォルトサイズ
-            const itemWidth = item.targetWidth || CELL_SIZE;
-            const itemHeight = item.targetHeight || CELL_SIZE;
-
-            if (itemWidth > colWidths[col]) {
-                colWidths[col] = itemWidth;
+    // --- 全てのセルのスケール基準値と表示を更新する関数 ---
+    const updateAllItemsDisplay = () => {
+        document.querySelectorAll('.grid-item').forEach(item => {
+            if (item.recalculateScales) {
+                item.recalculateScales();
             }
-            if (itemHeight > rowHeights[row]) {
-                rowHeights[row] = itemHeight;
+            if (clampToggle.checked && item.clampTranslate) {
+                item.clampTranslate();
+                item.updateTransform();
             }
         });
-
-        // 計算した最大サイズをグリッドのテンプレートに適用
-        gridContainer.style.gridTemplateColumns = colWidths.map(w => `${w}px`).join(' ');
-        gridContainer.style.gridTemplateRows = rowHeights.map(h => `${h}px`).join(' ');
     };
-
-    // --- レイアウトモード切替処理 ---
-    layoutModeRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            currentLayoutMode = e.target.value;
-            createGrid();
-        });
-    });
 
     // --- グリッド線のスタイルをリアルタイムで更新 ---
     gridGapInput.addEventListener('input', (e) => {
@@ -69,30 +41,25 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.querySelectorAll('.grid-item').forEach(item => {
             const img = item.querySelector('img');
             if (img && img.src && item.state) {
-                existingItems.push({
-                    src: img.src,
-                    state: item.state,
-                });
+                existingItems.push({ src: img.src, state: item.state });
             } else {
                 existingItems.push(null);
             }
         });
 
-        const rows = document.getElementById('rows').value;
-        const cols = document.getElementById('cols').value;
+        const rows = parseInt(rowsInput.value, 10);
+        const cols = parseInt(colsInput.value, 10);
         gridContainer.innerHTML = '';
 
-        // グリッドのテンプレートを初期化
-        gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${CELL_SIZE}px)`;
-        gridContainer.style.gridTemplateRows = `repeat(${rows}, ${CELL_SIZE}px)`;
+        rowHeights = new Array(rows).fill(CELL_SIZE);
+        colWidths = new Array(cols).fill(CELL_SIZE);
+        gridContainer.style.gridTemplateColumns = colWidths.map(w => `${w}px`).join(' ');
+        gridContainer.style.gridTemplateRows = rowHeights.map(h => `${h}px`).join(' ');
 
         const newCellCount = rows * cols;
         for (let i = 0; i < newCellCount; i++) {
             setupGridItem(existingItems[i] || null);
         }
-
-        // モード切替時にレイアウトを再計算
-        setTimeout(updateGridLayout, 50);
     };
 
     // --- 個々のセルをセットアップする関数 ---
@@ -110,6 +77,14 @@ document.addEventListener('DOMContentLoaded', () => {
         controls.innerHTML = `
             <label for="${fileInputId}">画像を選択</label>
             <input type="file" id="${fileInputId}" accept="image/*">
+            <div class="button-group">
+                <button class="fit-btn">フィット</button>
+                <button class="fill-btn">全表示</button>
+            </div>
+            <div class="button-group">
+                <button class="align-h-btn">横調整</button>
+                <button class="align-v-btn">縦調整</button>
+            </div>
             <input type="range" min="0.1" max="3" step="0.01" value="1" class="scale-slider">
         `;
         gridItem.appendChild(imageContainer);
@@ -118,10 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fileInput = controls.querySelector('input[type="file"]');
         const scaleSlider = controls.querySelector('.scale-slider');
+        const fitBtn = controls.querySelector('.fit-btn');
+        const fillBtn = controls.querySelector('.fill-btn');
+        const alignHBtn = controls.querySelector('.align-h-btn');
+        const alignVBtn = controls.querySelector('.align-v-btn');
 
         const state = {
             scale: 1, translateX: 0, translateY: 0,
-            naturalWidth: 0, naturalHeight: 0, initialScale: 0,
+            naturalWidth: 0, naturalHeight: 0,
+            fitScale: 0, fillScale: 0,
         };
         gridItem.state = state;
 
@@ -141,14 +121,23 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const updateSliderRange = () => {
-            if (state.initialScale === 0) return;
-            if (clampToggle.checked) {
-                scaleSlider.min = state.initialScale;
-            } else {
-                scaleSlider.min = 0.1;
-            }
-            scaleSlider.max = state.initialScale * 4;
+            if (state.fitScale === 0) return;
+            // 「移動範囲を制限する」の設定に関わらず、スライダーの下限は常に固定値とする
+            scaleSlider.min = 0.1;
+            scaleSlider.max = state.fitScale * 4;
         };
+
+        const recalculateScales = () => {
+            if (state.naturalWidth === 0 || gridItem.offsetWidth === 0) return;
+            const cellWidth = gridItem.offsetWidth;
+            const cellHeight = gridItem.offsetHeight;
+            const scaleX = cellWidth / state.naturalWidth;
+            const scaleY = cellHeight / state.naturalHeight;
+            state.fitScale = Math.max(scaleX, scaleY);
+            state.fillScale = Math.min(scaleX, scaleY);
+            updateSliderRange();
+        };
+        gridItem.recalculateScales = recalculateScales;
 
         const loadImage = (imageSrc, existingState = null) => {
             const tempImage = new Image();
@@ -156,52 +145,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.naturalWidth = tempImage.naturalWidth;
                 state.naturalHeight = tempImage.naturalHeight;
 
-                // === ここからが修正箇所 ===
-                if (currentLayoutMode === 'flexible') {
-                    const aspectRatio = state.naturalWidth / state.naturalHeight;
-                    if (aspectRatio >= 1) { // 横長または正方形の画像
-                        gridItem.targetWidth = CELL_SIZE * aspectRatio;
-                        gridItem.targetHeight = CELL_SIZE;
-                    } else { // 縦長の画像
-                        gridItem.targetWidth = CELL_SIZE;
-                        gridItem.targetHeight = CELL_SIZE / aspectRatio;
-                    }
-                } else { // 固定モード
-                    gridItem.targetWidth = CELL_SIZE;
-                    gridItem.targetHeight = CELL_SIZE;
-                }
-                // === ここまでが修正箇所 ===
-
-                // グリッド全体のレイアウトを更新
-                updateGridLayout();
-
-                // DOM更新（セルサイズ変更）を待つための遅延
                 setTimeout(() => {
-                    const cellWidth = gridItem.offsetWidth;
-                    const cellHeight = gridItem.offsetHeight;
-                    const scaleX = cellWidth / state.naturalWidth;
-                    const scaleY = cellHeight / state.naturalHeight;
-                    state.initialScale = Math.max(scaleX, scaleY);
+                    recalculateScales();
 
                     if (existingState) {
                         Object.assign(state, existingState);
-                        state.initialScale = Math.max(scaleX, scaleY);
-                        if (clampToggle.checked && state.scale < state.initialScale) {
-                            state.scale = state.initialScale;
-                        }
                     } else {
-                        state.scale = state.initialScale;
-                        state.translateX = 0; state.translateY = 0;
+                        state.scale = state.fitScale;
+                        state.translateX = 0;
+                        state.translateY = 0;
                     }
 
-                    updateSliderRange();
                     scaleSlider.value = state.scale;
                     img.src = imageSrc;
                     img.classList.add('loaded');
 
                     if (clampToggle.checked) clampTranslate();
                     updateTransform();
-                }, 100);
+                }, 50);
             };
             tempImage.src = imageSrc;
         };
@@ -210,9 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                loadImage(event.target.result);
-            };
+            reader.onload = (event) => loadImage(event.target.result);
             reader.readAsDataURL(file);
         });
 
@@ -222,14 +181,55 @@ document.addEventListener('DOMContentLoaded', () => {
             updateTransform();
         });
 
-        let isDragging = false, startX, startY, initialTx, initialTy;
+        fitBtn.addEventListener('click', () => {
+            if (!img.src) return;
+            state.scale = state.fitScale;
+            state.translateX = 0;
+            state.translateY = 0;
+            scaleSlider.value = state.scale;
+            updateTransform();
+        });
 
-        const getEventPosition = (e) => {
-            if (e.touches && e.touches.length > 0) {
-                return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
-            }
-            return { clientX: e.clientX, clientY: e.clientY };
-        };
+        fillBtn.addEventListener('click', () => {
+            if (!img.src) return;
+            state.scale = state.fillScale;
+            state.translateX = 0;
+            state.translateY = 0;
+            scaleSlider.value = state.scale;
+            updateTransform();
+        });
+
+        alignVBtn.addEventListener('click', () => {
+            if (!img.src) return;
+            const scaledHeight = state.naturalHeight * state.scale;
+            const items = Array.from(gridContainer.children);
+            const index = items.indexOf(gridItem);
+            const cols = parseInt(colsInput.value, 10);
+            const rowIndex = Math.floor(index / cols);
+
+            rowHeights[rowIndex] = scaledHeight;
+            gridContainer.style.gridTemplateRows = rowHeights.map(h => `${h.toFixed(2)}px`).join(' ');
+
+            setTimeout(updateAllItemsDisplay, 50);
+        });
+
+        alignHBtn.addEventListener('click', () => {
+            if (!img.src) return;
+            const scaledWidth = state.naturalWidth * state.scale;
+            const items = Array.from(gridContainer.children);
+            const index = items.indexOf(gridItem);
+            const cols = parseInt(colsInput.value, 10);
+            const colIndex = index % cols;
+
+            colWidths[colIndex] = scaledWidth;
+            gridContainer.style.gridTemplateColumns = colWidths.map(w => `${w.toFixed(2)}px`).join(' ');
+
+            setTimeout(updateAllItemsDisplay, 50);
+        });
+
+
+        let isDragging = false, startX, startY, initialTx, initialTy;
+        const getEventPosition = (e) => e.touches?.[0] || e;
 
         const onDragStart = (e) => {
             if (!img.src) return;
@@ -269,31 +269,24 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('touchend', onDragEnd);
         window.addEventListener('touchcancel', onDragEnd);
 
-        gridItem.updateSliderRange = updateSliderRange;
         gridItem.clampTranslate = clampTranslate;
         gridItem.updateTransform = updateTransform;
 
-        if (initialData && initialData.src) {
+        if (initialData?.src) {
             loadImage(initialData.src, initialData.state);
         }
     };
 
     clampToggle.addEventListener('change', () => {
-        gridContainer.querySelectorAll('.grid-item').forEach(gridItem => {
-            if (gridItem.state && gridItem.state.initialScale > 0) {
-                gridItem.updateSliderRange();
-                if (clampToggle.checked) {
-                    const state = gridItem.state;
-                    const scaleSlider = gridItem.querySelector('.scale-slider');
-                    if (state.scale < state.initialScale) {
-                        state.scale = state.initialScale;
-                        scaleSlider.value = state.scale;
-                    }
+        // チェックがオンになった場合は、全ての画像の位置を再評価して範囲内に収める
+        if (clampToggle.checked) {
+            gridContainer.querySelectorAll('.grid-item').forEach(gridItem => {
+                if (gridItem.state?.fitScale > 0) {
                     gridItem.clampTranslate();
                     gridItem.updateTransform();
                 }
-            }
-        });
+            });
+        }
     });
 
     const exportImage = async () => {
