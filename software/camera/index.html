@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <title>Webカメラ</title>
+    <style>
+        #main-body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            gap: 30px;
+        }
+
+        .section {
+            width: 100%;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            background-color: #fff;
+        }
+
+        .settings {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #resolution-select {
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        #camera {
+            background-color: #000;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .button-group button {
+            padding: 10px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            color: white;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+
+        /* ボタンのスタイルを更新 */
+        #shutter-btn {
+            background-color: #007bff;
+        }
+
+        #clear-gallery-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        /* 録画トグルボタンのスタイル */
+        #record-btn {
+            background-color: #dc3545;
+            /* 赤: 録画開始 */
+            min-width: 130px;
+            /* テキスト変更時のガタツキ防止 */
+        }
+
+        #record-btn.is-recording {
+            background-color: #fd7e14;
+            /* オレンジ: 録画停止 */
+        }
+
+        /* hover時のスタイルも追加すると、より操作感が向上します */
+        #record-btn.is-recording:hover {
+            background-color: #e66a00;
+        }
+
+        /* ギャラリーとモーダルのスタイルは前回と同じ */
+        #gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        #gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+            min-height: 100px;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .thumbnail {
+            position: relative;
+            width: 100%;
+            padding-top: 75%;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover img {
+            transform: scale(1.05);
+        }
+
+        .thumbnail .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            line-height: 40px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 80%;
+            max-height: 80vh;
+        }
+
+        .modal-content-container {
+            text-align: center;
+        }
+
+        #modal-download-link {
+            display: block;
+            margin: 15px auto;
+            padding: 10px 20px;
+            width: fit-content;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+
+    <div id="main-body">
+        <h1>Webカメラ</h1>
+
+        <div id="main-container">
+            <div id="camera-section" class="section">
+                <div class="box">
+                    <div class="settings">
+                        <label for="resolution-select">解像度:</label>
+                        <select id="resolution-select">
+                            <option value="640x480">640 x 480 (VGA)</option>
+                            <option value="1280x720">1280 x 720 (HD 720p)</option>
+                            <option value="1920x1080">1920 x 1080 (Full HD 1080p)</option>
+                            <option value="3840x2160">3840 x 2160 (4K UHD)</option>
+                        </select>
+                    </div>
+                    <video id="camera" width="640" height="480" autoplay playsinline muted></video>
+                    <canvas id="hidden-canvas" style="display: none;"></canvas>
+                    <div class="button-group">
+                        <button id="shutter-btn">写真撮影</button>
+                        <!-- ボタンを1つに統合 -->
+                        <button id="record-btn">録画開始</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="preview-section" class="section">
+                <div class="box">
+                    <div id="gallery-header">
+                        <h2>撮影結果</h2>
+                        <button id="clear-gallery-btn">すべてクリア</button>
+                    </div>
+                    <div id="gallery"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="my-modal" class="modal">
+            <span class="close-btn">&times;</span>
+            <div class="modal-content-container">
+                <img class="modal-content" id="modal-image">
+                <video class="modal-content" id="modal-video" controls></video>
+                <a id="modal-download-link">ダウンロード</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <footer></footer>
+</body>
+
+</html>
