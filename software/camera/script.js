@@ -53,18 +53,14 @@ async function initCamera() {
     const selectedValue = resolutionSelect.value;
     const [width, height] = selectedValue.split('x').map(Number);
 
-    // video要素のサイズはCSSで制御するため、ここでは設定しない
-    // canvasのサイズは撮影時に動的に設定する
-
     const constraints = {
         video: {
-            width: { ideal: width }, // exactからidealに変更し、より多くのデバイスをサポート
+            width: { ideal: width },
             height: { ideal: height },
         },
         audio: true
     };
 
-    // 選択されたカメラがあればconstraintsに追加
     if (cameraSelect.value) {
         constraints.video.deviceId = { exact: cameraSelect.value };
     }
@@ -73,7 +69,19 @@ async function initCamera() {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         currentStream = stream;
-        await populateCameraList(); // ストリーム取得後にカメラリストを更新(ラベルが表示されるため)
+
+        // 実際に適用された解像度を取得し、ユーザーの選択と異なる場合は通知する
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+
+        // 少し待ってからでないと、正しい videoWidth/Height が取得できない場合がある
+        video.onloadedmetadata = () => {
+            if (settings.width !== width || settings.height !== height) {
+                alert(`ご希望の解像度 (${width}x${height}) は利用できませんでした。\n代わりにサポートされている解像度 (${settings.width}x${settings.height}) でカメラを開始します。`);
+            }
+        };
+
+        await populateCameraList();
     } catch (err) {
         console.error("カメラエラー:", err);
         alert(`解像度 (${width}x${height}) または指定のカメラはサポートされていません。`);
@@ -129,7 +137,6 @@ function closeModal() {
 
 // ===== 写真撮影の処理 =====
 shutterBtn.addEventListener('click', () => {
-    // canvasのサイズを映像の実際のサイズに合わせる
     hiddenCanvas.width = video.videoWidth;
     hiddenCanvas.height = video.videoHeight;
 
@@ -205,22 +212,19 @@ function createVideoThumbnail(videoUrl) {
         tempVideo.muted = true;
 
         tempVideo.addEventListener('loadeddata', () => {
-            // 0秒地点にシーク
             tempVideo.currentTime = 0;
         }, { once: true });
 
         tempVideo.addEventListener('seeked', () => {
-            // 【修正点】ここでもcanvasサイズを映像のサイズに合わせる
             hiddenCanvas.width = tempVideo.videoWidth;
             hiddenCanvas.height = tempVideo.videoHeight;
             const context = hiddenCanvas.getContext('2d');
             context.drawImage(tempVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
             const dataUrl = hiddenCanvas.toDataURL('image/jpeg');
             resolve(dataUrl);
-            tempVideo.remove(); // 不要になったvideo要素を削除
+            tempVideo.remove();
         }, { once: true });
 
-        // play()は自動再生ポリシーにより失敗することがあるため、catchでエラーを握りつぶす
         tempVideo.play().catch(() => { });
     });
 }
@@ -238,7 +242,7 @@ clearGalleryBtn.addEventListener('click', () => {
 
 // ===== イベントリスナーの設定 =====
 resolutionSelect.addEventListener('change', initCamera);
-cameraSelect.addEventListener('change', initCamera); // カメラ選択のイベントリスナーを追加
+cameraSelect.addEventListener('change', initCamera);
 closeModalBtn.addEventListener('click', closeModal);
 window.addEventListener('click', (event) => {
     if (event.target === modal) {
