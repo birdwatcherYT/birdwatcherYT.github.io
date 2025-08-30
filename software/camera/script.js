@@ -4,6 +4,7 @@ const hiddenCanvas = document.getElementById('hidden-canvas');
 const shutterBtn = document.getElementById('shutter-btn');
 const recordBtn = document.getElementById('record-btn'); // 統合されたボタン
 const resolutionSelect = document.getElementById('resolution-select');
+const cameraSelect = document.getElementById('camera-select'); // カメラ選択を追加
 const gallery = document.getElementById('gallery');
 const clearGalleryBtn = document.getElementById('clear-gallery-btn');
 const modal = document.getElementById('my-modal');
@@ -20,6 +21,30 @@ let currentStream;
 let galleryItems = [];
 
 
+// ===== カメラデバイス一覧の取得と設定 =====
+async function populateCameraList() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const currentCameraId = currentStream?.getVideoTracks()[0]?.getSettings().deviceId;
+
+        cameraSelect.innerHTML = ''; // 以前のリストをクリア
+
+        videoDevices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `カメラ ${cameraSelect.length + 1}`;
+            if (device.deviceId === currentCameraId) {
+                option.selected = true; // 現在使用中のカメラを選択状態にする
+            }
+            cameraSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error("カメラデバイスリストの取得エラー:", err);
+    }
+}
+
+
 // ===== カメラの初期化・再初期化 =====
 async function initCamera() {
     if (currentStream) {
@@ -27,18 +52,31 @@ async function initCamera() {
     }
     const selectedValue = resolutionSelect.value;
     const [width, height] = selectedValue.split('x').map(Number);
-    video.width = width;
-    video.height = height;
-    hiddenCanvas.width = width;
-    hiddenCanvas.height = height;
-    const constraints = { video: { width: { exact: width }, height: { exact: height } }, audio: true };
+
+    // video要素のサイズはCSSで制御するため、ここでは設定しない
+    // canvasのサイズは撮影時に動的に設定する
+
+    const constraints = {
+        video: {
+            width: { ideal: width }, // exactからidealに変更し、より多くのデバイスをサポート
+            height: { ideal: height },
+        },
+        audio: true
+    };
+
+    // 選択されたカメラがあればconstraintsに追加
+    if (cameraSelect.value) {
+        constraints.video.deviceId = { exact: cameraSelect.value };
+    }
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         currentStream = stream;
+        await populateCameraList(); // ストリーム取得後にカメラリストを更新(ラベルが表示されるため)
     } catch (err) {
         console.error("カメラエラー:", err);
-        alert(`解像度 (${width}x${height}) はサポートされていません。`);
+        alert(`解像度 (${width}x${height}) または指定のカメラはサポートされていません。`);
     }
 }
 
@@ -72,24 +110,29 @@ function openModal(index) {
         modalVideo.style.display = 'none';
         modalImage.src = item.data;
         modalDownloadLink.href = item.data;
-        modalDownloadLink.download = `photo-${index}.png`;
+        modalDownloadLink.download = `photo-${Date.now()}.png`;
     } else {
         modalImage.style.display = 'none';
         modalVideo.style.display = 'block';
         modalVideo.src = item.data;
         modalDownloadLink.href = item.data;
-        modalDownloadLink.download = `video-${index}.webm`;
+        modalDownloadLink.download = `video-${Date.now()}.webm`;
     }
     modal.style.display = 'block';
 }
 function closeModal() {
     modal.style.display = 'none';
     modalVideo.pause();
+    modalVideo.src = ""; // ソースをクリア
 }
 
 
 // ===== 写真撮影の処理 =====
 shutterBtn.addEventListener('click', () => {
+    // canvasのサイズを映像の実際のサイズに合わせる
+    hiddenCanvas.width = video.videoWidth;
+    hiddenCanvas.height = video.videoHeight;
+
     const context = hiddenCanvas.getContext('2d');
     context.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
     const dataUrl = hiddenCanvas.toDataURL('image/png');
@@ -100,12 +143,9 @@ shutterBtn.addEventListener('click', () => {
 
 // ===== 動画撮影のトグル処理 =====
 recordBtn.addEventListener('click', () => {
-    // 録画中でなければ、録画を開始
     if (!mediaRecorder || mediaRecorder.state === 'inactive') {
         startRecording();
-    }
-    // 録画中であれば、録画を停止
-    else {
+    } else {
         stopRecording();
     }
 });
@@ -117,7 +157,15 @@ function startRecording() {
         return;
     }
 
-    mediaRecorder = new MediaRecorder(currentStream, { mimeType: 'video/webm' });
+    const options = { mimeType: 'video/webm' };
+    try {
+        mediaRecorder = new MediaRecorder(currentStream, options);
+    } catch (e) {
+        console.error("MediaRecorderの初期化に失敗: ", e);
+        alert("お使いのブラウザではこの形式での録画に対応していません。");
+        return;
+    }
+
     mediaRecorder.ondataavailable = e => (e.data.size > 0) && recordedChunks.push(e.data);
     mediaRecorder.onstop = async () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
@@ -129,22 +177,22 @@ function startRecording() {
 
     mediaRecorder.start();
 
-    // UIを録画中状態に更新
     recordBtn.textContent = '録画停止';
     recordBtn.classList.add('is-recording');
     shutterBtn.disabled = true;
     resolutionSelect.disabled = true;
+    cameraSelect.disabled = true;
 }
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
 
-        // UIを非録画状態に更新
         recordBtn.textContent = '録画開始';
         recordBtn.classList.remove('is-recording');
         shutterBtn.disabled = false;
         resolutionSelect.disabled = false;
+        cameraSelect.disabled = false;
     }
 }
 
@@ -155,18 +203,28 @@ function createVideoThumbnail(videoUrl) {
         const tempVideo = document.createElement('video');
         tempVideo.src = videoUrl;
         tempVideo.muted = true;
+
         tempVideo.addEventListener('loadeddata', () => {
-            setTimeout(() => { tempVideo.currentTime = 0; }, 200);
+            // 0秒地点にシーク
+            tempVideo.currentTime = 0;
         }, { once: true });
+
         tempVideo.addEventListener('seeked', () => {
+            // 【修正点】ここでもcanvasサイズを映像のサイズに合わせる
+            hiddenCanvas.width = tempVideo.videoWidth;
+            hiddenCanvas.height = tempVideo.videoHeight;
             const context = hiddenCanvas.getContext('2d');
             context.drawImage(tempVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
             const dataUrl = hiddenCanvas.toDataURL('image/jpeg');
             resolve(dataUrl);
+            tempVideo.remove(); // 不要になったvideo要素を削除
         }, { once: true });
+
+        // play()は自動再生ポリシーにより失敗することがあるため、catchでエラーを握りつぶす
         tempVideo.play().catch(() => { });
     });
 }
+
 clearGalleryBtn.addEventListener('click', () => {
     galleryItems.forEach(item => {
         if (item.type === 'video') {
@@ -180,6 +238,7 @@ clearGalleryBtn.addEventListener('click', () => {
 
 // ===== イベントリスナーの設定 =====
 resolutionSelect.addEventListener('change', initCamera);
+cameraSelect.addEventListener('change', initCamera); // カメラ選択のイベントリスナーを追加
 closeModalBtn.addEventListener('click', closeModal);
 window.addEventListener('click', (event) => {
     if (event.target === modal) {

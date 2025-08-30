@@ -46,12 +46,23 @@
         .settings {
             margin-bottom: 15px;
             display: flex;
+            flex-wrap: wrap;
+            /* 画面が狭い場合に折り返すように */
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            /* 要素間のスペースを調整 */
         }
 
-        #resolution-select {
+        .settings>div {
+            /* 各設定項目をグループ化 */
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #resolution-select,
+        #camera-select {
             padding: 5px;
             border-radius: 4px;
         }
@@ -217,15 +228,21 @@
             <div id="camera-section" class="section">
                 <div class="box">
                     <div class="settings">
-                        <label for="resolution-select">解像度:</label>
-                        <select id="resolution-select">
-                            <option value="640x480">640 x 480 (VGA)</option>
-                            <option value="1280x720">1280 x 720 (HD 720p)</option>
-                            <option value="1920x1080">1920 x 1080 (Full HD 1080p)</option>
-                            <option value="3840x2160">3840 x 2160 (4K UHD)</option>
-                        </select>
+                        <div>
+                            <label for="camera-select">カメラ:</label>
+                            <select id="camera-select"></select>
+                        </div>
+                        <div>
+                            <label for="resolution-select">解像度:</label>
+                            <select id="resolution-select">
+                                <option value="640x480">640 x 480 (VGA)</option>
+                                <option value="1280x720">1280 x 720 (HD 720p)</option>
+                                <option value="1920x1080">1920 x 1080 (Full HD 1080p)</option>
+                                <option value="3840x2160">3840 x 2160 (4K UHD)</option>
+                            </select>
+                        </div>
                     </div>
-                    <video id="camera" width="640" height="480" autoplay playsinline muted></video>
+                    <video id="camera" autoplay playsinline muted></video>
                     <canvas id="hidden-canvas" style="display: none;"></canvas>
                     <div class="button-group">
                         <button id="shutter-btn">写真撮影</button>
