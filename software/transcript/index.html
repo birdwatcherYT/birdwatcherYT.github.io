@@ -123,7 +123,8 @@
         function startRecognition() {
             if (isRecording) return;
 
-            if (!("webkitSpeechRecognition" in window)) {
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognitionAPI) {
                 alert("このブラウザは音声認識をサポートしていません。");
                 return;
             }
@@ -140,7 +141,7 @@
             }
             finalTranscript = currentText;
 
-            recognition = new webkitSpeechRecognition();
+            recognition = new SpeechRecognitionAPI();
             recognition.lang = languageSelect.value;
             recognition.continuous = true;
             recognition.interimResults = true;
