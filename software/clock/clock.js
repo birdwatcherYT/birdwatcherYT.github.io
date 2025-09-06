@@ -133,27 +133,83 @@ function timer_click() {
 	}
 }
 
+// --- Stopwatch functions ---
+let stopwatchStartTime = null;
+let stopwatchElapsedTime = 0;
+let stopwatchWorker = null;
+let lapTimes = [];
+
+function formatStopwatchTime(time) {
+	const milliseconds = Math.floor(time % 1000);
+	const seconds = Math.floor((time / 1000) % 60);
+	const minutes = Math.floor(time / (1000 * 60));
+	return `${minutes}:${zeroPadding(seconds, 2)}.${zeroPadding(milliseconds, 3)}`;
+}
+
+function updateStopwatchDisplay() {
+	if (stopwatchStartTime === null) return;
+	const currentTime = performance.now();
+	const elapsedTime = stopwatchElapsedTime + (currentTime - stopwatchStartTime);
+	document.getElementById("stopwatch").innerHTML = formatStopwatchTime(elapsedTime);
+}
+
+function startStopStopwatch() {
+	const button = document.getElementById("stopwatch_start_stop_button");
+	if (stopwatchWorker) { // Running -> Stop
+		stopwatchWorker.terminate();
+		stopwatchWorker = null;
+		stopwatchElapsedTime += performance.now() - stopwatchStartTime;
+		stopwatchStartTime = null;
+		button.textContent = "Start";
+	} else { // Stopped -> Start
+		stopwatchStartTime = performance.now();
+		const code = `onmessage = (e) => { setInterval(() => self.postMessage(null), e.data); };`;
+		stopwatchWorker = new Worker("data:text/javascript;base64," + btoa(code));
+		stopwatchWorker.onmessage = updateStopwatchDisplay;
+		stopwatchWorker.postMessage(10); // 10ms間隔で更新
+		button.textContent = "Stop";
+	}
+}
+
+function resetStopwatch() {
+	stopwatchWorker?.terminate();
+	stopwatchWorker = null;
+	stopwatchStartTime = null;
+	stopwatchElapsedTime = 0;
+	lapTimes = [];
+	document.getElementById("stopwatch").innerHTML = "0:00.000";
+	document.getElementById("lap_list").innerHTML = "";
+	document.getElementById("stopwatch_start_stop_button").textContent = "Start";
+}
+
+function lapStopwatch() {
+	if (stopwatchStartTime === null) return;
+	const currentTime = performance.now();
+	const elapsedTime = stopwatchElapsedTime + (currentTime - stopwatchStartTime);
+	lapTimes.push(elapsedTime);
+
+	const lapList = document.getElementById("lap_list");
+	const li = document.createElement("li");
+	li.textContent = formatStopwatchTime(elapsedTime);
+	lapList.appendChild(li);
+}
+
 // --- PIP機能 ここから ---
 const pipButton = document.getElementById("pip-button");
 const timerPipButton = document.getElementById("timer-pip-button");
+const stopwatchPipButton = document.getElementById("stopwatch-pip-button");
 const videoElement = document.createElement('video');
 videoElement.autoplay = true;
 
 let pipCanvasWorker = null;
-let activePipMode = null; // 'clock' or 'timer'
+let activePipMode = null; // 'clock', 'timer', or 'stopwatch'
 
 function updatePipButtonsState() {
-	if (activePipMode === 'clock') {
-		pipButton.textContent = 'Exit PiP mode';
-		timerPipButton.textContent = 'Picture in Picture';
-	} else if (activePipMode === 'timer') {
-		pipButton.textContent = 'Picture in Picture';
-		timerPipButton.textContent = 'Exit PiP mode';
-	} else {
-		pipButton.textContent = 'Picture in Picture';
-		timerPipButton.textContent = 'Picture in Picture';
-	}
+	pipButton.textContent = activePipMode === 'clock' ? 'Exit PiP mode' : 'Picture in Picture';
+	timerPipButton.textContent = activePipMode === 'timer' ? 'Exit PiP mode' : 'Picture in Picture';
+	stopwatchPipButton.textContent = activePipMode === 'stopwatch' ? 'Exit PiP mode' : 'Picture in Picture';
 }
+
 
 async function pip_click(mode) {
 	try {
@@ -195,7 +251,7 @@ async function startPipRender(mode, requestNewWindow = false) {
 	if (mode === 'clock') {
 		const dateElement = document.getElementById("date");
 		const timeElement = document.getElementById("time");
-		
+
 		const dateFontSize = 36 * scaleFactor;
 		const timeFontSize = 96 * scaleFactor;
 		const dateFont = `${dateFontSize}px monospace, serif`;
@@ -203,14 +259,14 @@ async function startPipRender(mode, requestNewWindow = false) {
 
 		const dateWidth = getTextWidth(dateElement.textContent, dateFont);
 		const timeWidth = getTextWidth(timeElement.textContent, timeFont);
-		
+
 		const horizontalPadding = 40 * scaleFactor;
 		const verticalPadding = 20 * scaleFactor;
 		const lineSpacing = 10 * scaleFactor;
-		
+
 		canvas.width = Math.max(dateWidth, timeWidth) + horizontalPadding;
 		canvas.height = dateFontSize + timeFontSize + lineSpacing + verticalPadding * 2;
-		
+
 		const dateY = verticalPadding + dateFontSize / 2;
 		const timeY = verticalPadding + dateFontSize + lineSpacing + timeFontSize / 2;
 
@@ -228,13 +284,13 @@ async function startPipRender(mode, requestNewWindow = false) {
 		};
 	} else if (mode === 'timer') {
 		const timerElement = document.getElementById("timer");
-		
+
 		const timerFontSize = 96 * scaleFactor;
 		const timerFont = `bold ${timerFontSize}px monospace, serif`;
 		const timerText = timerElement.innerHTML || "0:00";
-		
+
 		const timerWidth = getTextWidth(timerText, timerFont);
-		
+
 		const horizontalPadding = 40 * scaleFactor;
 		const verticalPadding = 10 * scaleFactor;
 
@@ -252,14 +308,41 @@ async function startPipRender(mode, requestNewWindow = false) {
 			const currentTimerText = timerElement.innerHTML || "0:00";
 			ctx.fillText(currentTimerText, canvas.width / 2, canvas.height / 2);
 		};
+	} else if (mode === 'stopwatch') {
+		const stopwatchElement = document.getElementById("stopwatch");
+
+		const stopwatchFontSize = 96 * scaleFactor;
+		const stopwatchFont = `bold ${stopwatchFontSize}px monospace, serif`;
+		const stopwatchText = stopwatchElement.innerHTML || "0:00.000";
+
+		const stopwatchWidth = getTextWidth(stopwatchText, stopwatchFont);
+
+		const horizontalPadding = 40 * scaleFactor;
+		const verticalPadding = 10 * scaleFactor;
+
+		canvas.width = stopwatchWidth + horizontalPadding;
+		canvas.height = stopwatchFontSize + verticalPadding * 2;
+
+		renderCanvas = () => {
+			const bodyStyle = window.getComputedStyle(document.body);
+			ctx.fillStyle = bodyStyle.backgroundColor;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = bodyStyle.color;
+			ctx.font = stopwatchFont;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			const currentStopwatchText = stopwatchElement.innerHTML || "0:00.000";
+			ctx.fillText(currentStopwatchText, canvas.width / 2, canvas.height / 2);
+		};
 	}
+
 
 	renderCanvas();
 
 	const code = `onmessage = (e) => { setInterval(() => self.postMessage(null), e.data); };`;
 	pipCanvasWorker = new Worker("data:text/javascript;base64," + btoa(code));
 	pipCanvasWorker.onmessage = () => { renderCanvas(); };
-	pipCanvasWorker.postMessage(200);
+	pipCanvasWorker.postMessage(100);
 
 	videoElement.srcObject = canvas.captureStream();
 	await videoElement.play();
@@ -273,8 +356,10 @@ function initializePip() {
 	if (!document.pictureInPictureEnabled) {
 		pipButton.disabled = true;
 		timerPipButton.disabled = true;
+		stopwatchPipButton.disabled = true;
 		pipButton.textContent = 'PiP not supported';
 		timerPipButton.textContent = 'PiP not supported';
+		stopwatchPipButton.textContent = 'PiP not supported';
 		return;
 	}
 

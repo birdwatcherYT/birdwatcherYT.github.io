@@ -92,6 +92,15 @@
 		<button id="timer-pip-button" onclick="pip_click('timer')" style="margin-left: 10px;">Picture in Picture</button>
 	</p>
 	<div id="timer" class="timer"></div>
+	<h2>Stopwatch</h2>
+	<div id="stopwatch" class="timer" style="font-size: 5vw;">0:00.000</div>
+	<p>
+		<button id="stopwatch_start_stop_button" onclick="startStopStopwatch();">Start</button>
+		<button id="stopwatch_reset_button" onclick="resetStopwatch();">Reset</button>
+		<button id="stopwatch_lap_button" onclick="lapStopwatch();">Lap</button>
+		<button id="stopwatch-pip-button" onclick="pip_click('stopwatch')" style="margin-left: 10px;">Picture in Picture</button>
+	</p>
+	<ol id="lap_list"></ol>
 
 	<script src="clock.js"></script>
 	<script>
