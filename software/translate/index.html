@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローカル翻訳アプリ</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+    <div class="all-container">
+        <div class="container">
+            <h1>ローカル翻訳アプリ</h1>
+            <p>transformers.jsを使い、完全にローカルで動作します。</p>
+            <textarea id="input-text" placeholder="翻訳したいテキストを入力してください..."></textarea>
+
+            <div class="controls">
+                <div class="lang-controls-wrapper">
+                    <div class="lang-select">
+                        <label for="source-lang">翻訳元</label>
+                        <select id="source-lang">
+                            <option value="jpn_Jpan" selected>日本語 (Japanese)</option>
+                            <option value="eng_Latn">英語 (English)</option>
+                            <option value="zho_Hans">中国語 (簡体字)</option>
+                            <option value="kor_Hang">韓国語 (한국어)</option>
+                            <option value="fra_Latn">フランス語 (Français)</option>
+                            <option value="spa_Latn">スペイン語 (Español)</option>
+                            <option value="deu_Latn">ドイツ語 (Deutsch)</option>
+                            <option value="ita_Latn">イタリア語 (Italiano)</option>
+                            <option value="rus_Cyrl">ロシア語 (Русский)</option>
+                            <option value="por_Latn">ポルトガル語 (Português)</option>
+                            <option value="arb_Arab">アラビア語 (العربية)</option>
+                            <option value="vie_Latn">ベトナム語 (Tiếng Việt)</option>
+                            <option value="tha_Thai">タイ語 (ภาษาไทย)</option>
+                            <option value="ind_Latn">インドネシア語 (Bahasa Indonesia)</option>
+                        </select>
+                    </div>
+
+                    <button id="swap-button" title="言語を入れ替え">⇄</button>
+
+                    <div class="lang-select">
+                        <label for="target-lang">翻訳先</label>
+                        <select id="target-lang">
+                            <option value="eng_Latn" selected>英語 (English)</option>
+                            <option value="jpn_Jpan">日本語 (Japanese)</option>
+                            <option value="zho_Hans">中国語 (簡体字)</option>
+                            <option value="kor_Hang">韓国語 (한국어)</option>
+                            <option value="fra_Latn">フランス語 (Français)</option>
+                            <option value="spa_Latn">スペイン語 (Español)</option>
+                            <option value="deu_Latn">ドイツ語 (Deutsch)</option>
+                            <option value="ita_Latn">イタリア語 (Italiano)</option>
+                            <option value="rus_Cyrl">ロシア語 (Русский)</option>
+                            <option value="por_Latn">ポルトガル語 (Português)</option>
+                            <option value="arb_Arab">アラビア語 (العربية)</option>
+                            <option value="vie_Latn">ベトナム語 (Tiếng Việt)</option>
+                            <option value="tha_Thai">タイ語 (ภาษาไทย)</option>
+                            <option value="ind_Latn">インドネシア語 (Bahasa Indonesia)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="translate-button">翻訳</button>
+            </div>
+            <div id="status" class="status">
+                翻訳の準備ができています。
+            </div>
+                <h2>翻訳結果</h2>
+                <div id="output"></div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <footer></footer>
+</body>
+
+</html>

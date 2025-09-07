@@ -1,0 +1,111 @@
+.all-container {
+    display: grid;
+    place-items: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 10px;
+    box-sizing: border-box;
+    /* paddingを含めた幅計算に */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.lang-controls-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.lang-select {
+    flex-grow: 1;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+select {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#swap-button {
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: auto;
+    /* ラベルの高さ分を調整 */
+    line-height: 1;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#swap-button:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+}
+
+
+#translate-button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#translate-button:disabled {
+    background-color: #a0cfff;
+    cursor: not-allowed;
+}
+
+#output {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 120px;
+    border: 1px solid #ccc;
+}
+
+.status {
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+}
