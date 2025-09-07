@@ -15,7 +15,17 @@
     <div class="all-container">
         <div class="container">
             <h1>ローカル翻訳アプリ</h1>
-            <p>transformers.jsで「nllb-200-distilled-600M」モデルを使い、完全にローカルで動作します。</p>
+            <p>transformers.jsを使い、完全にローカルで動作します。</p>
+
+            <div class="model-selector">
+                <label for="model-select">翻訳モデルを選択</label>
+                <select id="model-select">
+                    <option value="Xenova/nllb-200-distilled-600M" selected>NLLB-600M</option>
+                    <option value="Xenova/m2m100_418M">M2M100-418M</option>
+                </select>
+                <p class="model-note">※モデルを切り替えるとダウンロードが始まります。</p>
+            </div>
+
             <textarea id="input-text" placeholder="翻訳したいテキストを入力してください..."></textarea>
 
             <div class="controls">
@@ -23,20 +33,21 @@
                     <div class="lang-select">
                         <label for="source-lang">翻訳元</label>
                         <select id="source-lang">
-                            <option value="jpn_Jpan" selected>日本語 (Japanese)</option>
-                            <option value="eng_Latn">英語 (English)</option>
-                            <option value="zho_Hans">中国語 (簡体字)</option>
-                            <option value="kor_Hang">韓国語 (한국어)</option>
-                            <option value="fra_Latn">フランス語 (Français)</option>
-                            <option value="spa_Latn">スペイン語 (Español)</option>
-                            <option value="deu_Latn">ドイツ語 (Deutsch)</option>
-                            <option value="ita_Latn">イタリア語 (Italiano)</option>
-                            <option value="rus_Cyrl">ロシア語 (Русский)</option>
-                            <option value="por_Latn">ポルトガル語 (Português)</option>
-                            <option value="arb_Arab">アラビア語 (العربية)</option>
-                            <option value="vie_Latn">ベトナム語 (Tiếng Việt)</option>
-                            <option value="tha_Thai">タイ語 (ภาษาไทย)</option>
-                            <option value="ind_Latn">インドネシア語 (Bahasa Indonesia)</option>
+                            <!-- 各オプションに data-m2m-code を追加 -->
+                            <option value="jpn_Jpan" data-m2m-code="ja" selected>日本語 (Japanese)</option>
+                            <option value="eng_Latn" data-m2m-code="en">英語 (English)</option>
+                            <option value="zho_Hans" data-m2m-code="zh">中国語 (簡体字)</option>
+                            <option value="kor_Hang" data-m2m-code="ko">韓国語 (한국어)</option>
+                            <option value="fra_Latn" data-m2m-code="fr">フランス語 (Français)</option>
+                            <option value="spa_Latn" data-m2m-code="es">スペイン語 (Español)</option>
+                            <option value="deu_Latn" data-m2m-code="de">ドイツ語 (Deutsch)</option>
+                            <option value="ita_Latn" data-m2m-code="it">イタリア語 (Italiano)</option>
+                            <option value="rus_Cyrl" data-m2m-code="ru">ロシア語 (Русский)</option>
+                            <option value="por_Latn" data-m2m-code="pt">ポルトガル語 (Português)</option>
+                            <option value="arb_Arab" data-m2m-code="ar">アラビア語 (العربية)</option>
+                            <option value="vie_Latn" data-m2m-code="vi">ベトナム語 (Tiếng Việt)</option>
+                            <option value="tha_Thai" data-m2m-code="th">タイ語 (ภาษาไทย)</option>
+                            <option value="ind_Latn" data-m2m-code="id">インドネシア語 (Bahasa Indonesia)</option>
                         </select>
                     </div>
 
@@ -45,20 +56,20 @@
                     <div class="lang-select">
                         <label for="target-lang">翻訳先</label>
                         <select id="target-lang">
-                            <option value="eng_Latn" selected>英語 (English)</option>
-                            <option value="jpn_Jpan">日本語 (Japanese)</option>
-                            <option value="zho_Hans">中国語 (簡体字)</option>
-                            <option value="kor_Hang">韓国語 (한국어)</option>
-                            <option value="fra_Latn">フランス語 (Français)</option>
-                            <option value="spa_Latn">スペイン語 (Español)</option>
-                            <option value="deu_Latn">ドイツ語 (Deutsch)</option>
-                            <option value="ita_Latn">イタリア語 (Italiano)</option>
-                            <option value="rus_Cyrl">ロシア語 (Русский)</option>
-                            <option value="por_Latn">ポルトガル語 (Português)</option>
-                            <option value="arb_Arab">アラビア語 (العربية)</option>
-                            <option value="vie_Latn">ベトナム語 (Tiếng Việt)</option>
-                            <option value="tha_Thai">タイ語 (ภาษาไทย)</option>
-                            <option value="ind_Latn">インドネシア語 (Bahasa Indonesia)</option>
+                            <option value="eng_Latn" data-m2m-code="en" selected>英語 (English)</option>
+                            <option value="jpn_Jpan" data-m2m-code="ja">日本語 (Japanese)</option>
+                            <option value="zho_Hans" data-m2m-code="zh">中国語 (簡体字)</option>
+                            <option value="kor_Hang" data-m2m-code="ko">韓国語 (한국어)</option>
+                            <option value="fra_Latn" data-m2m-code="fr">フランス語 (Français)</option>
+                            <option value="spa_Latn" data-m2m-code="es">スペイン語 (Español)</option>
+                            <option value="deu_Latn" data-m2m-code="de">ドイツ語 (Deutsch)</option>
+                            <option value="ita_Latn" data-m2m-code="it">イタリア語 (Italiano)</option>
+                            <option value="rus_Cyrl" data-m2m-code="ru">ロシア語 (Русский)</option>
+                            <option value="por_Latn" data-m2m-code="pt">ポルトガル語 (Português)</option>
+                            <option value="arb_Arab" data-m2m-code="ar">アラビア語 (العربية)</option>
+                            <option value="vie_Latn" data-m2m-code="vi">ベトナム語 (Tiếng Việt)</option>
+                            <option value="tha_Thai" data-m2m-code="th">タイ語 (ภาษาไทย)</option>
+                            <option value="ind_Latn" data-m2m-code="id">インドネシア語 (Bahasa Indonesia)</option>
                         </select>
                     </div>
                 </div>
@@ -68,8 +79,8 @@
             <div id="status" class="status">
                 翻訳の準備ができています。
             </div>
-                <h2>翻訳結果</h2>
-                <div id="output"></div>
+            <h2>翻訳結果</h2>
+            <div id="output"></div>
         </div>
     </div>
 

@@ -9,11 +9,18 @@ env.useBrowserCache = true;
 let translator = null;
 
 /**
- * モデルを初期化し、準備ができたらメインスレッドに通知する
+ * 指定されたモデルを初期化し、準備ができたらメインスレッドに通知する
+ * @param {string} model_name 初期化するモデルの名前
  */
-async function initializeModel() {
+async function initializeModel(model_name) {
+    // 既存のインスタンスを破棄（念のため）
+    if (translator) {
+        await translator.dispose();
+        translator = null;
+    }
+
     try {
-        translator = await pipeline('translation', 'Xenova/nllb-200-distilled-600M', {
+        translator = await pipeline('translation', model_name, {
             // 進捗状況をメインスレッドに通知するコールバック
             progress_callback: (progress) => {
                 self.postMessage({
@@ -73,7 +80,8 @@ self.onmessage = (event) => {
 
     // メッセージのタイプに応じて処理を振り分ける
     if (type === 'init') {
-        initializeModel();
+        // data.model で渡されたモデル名で初期化
+        initializeModel(data.model);
     } else if (type === 'translate') {
         translate(data.text, data.source_lang, data.lang);
     }

@@ -5,7 +5,8 @@ const output = document.getElementById('output');
 const translateButton = document.getElementById('translate-button');
 const sourceLangSelect = document.getElementById('source-lang');
 const targetLangSelect = document.getElementById('target-lang');
-const swapButton = document.getElementById('swap-button'); // スワップボタン
+const swapButton = document.getElementById('swap-button');
+const modelSelect = document.getElementById('model-select'); // モデル選択のセレクトボックス
 
 // UIの状態を更新する関数
 const setStatus = (text) => {
@@ -34,6 +35,7 @@ worker.onmessage = (event) => {
             // モデルの準備完了
             setStatus('翻訳の準備が完了しました。');
             translateButton.disabled = false;
+            modelSelect.disabled = false; // モデル選択を有効化
             break;
 
         case 'translation_result':
@@ -41,6 +43,7 @@ worker.onmessage = (event) => {
             output.textContent = data;
             setStatus('翻訳が完了しました。');
             translateButton.disabled = false; // ボタンを再度有効化
+            modelSelect.disabled = false; // モデル選択を有効化
             break;
 
         case 'error':
@@ -48,6 +51,7 @@ worker.onmessage = (event) => {
             setStatus(message);
             console.error(message);
             translateButton.disabled = false; // エラー時もボタンを有効化
+            modelSelect.disabled = false; // モデル選択を有効化
             break;
     }
 };
@@ -66,18 +70,35 @@ translateButton.addEventListener('click', () => {
         return;
     }
 
+    // --- モデルに応じた言語コードを取得 ---
+    const selectedModel = modelSelect.value;
+    let sourceLangCode, targetLangCode;
+
+    if (selectedModel.includes('m2m100')) {
+        // M2M100モデルの場合、data-m2m-code属性からコードを取得
+        sourceLangCode = sourceLangSelect.options[sourceLangSelect.selectedIndex].getAttribute('data-m2m-code');
+        targetLangCode = targetLangSelect.options[targetLangSelect.selectedIndex].getAttribute('data-m2m-code');
+    } else {
+        // NLLBモデル（デフォルト）の場合、value属性をそのまま使用
+        sourceLangCode = sourceLangSelect.value;
+        targetLangCode = targetLangSelect.value;
+    }
+    // --- ここまでが追加されたロジック ---
+
+
     // UIを処理中状態に更新
     translateButton.disabled = true;
+    modelSelect.disabled = true; // モデル選択を無効化
     setStatus('翻訳処理をバックグラウンドに依頼しました...');
     output.textContent = '';
 
-    // Web Workerに翻訳処理を依頼
+    // Web Workerに翻訳処理を依頼（取得した正しい言語コードを使用）
     worker.postMessage({
         type: 'translate',
         data: {
             text: textToTranslate,
-            source_lang: sourceLangSelect.value,
-            lang: targetLangSelect.value
+            source_lang: sourceLangCode,
+            lang: targetLangCode
         }
     });
 });
@@ -93,12 +114,38 @@ swapButton.addEventListener('click', () => {
     targetLangSelect.value = sourceLang;
 });
 
+// モデル選択の変更イベント
+modelSelect.addEventListener('change', () => {
+    // UIをモデル準備中状態に更新
+    setStatus(`新しいモデル (${modelSelect.options[modelSelect.selectedIndex].text}) を準備しています...`);
+    translateButton.disabled = true;
+    modelSelect.disabled = true;
+    output.textContent = ''; // 翻訳結果をクリア
+
+    // Web Workerに新しいモデルでの初期化を依頼
+    worker.postMessage({
+        type: 'init',
+        data: {
+            model: modelSelect.value
+        }
+    });
+});
+
 
 // --- アプリケーションの初期化 ---
-setStatus('バックグラウンドで翻訳モデルの準備をしています...');
-translateButton.disabled = true;
+const initializeApp = () => {
+    setStatus('バックグラウンドで翻訳モデルの準備をしています...');
+    translateButton.disabled = true;
+    modelSelect.disabled = true;
 
-// Web Workerにモデルの初期化を依頼
-worker.postMessage({
-    type: 'init'
-});
+    // Web Workerに選択されているモデルでの初期化を依頼
+    worker.postMessage({
+        type: 'init',
+        data: {
+            model: modelSelect.value
+        }
+    });
+};
+
+// 初期化を実行
+initializeApp();
