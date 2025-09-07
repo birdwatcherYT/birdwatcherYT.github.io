@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リアルタイム音声文字起こし (オフライン: whisper)</title>
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+    <div class="all-container">
+
+        <div class="app">
+            <h1>リアルタイム音声文字起こし (オフライン: whisper)</h1>
+            <p class="description">transformers.jsを使い、サーバーに音声がアップロードされることなく、完全にローカルで動作します。</p>
+
+            <div class="settings">
+                <div class="setting-item">
+                    <label for="model-select" title="文字起こしに使用するAIモデルを選択します。大きいモデルほど高精度ですが、処理に時間がかかります。">モデル</label>
+                    <select id="model-select" title="文字起こしに使用するAIモデルを選択します。大きいモデルほど高精度ですが、処理に時間がかかります。">
+                        <option value="Xenova/whisper-tiny">Whisper Tiny</option>
+                        <option value="Xenova/whisper-base" selected>Whisper Base</option>
+                        <option value="Xenova/whisper-small">Whisper Small</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="language-select" title="文字起こしする音声の言語を指定します。">言語</label>
+                    <select id="language-select" title="文字起こしする音声の言語を指定します。">
+                        <option value="japanese" selected>Japanese</option>
+                        <option value="english">English</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="korean">Korean</option>
+                        <option value="french">French</option>
+                        <option value="german">German</option>
+                        <option value="spanish">Spanish</option>
+                        <option value="russian">Russian</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="separatorSelect" title="文字起こし結果の文章の末尾に追加する区切り文字を選択します。">区切り文字</label>
+                    <select id="separatorSelect" title="文字起こし結果の文章の末尾に追加する区切り文字を選択します。">
+                        <option value="newline">改行</option>
+                        <option value="space">スペース</option>
+                        <option value="kuten">。</option>
+                        <option value="touten">、</option>
+                    </select>
+                </div>
+                <div class="setting-item slider-container">
+                    <label for="threshold-slider"
+                        title="マイクが拾う音のうち、どのレベル以上を発話とみなすかの閾値です。値を大きくすると小さな音を無視します。">音声レベル閾値</label>
+                    <input type="range" id="threshold-slider" min="1" max="50" value="10" step="1"
+                        title="マイクが拾う音のうち、どのレベル以上を発話とみなすかの閾値です。値を大きくすると小さな音を無視します。">
+                    <span id="threshold-value">10</span>
+                </div>
+                <div class="setting-item slider-container">
+                    <label for="hangover-slider" title="発話が途切れた後、どのくらいの無音時間があれば文章の区切りと判断するかの時間です。">発話後の無音許容時間</label>
+                    <input type="range" id="hangover-slider" min="500" max="3000" value="1000" step="100"
+                        title="発話が途切れた後、どのくらいの無音時間があれば文章の区切りと判断するかの時間です。">
+                    <span id="hangover-value">1000 ms</span>
+                </div>
+                <div class="setting-item slider-container">
+                    <label for="min-speech-slider" title="この時間より短い発話はノイズとみなし、文字起こしを行いません。">最短発話時間 (ノイズ除去)</label>
+                    <input type="range" id="min-speech-slider" min="100" max="1000" value="200" step="50"
+                        title="この時間より短い発話はノイズとみなし、文字起こしを行いません。">
+                    <span id="min-speech-value">200 ms</span>
+                </div>
+                <!-- Whisperの推論精度を調整するための詳細パラメータ -->
+                <div class="setting-item">
+                    <label for="no-repeat-ngram-size" title="同じ単語の並びが指定回数以上繰り返されることを防ぎます。0で無効。">N-gram反復防止</label>
+                    <input type="number" id="no-repeat-ngram-size" value="3" min="0"
+                        title="同じ単語の並びが指定回数以上繰り返されることを防ぎます。0で無効。">
+                </div>
+                <div class="setting-item">
+                    <label for="logprob-threshold" title="信頼性がこの値を下回る結果を抑制します。値を大きくすると抑制が強まります。">対数確率しきい値</label>
+                    <input type="number" id="logprob-threshold" value="-1.0" step="0.1"
+                        title="信頼性がこの値を下回る結果を抑制します。値を大きくすると抑制が強まります。">
+                </div>
+                <div class="setting-item">
+                    <label for="compression-ratio-threshold"
+                        title="反復的な出力が疑われる結果を抑制します。値を小さくすると抑制が強まります。">圧縮率しきい値</label>
+                    <input type="number" id="compression-ratio-threshold" value="2.4" step="0.1"
+                        title="反復的な出力が疑われる結果を抑制します。値を小さくすると抑制が強まります。">
+                </div>
+            </div>
+
+            <div id="status">待機中。開始ボタンを押してください。</div>
+
+            <div id="vad-status">
+                <div id="vad-meter-label">音声レベル:</div>
+                <div id="vad-meter-container">
+                    <div id="vad-meter-bar"></div>
+                    <div id="vad-threshold-marker"></div>
+                </div>
+            </div>
+
+            <div id="output"></div>
+
+            <div class="controls">
+                <button id="start" disabled title="マイクからの音声認識を開始します。">🎤 開始</button>
+                <button id="stop" disabled title="音声認識を停止します。">⏹ 停止</button>
+                <button id="force-send" disabled title="発話の自動終了を待たずに、現在バッファに溜まっている音声を強制的に文字起こしさせます。発話中に有効になります。">🚀
+                    強制送信</button>
+                <button id="force-clear" disabled title="現在バッファに溜まっている音声を破棄します。意図しない音声が入った場合に使用します。">🗑️ 強制クリア</button>
+                <button id="cancel-jobs" disabled title="現在実行中の全ての文字起こし処理を強制的に中断します。">⚡ 全キャンセル</button>
+            </div>
+            <div class="actions">
+                <button id="save" title="現在の文字起こし結果をテキストファイルとして保存します。">💾 保存</button>
+                <button id="copy" title="現在の文字起こし結果をクリップボードにコピーします。">📋 コピー</button>
+                <button id="clear" title="文字起こし結果の表示をすべてクリアします。">🧹 クリア</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <footer></footer>
+</body>
+
+</html>

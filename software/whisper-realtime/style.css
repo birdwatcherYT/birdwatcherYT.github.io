@@ -1,0 +1,174 @@
+.all-container {
+  display: grid; /* Gridを有効にする */
+  place-items: center; /* 水平・垂直方向の両方を一度に中央揃え */
+  min-height: 100vh; /* ビューポートの高さいっぱいに広げる */
+  margin: 0; /* bodyのデフォルトマージンをリセット */
+}
+.app {
+    font-family: Arial, sans-serif;
+    width: 100%;
+    max-width: 800px;
+    padding: 25px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+p.description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.slider-container {
+    gap: 5px;
+}
+
+label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+#output {
+    border: 1px solid #ccc;
+    padding: 15px;
+    min-height: 200px;
+    margin-top: 10px;
+    background: #fdfdfd;
+    white-space: pre-wrap;
+    border-radius: 5px;
+    color: #333;
+    line-height: 1.6;
+}
+
+#status {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    text-align: center;
+    color: #495057;
+    min-height: 1.5em;
+    transition: background-color 0.3s;
+}
+
+#vad-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0 5px 0;
+    padding: 0 5px;
+}
+
+#vad-meter-label {
+    font-size: 14px;
+    color: #555;
+}
+
+#vad-meter-container {
+    flex-grow: 1;
+    height: 12px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+#vad-meter-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #28a745;
+    border-radius: 6px;
+    transition: width 0.05s linear;
+}
+
+#vad-threshold-marker {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background-color: #dc3545;
+}
+
+.controls,
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+button,
+select,
+input {
+    padding: 0;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+button,
+select,
+input[type="number"] {
+    padding: 10px;
+}
+
+button:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+#start {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+#start:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+#stop {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+#stop:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+#cancel-jobs {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+#cancel-jobs:hover:not(:disabled) {
+    background-color: #e0a800;
+}
