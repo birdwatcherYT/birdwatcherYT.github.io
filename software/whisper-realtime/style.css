@@ -1,9 +1,10 @@
 .all-container {
-  display: grid; /* Gridを有効にする */
-  place-items: center; /* 水平・垂直方向の両方を一度に中央揃え */
-  min-height: 100vh; /* ビューポートの高さいっぱいに広げる */
-  margin: 0; /* bodyのデフォルトマージンをリセット */
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    margin: 0;
 }
+
 .app {
     font-family: Arial, sans-serif;
     width: 100%;
