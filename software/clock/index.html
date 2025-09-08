@@ -116,6 +116,56 @@
         body.dark a:visited {
             color: #bd93f9;
         }
+
+        @media screen and (max-width: 768px) {
+
+            /* 画面幅が768px以下（タブレットやスマホ）の場合に適用 */
+            .date {
+                font-size: 7vw;
+            }
+
+            .time {
+                font-size: 20vw;
+            }
+
+            .timer,
+            .stopwatch-display {
+                font-size: 15vw;
+            }
+
+            .alarm-display {
+                font-size: 5vw;
+            }
+
+            .alarm-countdown {
+                font-size: 1.8em;
+            }
+
+            .item {
+                flex-basis: 90%;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            /* 画面幅が480px以下（より小さいスマホ）の場合に適用 */
+            .date {
+                font-size: 8vw;
+            }
+
+            .time {
+                font-size: 25vw;
+            }
+
+            .timer,
+            .stopwatch-display {
+                font-size: 18vw;
+            }
+
+            .alarm-display {
+                font-size: 6vw;
+            }
+        }
     </style>
 </head>
 
