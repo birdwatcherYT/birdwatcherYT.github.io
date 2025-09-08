@@ -25,6 +25,36 @@
             font-weight: bold;
         }
 
+        .alarm-display {
+            font-size: 3vw;
+            font-family: monospace, serif;
+            line-height: 1.2;
+        }
+
+        .alarm-target-time {
+            font-size: 0.6em;
+            font-weight: normal;
+        }
+
+        .alarm-countdown {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .stopwatch-display {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            font-size: 5vw;
+            font-family: monospace, serif;
+            font-weight: bold;
+        }
+
+        .stopwatch-milliseconds,
+        ol span.stopwatch-milliseconds {
+            font-size: 0.7em;
+        }
+
         .toggle_input {
             position: absolute;
             left: 0;
@@ -77,6 +107,15 @@
             text-align: center;
             flex-basis: 400px;
         }
+
+        /* ダークテーマ用のaリンクスタイル */
+        body.dark a:link {
+            color: #8be9fd;
+        }
+
+        body.dark a:visited {
+            color: #bd93f9;
+        }
     </style>
 </head>
 
@@ -98,6 +137,12 @@
             <h2>Alerm</h2>
             <input id="alerm_date" type="datetime-local" step="1" />
             <button id="alerm_button" onclick="alerm_click();">Set</button>
+            <button id="alerm-pip-button" onclick="pip_click('alerm')" style="margin-left: 10px;">Picture in
+                Picture</button>
+            <div id="alerm_display" class="alarm-display">
+                <div id="alerm_target_time" class="alarm-target-time">YYYY/MM/DD hh:mm:ssまで残り</div>
+                <div id="alerm_countdown" class="alarm-countdown">00:00:00</div>
+            </div>
         </div>
         <div class="item">
             <h2>Timer</h2>
@@ -107,11 +152,10 @@
                 <button id="timer-pip-button" onclick="pip_click('timer')" style="margin-left: 10px;">Picture in
                     Picture</button>
             </p>
-            <div id="timer" class="timer"></div>
+            <div id="timer" class="timer">0:00</div>
         </div>
         <div class="item">
             <h2>Stopwatch</h2>
-            <div id="stopwatch" class="timer" style="font-size: 5vw;">0:00.000</div>
             <p>
                 <button id="stopwatch_start_stop_button" onclick="startStopStopwatch();">Start</button>
                 <button id="stopwatch_reset_button" onclick="resetStopwatch();">Reset</button>
@@ -119,6 +163,8 @@
                 <button id="stopwatch-pip-button" onclick="pip_click('stopwatch')" style="margin-left: 10px;">Picture in
                     Picture</button>
             </p>
+            <div id="stopwatch" class="stopwatch-display"><span>0:00</span><span
+                    class="stopwatch-milliseconds">.000</span></div>
             <ol id="lap_list"></ol>
         </div>
     </div>
@@ -127,7 +173,16 @@
     <script>
         function Dark(elem) {
             const body = document.getElementById("body");
-            body.style.cssText = elem.checked ? "background-color: black; color: white;" : "background-color: white; color: black;";
+
+            if (elem.checked) {
+                // ダークテーマに切り替え
+                body.style.cssText = "background-color: black; color: white;";
+                body.classList.add("dark");
+            } else {
+                // ライトテーマに戻す
+                body.style.cssText = "background-color: white; color: black;";
+                body.classList.remove("dark");
+            }
         }
         function makeSelector(num, padding) {
             let str = "";
