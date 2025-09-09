@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+    <title>ローカルLLM</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <p><a href="../index.html">←Softwares</a></p>
+
+    <div id="app-container">
+        <h1>ローカルLLM</h1>
+
+        <p><strong>モデル:</strong> onnx-community/gemma-3-1b-it-ONNX-GQA</p>
+        <textarea id="prompt-input" rows="5" placeholder="ここにメッセージを入力してください。例えば、「キジバトってどんな鳥？」"></textarea>
+
+        <!-- パラメータ調整UI -->
+        <div class="parameter-group">
+            <label for="max-new-tokens-input">Max New Tokens:</label>
+            <input type="range" id="max-new-tokens-range" min="16" max="8192" value="512">
+            <input type="number" id="max-new-tokens-input" min="16" max="8192" value="512">
+        </div>
+        <div class="parameter-group">
+            <label for="temperature-input">Temperature:</label>
+            <input type="range" id="temperature-range" min="0" max="2" step="0.1" value="0.7">
+            <input type="number" id="temperature-input" min="0" max="2" step="0.1" value="0.7">
+        </div>
+
+        <button id="generate-button">テキストを生成</button>
+        <p>※モデルがローカルにダウンロードされます。通信容量を気にする方は注意してください。</p>
+
+        <h3>応答:</h3>
+        <div id="result-container"></div>
+        <p id="status">ここにステータスが表示されます</p>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <footer></footer>
+</body>
+
+</html>

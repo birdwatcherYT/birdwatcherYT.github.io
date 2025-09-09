@@ -1,0 +1,71 @@
+#app-container {
+    max-width: 800px;
+    margin: 20px;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+button:hover:enabled {
+    background-color: #0056b3;
+}
+
+#status {
+    text-align: center;
+    margin-top: 15px;
+    color: #666;
+}
+
+#result-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    white-space: pre-wrap;
+    min-height: 100px;
+}
+
+.parameter-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.parameter-group label {
+    flex-basis: 120px;
+}
+
+.parameter-group input[type="range"] {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.parameter-group input[type="number"] {
+    width: 70px;
+}
