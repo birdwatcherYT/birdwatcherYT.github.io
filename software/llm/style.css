@@ -1,28 +1,87 @@
 #app-container {
     max-width: 800px;
-    margin: 20px;
+    margin: 20px auto;
+    /* 中央寄せ */
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
-textarea {
-    width: 100%;
+/* --- チャットコンテナ --- */
+#chat-container {
+    height: 50vh;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+    overflow-y: auto;
+    /* スクロール可能に */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- 各メッセージバブルのスタイル --- */
+.message {
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 75%;
+    word-wrap: break-word;
+    /* 長い単語を折り返す */
+    white-space: pre-wrap;
+    /* 改行を反映 */
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+    /* 右寄せ */
+    border-bottom-right-radius: 4px;
+}
+
+.assistant-message {
+    background-color: #f1f0f0;
+    color: black;
+    align-self: flex-start;
+    /* 左寄せ */
+    border-bottom-left-radius: 4px;
+}
+
+/* --- 入力エリア --- */
+#input-area {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+textarea#prompt-input {
+    flex-grow: 1;
     padding: 10px;
     border-radius: 4px;
     border: 1px solid #ccc;
-    box-sizing: border-box;
-    margin-bottom: 10px;
     font-size: 16px;
+    resize: none;
+    /* リサイズハンドルを非表示 */
 }
 
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #007bff;
-    color: white;
+/* ボタン共通スタイル */
+#input-area button {
+    padding: 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    height: fit-content;
+    flex-shrink: 0;
+}
+
+button#generate-button {
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: #007bff;
+    color: white;
 }
 
 button:disabled {
@@ -30,24 +89,61 @@ button:disabled {
     cursor: not-allowed;
 }
 
-button:hover:enabled {
+button#generate-button:hover:enabled {
     background-color: #0056b3;
+}
+
+/* 状態1: マイクOFF (灰色 - デフォルト) */
+button#mic-button {
+    background-color: #f0f0f0;
+    color: black;
+    width: 44px;
+}
+
+button#mic-button:hover:enabled {
+    background-color: #ddd;
+}
+
+/* 状態2: マイクON & 待機中 (緑色) */
+button#mic-button.mic-waiting {
+    background-color: #2ECC40;
+    /* Green */
+    color: white;
+}
+
+/* 状態3: マイクON & 認識中 (赤色・点滅) */
+button#mic-button.mic-recording {
+    background-color: #ff4136;
+    /* Red */
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 65, 54, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 65, 54, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 65, 54, 0);
+    }
 }
 
 #status {
     text-align: center;
     margin-top: 15px;
     color: #666;
+    font-size: 0.9em;
 }
 
-#result-container {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    white-space: pre-wrap;
-    min-height: 100px;
+.parameter-controls {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
 .parameter-group {
@@ -58,7 +154,8 @@ button:hover:enabled {
 }
 
 .parameter-group label {
-    flex-basis: 120px;
+    flex-basis: 180px;
+    flex-shrink: 0;
 }
 
 .parameter-group input[type="range"] {
@@ -68,4 +165,16 @@ button:hover:enabled {
 
 .parameter-group input[type="number"] {
     width: 70px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    flex-grow: 1;
+}
+
+.parameter-group select {
+    flex-grow: 1;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
