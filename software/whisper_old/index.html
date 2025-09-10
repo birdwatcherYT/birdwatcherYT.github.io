@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-    <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
-    <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
+	<meta name="viewport" content="width=device-width">
+	<link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
+	<link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
     <title>Whisperによる音声ファイル書き起こし</title>
     <style>
         body {
@@ -73,7 +73,7 @@
 </head>
 
 <body>
-    <p><a href="../index.html">←Softwares</a></p>
+	<p><a href="../index.html">←Softwares</a></p>
     <h1>Whisperによる音声ファイル書き起こし</h1>
     <p>transformers.jsとwhisperを使い、サーバーにアップロードされることなく完全にローカルで動作します。</p>
 
@@ -94,10 +94,9 @@
         <div class="setting-item">
             <label for="model-select">モデル</label>
             <select id="model-select">
-                <option value="onnx-community/whisper-tiny">Whisper Tiny</option>
-                <option value="onnx-community/whisper-base" selected>Whisper Base</option>
-                <option value="onnx-community/whisper-small">Whisper Small</option>
-                <option value="onnx-community/whisper-large-v3-turbo">Whisper Large v3 Turbo</option>
+                <option value="Xenova/whisper-tiny" selected>Whisper Tiny</option>
+                <option value="Xenova/whisper-base">Whisper Base</option>
+                <option value="Xenova/whisper-small">Whisper Small</option>
             </select>
         </div>
         <div class="setting-item">
@@ -157,33 +156,22 @@
 
         const worker = new Worker('./worker.js', { type: 'module' });
 
-        // --- 変更箇所：進捗計算に必要な変数を外側のスコープに移動 ---
-        let streamingChunks = [];
-        let timeOffset = 0;
-        let lastRelativeStartTime = -1;
-        let totalDuration = 0; // 音声の全長を保持する変数を追加
-
         transcribeButton.addEventListener('click', async () => {
             const file = audioFileInput.files[0];
             if (!file) { return alert('音声ファイルを選択してください。'); }
 
             transcribeButton.disabled = true;
             resultPre.textContent = '';
-            saveButton.style.display = 'none';
+            saveButton.style.display = 'none'; // 保存ボタンを非表示にする
             statusDiv.textContent = '音声ファイルをデコード中...';
-
-            streamingChunks = [];
-            timeOffset = 0;
-            lastRelativeStartTime = -1;
-            totalDuration = 0;
 
             try {
                 const decodedAudio = await decodeAudio(file);
-                totalDuration = decodedAudio.duration; // 取得したdurationを保存
                 statusDiv.textContent = 'ワーカースレッドにデータを転送中...';
 
                 worker.postMessage({
                     audio: decodedAudio.audioData,
+                    duration: decodedAudio.duration,
                     model: modelSelect.value,
                     language: languageSelect.value,
                     chunkLength: chunkLengthInput.valueAsNumber,
@@ -211,26 +199,11 @@
         }
 
         function formatTimestamp(seconds) {
-            if (seconds == null || isNaN(seconds)) return '...';
-            const date = new Date(0);
-            date.setSeconds(seconds);
-            return date.toISOString().substr(11, 8);
+            if (seconds == null) return '';
+            return new Date(seconds * 1000).toISOString().substr(11, 8);
         }
 
-        function renderStreamingResults() {
-            if (!showTimestampsCheckbox.checked) return;
-            let formattedText = '';
-            streamingChunks.forEach(chunk => {
-                if (chunk.endTime !== null && chunk.text.trim() === '') {
-                    return;
-                }
-                const start = formatTimestamp(chunk.startTime);
-                const end = formatTimestamp(chunk.endTime);
-                formattedText += `[${start} -> ${end}] ${chunk.text.trim()}\n`;
-            });
-            resultPre.textContent = formattedText;
-        }
-
+        // テキストをファイルとして保存する関数
         function saveTextToFile(text, filename) {
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
@@ -240,6 +213,7 @@
             URL.revokeObjectURL(link.href);
         }
 
+        // 保存ボタンのイベントリスナー
         saveButton.addEventListener('click', () => {
             const resultText = resultPre.textContent;
             const fileName = `transcription_${Date.now()}.txt`;
@@ -250,77 +224,23 @@
             const message = event.data;
             switch (message.type) {
                 case 'STATUS_UPDATE':
-                    // 「書き起こし中」の表示は進捗表示で制御するため、モデルロード中などのメッセージのみを更新
-                    if (!statusDiv.textContent.startsWith('書き起こし中...')) {
-                        statusDiv.textContent = message.data;
-                    }
+                    statusDiv.textContent = message.data;
                     break;
-                case 'TEXT':
-                    if (showTimestampsCheckbox.checked) {
-                        const openChunk = streamingChunks.slice().reverse().find(c => c.endTime === null);
-                        if (openChunk) {
-                            openChunk.text += message.data;
-                            renderStreamingResults();
+                case 'PROGRESS':
+                    statusDiv.textContent = `書き起こし中... (${message.data}%)`;
+                    break;
+                case 'CHUNK_DECODED':
+                    const segments = message.data;
+                    segments.forEach(segment => {
+                        if (showTimestampsCheckbox.checked && segment.timestamp) {
+                            const start = formatTimestamp(segment.timestamp[0]);
+                            const end = formatTimestamp(segment.timestamp[1]);
+                            resultPre.textContent += `[${start} -> ${end}] ${segment.text}\n`;
+                        } else {
+                            resultPre.textContent += segment.text + '\n';
                         }
-                    } else {
-                        resultPre.textContent += message.data;
-                    }
+                    });
                     break;
-                case 'START_TIME': { // --- 変更箇所：ブロックスコープとロジックの修正 ---
-                    const relativeStartTime = message.data;
-
-                    if (relativeStartTime < lastRelativeStartTime) {
-                        const step = chunkLengthInput.valueAsNumber - strideLengthInput.valueAsNumber;
-                        timeOffset += step;
-                    }
-                    lastRelativeStartTime = relativeStartTime;
-
-                    if (showTimestampsCheckbox.checked) {
-                        const absoluteStartTime = timeOffset + relativeStartTime;
-                        const newChunk = {
-                            startTime: absoluteStartTime,
-                            endTime: null,
-                            text: '',
-                            offset: timeOffset,
-                        };
-                        streamingChunks.push(newChunk);
-                        renderStreamingResults();
-                    }
-                    break;
-                }
-                case 'END_TIME': { // --- 変更箇所：進捗表示ロジックを追加 ---
-                    const relativeEndTime = message.data;
-                    let absoluteEndTime;
-
-                    // タイムスタンプ表示の有無で絶対終了時刻の計算方法を分ける
-                    if (showTimestampsCheckbox.checked) {
-                        const openChunk = streamingChunks.slice().reverse().find(c => c.endTime === null);
-                        if (openChunk) {
-                            absoluteEndTime = openChunk.offset + relativeEndTime;
-                            if (absoluteEndTime < openChunk.startTime) {
-                                const nextOffset = openChunk.offset + chunkLengthInput.valueAsNumber;
-                                absoluteEndTime = nextOffset + relativeEndTime;
-                            }
-                            openChunk.endTime = absoluteEndTime;
-                            renderStreamingResults();
-                        }
-                    } else {
-                        const currentChunkStartTime = timeOffset + lastRelativeStartTime;
-                        absoluteEndTime = timeOffset + relativeEndTime;
-                        if (absoluteEndTime < currentChunkStartTime) {
-                            const nextOffset = timeOffset + chunkLengthInput.valueAsNumber;
-                            absoluteEndTime = nextOffset + relativeEndTime;
-                        }
-                    }
-
-                    // 進捗率を計算して表示を更新
-                    if (absoluteEndTime !== undefined && totalDuration > 0) {
-                        const currentProgressTime = Math.min(absoluteEndTime, totalDuration);
-                        const progress = Math.round((currentProgressTime / totalDuration) * 100);
-                        statusDiv.textContent = `書き起こし中... (${progress}%)`;
-                    }
-                    break;
-                }
                 case 'COMPLETE':
                     statusDiv.textContent = '完了';
                     if (showTimestampsCheckbox.checked && message.data.chunks) {
@@ -328,17 +248,14 @@
                         message.data.chunks.forEach(chunk => {
                             const start = formatTimestamp(chunk.timestamp[0]);
                             const end = formatTimestamp(chunk.timestamp[1]);
-                            const text = chunk.text || '';
-                            if (text.trim() !== '') {
-                                formattedText += `[${start} -> ${end}] ${text.trim()}\n`;
-                            }
+                            formattedText += `[${start} -> ${end}] ${chunk.text.trim()}\n`;
                         });
                         resultPre.textContent = formattedText;
                     } else {
                         resultPre.textContent = message.data.text;
                     }
                     transcribeButton.disabled = false;
-                    saveButton.style.display = 'block';
+                    saveButton.style.display = 'block'; // 完了時に保存ボタンを表示する
                     break;
                 case 'ERROR':
                     statusDiv.textContent = `エラー: ${message.data}`;
@@ -347,7 +264,7 @@
             }
         };
     </script>
-    <footer></footer>
+	<footer></footer>
 </body>
 
 </html>

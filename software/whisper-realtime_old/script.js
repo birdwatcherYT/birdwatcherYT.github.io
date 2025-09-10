@@ -1,4 +1,3 @@
-
 // --- DOM Elements ---
 // HTMLから操作対象の要素を取得
 const output = document.getElementById("output");
@@ -39,7 +38,6 @@ let silenceDetectionTimer = null; // VADループのためのタイマー
 let lastSpeechTime = 0;       // 最後に音声を検出した時刻
 let firstSpeechTime = 0;      // 最初に音声を検出した時刻 (ノイズ除去用)
 let transcriptionJobsCount = 0; // 実行中の文字起こし処理の数
-let currentTranscriptionSpan = null; // リアルタイムで更新するための一時的なspan要素
 
 // --- VAD & Whisper Parameters ---
 // VAD (音声区間検出) とWhisperに関する設定値
@@ -65,31 +63,14 @@ const setupWorker = () => {
                 updateButtonStates();
                 updateStatus();
                 break;
-            case 'PARTIAL_TRANSCRIPTION': // 部分的な文字起こし結果
-                if (currentTranscriptionSpan) {
-                    currentTranscriptionSpan.textContent += data;
-                    output.scrollTop = output.scrollHeight; // 自動スクロール
-                }
-                break;
             case 'TRANSCRIPTION_COMPLETE': // 文字起こし完了
                 if (transcriptionJobsCount > 0) {
                     transcriptionJobsCount--;
                 }
-                // 最終的なテキストでspanを確定させる
-                if (currentTranscriptionSpan) {
-                    currentTranscriptionSpan.removeAttribute('id');
-                    if (data && data.trim()) {
-                        currentTranscriptionSpan.textContent = data.trim();
-                        // 最後の要素として確定させた後、区切り文字を追加
-                        const newTextNode = document.createTextNode(getSeparator());
-                        output.appendChild(newTextNode);
-                    } else {
-                        // 結果が空なら要素ごと削除
-                        currentTranscriptionSpan.remove();
-                    }
-                    currentTranscriptionSpan = null;
+                if (data && data.trim()) {
+                    output.textContent += data.trim() + getSeparator();
+                    output.scrollTop = output.scrollHeight; // 自動スクロール
                 }
-                output.scrollTop = output.scrollHeight; // 自動スクロール
                 updateStatus();
                 updateButtonStates();
                 break;
@@ -107,7 +88,6 @@ const setupWorker = () => {
 const getSeparator = () => ({
     'newline': '\n', 'space': ' ', 'kuten': '。', 'touten': '、'
 })[separatorSelect.value] || '\n';
-
 
 // 現在の状態に応じてステータスメッセージを更新する
 const updateStatus = () => {
@@ -247,25 +227,9 @@ const processAndSendAudio = () => {
         transcriptionJobsCount++;
         updateStatus();
         updateButtonStates();
-
-        // リアルタイム表示用の一時的なspanを作成
-        if (currentTranscriptionSpan) {
-            currentTranscriptionSpan.removeAttribute('id');
-            if (currentTranscriptionSpan.textContent.trim()) {
-                output.appendChild(document.createTextNode(getSeparator()));
-            } else {
-                currentTranscriptionSpan.remove();
-            }
-        }
-        currentTranscriptionSpan = document.createElement('span');
-        currentTranscriptionSpan.id = 'current-transcription';
-        currentTranscriptionSpan.textContent = '';
-        output.appendChild(currentTranscriptionSpan);
-
         worker.postMessage({
             type: 'TRANSCRIBE',
             audio: audioToSend,
-            model: modelSelect.value, // モデル情報を追加
             language: languageSelect.value,
             no_repeat_ngram_size: parseInt(noRepeatNgramSizeInput.value),
             logprob_threshold: parseFloat(logprobThresholdInput.value),
@@ -294,12 +258,6 @@ const cancelAllJobs = () => {
 
     transcriptionJobsCount = 0;
     statusDiv.textContent = '全処理をキャンセルしました。モデルを再初期化します...';
-
-    // 一時的な要素が残っていれば削除
-    if (currentTranscriptionSpan) {
-        currentTranscriptionSpan.remove();
-        currentTranscriptionSpan = null;
-    }
 
     setupWorker(); // 新しいWorkerインスタンスを作成して準備
     loadModel();   // モデルを再度読み込む

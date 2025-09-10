@@ -1,5 +1,6 @@
 // Transformers.jsライブラリから pipeline 関数とenv変数をインポート
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+// import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js';
 
 // Web Worker環境での設定
 env.allowLocalModels = false;

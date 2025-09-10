@@ -1,112 +1,81 @@
 // worker.js
 
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+// WhisperTextStreamerをインポート
+import { pipeline, WhisperTextStreamer, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js";
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-let transcriber = null;
+// パイプラインのインスタンスを管理するクラス
+class MyTranscriptionPipeline {
+    static task = 'automatic-speech-recognition';
+    static instance = null;
+    static model = null;
+
+    static async getInstance(model, progress_callback = null) {
+        if (this.instance === null || this.model !== model) {
+            this.model = model;
+            postMessageToMain({ type: 'STATUS_UPDATE', data: `モデル「${model}」の準備を開始...` });
+            this.instance = await pipeline(this.task, this.model, {
+                progress_callback,
+            });
+        }
+        return this.instance;
+    }
+}
+
 
 self.onmessage = async (event) => {
     const {
-        audio, duration, model,
-        language, chunkLength, strideLength,
-        returnTimestamps,
-        // 新しいパラメータを受け取る
-        noRepeatNgramSize,
-        logprobThreshold,
-        compressionRatioThreshold,
+        audio, model, language,
+        chunkLength, strideLength,
+        returnTimestamps, noRepeatNgramSize,
+        logprobThreshold, compressionRatioThreshold,
     } = event.data;
 
     try {
-        if (!transcriber || transcriber.model.model_name !== model) {
-            postMessageToMain({ type: 'STATUS_UPDATE', data: `モデル「${model}」の準備を開始...` });
-            transcriber = await pipeline('automatic-speech-recognition', model, {
-                progress_callback: (progress) => {
-                    postMessageToMain({ type: 'STATUS_UPDATE', data: `モデル読み込み中: ${progress.file} (${Math.round(progress.progress)}%)` });
-                }
-            });
-        }
+        // 管理クラスからパイプラインのインスタンスを取得
+        const transcriber = await MyTranscriptionPipeline.getInstance(model, (progress) => {
+            postMessageToMain({ type: 'STATUS_UPDATE', data: `モデル読み込み中: ${progress.file} (${Math.round(progress.progress)}%)` });
+        });
 
-        const chunk_length_s = chunkLength;
-        const stride_length_s = strideLength;
+        postMessageToMain({ type: 'STATUS_UPDATE', data: '書き起こし中...' });
 
-        const step_length_s = chunk_length_s - stride_length_s;
-        if (step_length_s <= 0) {
-            throw new Error('チャンク長はオーバーラップ長より大きくする必要があります。');
-        }
+        const streamer = new WhisperTextStreamer(transcriber.tokenizer, {
+            callback_function: (text) => {
+                console.log("text", text);
+                postMessageToMain({ type: 'TEXT', data: text });
+            },
+            // タイムスタンプトークン（<|0.50|>など）を検出すると呼び出される (開始時)
+            on_chunk_start: (startTime) => {
+                console.log("start", startTime);
+                postMessageToMain({ type: 'START_TIME', data: startTime });
+            },
+            // タイムスタンプトークンを検出すると呼び出される (終了時)
+            on_chunk_end: (endTime) => {
+                console.log("end", endTime);
+                postMessageToMain({ type: 'END_TIME', data: endTime });
+            }
+        });
 
-        const totalSteps = Math.ceil(duration / step_length_s);
-        let processedSteps = 0;
+        // 書き起こしを実行
+        const output = await transcriber(audio, {
+            // 長い音声を処理するためのチャンク設定
+            chunk_length_s: chunkLength,
+            stride_length_s: strideLength,
 
-        postMessageToMain({ type: 'PROGRESS', data: 0 });
-
-        const transcriberOptions = {
+            streamer: streamer, // 作成したストリーマーを渡す
             language: language,
-            task: 'transcribe',
-            chunk_length_s: chunk_length_s,
-            stride_length_s: stride_length_s,
-            return_timestamps: returnTimestamps,
-            // 新しいパラメータをオプションに追加
+            // NOTE: タイムスタンプonにしないと最初のチャンクが消滅するためTRUEにする
+            return_timestamps: true,
+
+            // その他のオプション
             no_repeat_ngram_size: noRepeatNgramSize,
             logprob_threshold: logprobThreshold,
             compression_ratio_threshold: compressionRatioThreshold,
+        });
 
-            chunk_callback: (chunk) => {
-                // (chunk_callbackの中身は変更なし)
-                processedSteps++;
-                const percentage = Math.round((processedSteps / totalSteps) * 100);
-                const displayPercentage = Math.min(100, percentage);
-                postMessageToMain({ type: 'PROGRESS', data: displayPercentage });
-
-                const chunkOffset = (processedSteps - 1) * step_length_s;
-
-                const { tokens } = chunk;
-                if (transcriber && transcriber.tokenizer && tokens) {
-                    let decodedText = transcriber.tokenizer.decode(tokens, { skip_special_tokens: true }).trim();
-
-                    if (!decodedText) return;
-                    console.log(decodedText);
-
-                    let segments = [];
-                    if (returnTimestamps) {
-                        const regex = /<\|(\d+\.\d+)\|>(.*?)<\|(\d+\.\d+)\|>/g;
-                        let match;
-                        while ((match = regex.exec(decodedText)) !== null) {
-                            const text = match[2].trim();
-                            if (text) {
-                                const startTime = parseFloat(match[1]) + chunkOffset;
-                                const endTime = parseFloat(match[3]) + chunkOffset;
-                                segments.push({
-                                    text: text,
-                                    timestamp: [startTime, endTime]
-                                });
-                            }
-                        }
-                        if (segments.length === 0) {
-                            const cleanText = decodedText.replace(/<\|\d+\.\d+\|>/g, '').trim();
-                            if (cleanText && chunk.timestamp) {
-                                const startTime = chunk.timestamp[0] + chunkOffset;
-                                const endTime = chunk.timestamp[1] + chunkOffset;
-                                segments.push({ text: cleanText, timestamp: [startTime, endTime] });
-                            }
-                        }
-                    } else {
-                        segments.push({ text: decodedText, timestamp: null });
-                    }
-
-                    if (segments.length > 0) {
-                        postMessageToMain({
-                            type: 'CHUNK_DECODED',
-                            data: segments
-                        });
-                    }
-                }
-            }
-        };
-
-        const output = await transcriber(audio, transcriberOptions);
-
+        // 最終的な結果を送信（COMPLETEメッセージは全てのチャンクが処理された後の完全な出力を持ちます）
         postMessageToMain({ type: 'COMPLETE', data: output });
 
     } catch (error) {
@@ -114,6 +83,7 @@ self.onmessage = async (event) => {
     }
 };
 
+// メインスレッドにメッセージを送信するヘルパー関数
 function postMessageToMain(message) {
     self.postMessage(message);
 }
