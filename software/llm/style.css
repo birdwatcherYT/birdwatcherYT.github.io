@@ -186,3 +186,36 @@ button#mic-button.mic-recording {
     border: 1px solid #ccc;
     resize: vertical;
 }
+
+
+/* --- 思考中メッセージのスタイル --- */
+.think-message {
+    background-color: #f8f9fa;
+    /* やや明るいグレー */
+    color: #495057;
+    /* 濃いグレーのテキスト */
+    align-self: flex-start;
+    /* 左寄せ */
+    border-left: 4px solid #adb5bd;
+    /* 左側にアクセントボーダー */
+    border-radius: 4px;
+    /* 通常メッセージと少し変える */
+    padding: 10px 15px;
+    max-width: 75%;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.think-header {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #6c757d;
+    /* ヘッダーテキストの色 */
+    margin-bottom: 8px;
+}
+
+.think-content {
+    font-family: monospace;
+    /* 等幅フォントで見やすく */
+    font-size: 0.9em;
+}

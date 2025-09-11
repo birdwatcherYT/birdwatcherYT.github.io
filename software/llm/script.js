@@ -35,9 +35,11 @@ let finalTranscript = '';
 
 // --- チャットの状態管理 ---
 let conversationHistory = [];
-let currentAssistantResponse = '';
+let currentRawResponse = ''; // <think>タグなどを含む生の応答
 let assistantMessageElement = null;
+let thinkMessageElement = null; // <think>タグの内容を表示する要素
 let speechBuffer = '';
+let speechProcessedLength = 0; // TTSで処理済みの文字数を追跡
 let isGenerating = false;
 
 // --- Web Worker とモデルの状態管理 ---
@@ -226,7 +228,6 @@ function setupWorkerMessageHandler() {
                         });
                         pendingGenerationRequest = null;
                     } else {
-                        // ロードだけ完了した場合（現在はこのケースはない）
                         generateButton.disabled = false;
                         promptInput.disabled = false;
                         modelSelect.disabled = false;
@@ -234,16 +235,58 @@ function setupWorkerMessageHandler() {
                 }
                 break;
             case 'stream':
-                if (!assistantMessageElement) assistantMessageElement = displayMessage('assistant', '');
-                currentAssistantResponse += message.text;
-                assistantMessageElement.textContent = currentAssistantResponse;
+                currentRawResponse += message.text;
+                
+                // <think>タグを解析
+                const match = currentRawResponse.match(/^(\s*)<think>([\s\S]*?)<\/think>([\s\S]*)/);
+                const openingMatch = currentRawResponse.match(/^(\s*)<think>([\s\S]*)/);
+
+                let thinkContent = '';
+                let normalContent = '';
+                let hasThinkBlock = false;
+
+                if (match) { // 開始タグと終了タグが揃っている場合
+                    hasThinkBlock = true;
+                    thinkContent = match[2];  // <think>の内側の内容
+                    normalContent = match[3]; // </think>より後の内容
+                } else if (openingMatch) { // 開始タグのみ見つかっている場合
+                    hasThinkBlock = true;
+                    thinkContent = openingMatch[2]; // <think>より後の内容
+                    normalContent = '';
+                } else { // <think>タグが見つからない場合
+                    normalContent = currentRawResponse;
+                }
+
+                // 思考中メッセージの表示/更新
+                if (hasThinkBlock) {
+                    if (!thinkMessageElement) {
+                        thinkMessageElement = displayThinkMessage('');
+                    }
+                    thinkMessageElement.querySelector('.think-content').textContent = thinkContent;
+                }
+                
+                const cleanNormalContent = normalContent.trimStart();
+
+                if (cleanNormalContent) {
+                    if (!assistantMessageElement) {
+                        assistantMessageElement = displayMessage('assistant', '');
+                    }
+                    assistantMessageElement.textContent = cleanNormalContent;
+                }
+                
                 chatContainer.scrollTop = chatContainer.scrollHeight;
-                speechBuffer += message.text;
-                const sentences = speechBuffer.split(/(?<=[。、！？\n.,])/);
-                if (sentences.length > 1) {
-                    const completeSentences = sentences.slice(0, -1).join('');
-                    addToSpeechQueue(completeSentences);
-                    speechBuffer = sentences[sentences.length - 1];
+                
+                if (cleanNormalContent.length > speechProcessedLength) {
+                    const newTextForSpeech = cleanNormalContent.substring(speechProcessedLength);
+                    speechBuffer += newTextForSpeech;
+                    speechProcessedLength = cleanNormalContent.length;
+                    
+                    const sentences = speechBuffer.split(/(?<=[。、！？\n.,])/);
+                    if (sentences.length > 1) {
+                        const completeSentences = sentences.slice(0, -1).join('');
+                        addToSpeechQueue(completeSentences);
+                        speechBuffer = sentences[sentences.length - 1];
+                    }
                 }
                 break;
             case 'complete':
@@ -252,11 +295,16 @@ function setupWorkerMessageHandler() {
                     addToSpeechQueue(speechBuffer);
                     speechBuffer = '';
                 }
-                if (currentAssistantResponse) {
-                    conversationHistory.push({ role: 'assistant', content: currentAssistantResponse });
+                
+                const finalResponse = currentRawResponse.replace(/^(\s*)<think>[\s\S]*?<\/think>/, '').trim();
+                if (finalResponse) {
+                    conversationHistory.push({ role: 'assistant', content: finalResponse });
                 }
-                currentAssistantResponse = '';
+                
+                currentRawResponse = '';
                 assistantMessageElement = null;
+                thinkMessageElement = null;
+                
                 status.textContent = '準備完了。次のメッセージを入力できます。';
                 generateButton.disabled = false;
                 promptInput.disabled = false;
@@ -270,14 +318,14 @@ function setupWorkerMessageHandler() {
                 break;
             case 'error':
                 isGenerating = false;
-                isModelReady = false; // エラーが発生したらモデルをリセット
+                isModelReady = false; 
                 displayMessage('assistant', `エラーが発生しました: ${message.text}`);
                 status.textContent = 'エラーが発生しました。ページを再読み込みするか、再度送信してください。';
                 generateButton.disabled = false;
                 promptInput.disabled = false;
                 modelSelect.disabled = false;
                 speechBuffer = '';
-                currentAssistantResponse = '';
+                currentRawResponse = '';
                 speechQueue = [];
                 isSpeaking = false;
                 synth.cancel();
@@ -297,39 +345,56 @@ function displayMessage(role, text) {
     return messageDiv;
 }
 
+function displayThinkMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', 'think-message');
+    
+    const header = document.createElement('div');
+    header.classList.add('think-header');
+    header.textContent = '🧠思考中...';
+    
+    const content = document.createElement('div');
+    content.classList.add('think-content');
+    content.textContent = text;
+
+    messageDiv.appendChild(header);
+    messageDiv.appendChild(content);
+
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return messageDiv;
+}
+
+
 async function sendMessage() {
     const userInput = promptInput.value.trim();
     if (!userInput || isGenerating) return;
 
     isGenerating = true;
 
-    // ユーザーメッセージの表示と履歴の更新
     conversationHistory.push({ role: 'user', content: userInput });
     displayMessage('user', userInput);
     promptInput.value = '';
 
-    // 音声関連の処理をリセット
     if (isRecording) stopRecognition();
     speechQueue = [];
     isSpeaking = false;
     if (synth.speaking) synth.cancel();
     speechBuffer = '';
+    speechProcessedLength = 0;
 
-    // UIを無効化
     generateButton.disabled = true;
     promptInput.disabled = true;
     modelSelect.disabled = true;
 
-    // Workerに渡すメッセージ配列を作成
     const messagesForWorker = [...conversationHistory];
     const systemPrompt = systemPromptInput.value.trim();
     if (systemPrompt) {
         messagesForWorker.unshift({ role: 'system', content: systemPrompt });
     }
 
-    // 生成リクエストのパラメータを準備
     const generationRequest = {
-        prompt: messagesForWorker, // システムプロンプトを含む配列を渡す
+        prompt: messagesForWorker,
         max_new_tokens: parseInt(maxNewTokensInput.value, 10),
         temperature: parseFloat(temperatureInput.value),
     };
@@ -339,7 +404,7 @@ async function sendMessage() {
         pendingGenerationRequest = generationRequest;
 
         if (worker) {
-            worker.terminate(); // モデル切り替え時に古いWorkerを破棄
+            worker.terminate();
         }
         worker = new Worker('worker.js', { type: 'module' });
         setupWorkerMessageHandler();
@@ -350,8 +415,9 @@ async function sendMessage() {
         });
     } else {
         status.textContent = '処理を開始します...';
-        currentAssistantResponse = '';
+        currentRawResponse = '';
         assistantMessageElement = null;
+        thinkMessageElement = null;
         worker.postMessage({
             type: 'generate',
             ...generationRequest
@@ -368,11 +434,10 @@ promptInput.addEventListener('keydown', (e) => {
     }
 });
 
-// モデル選択が変更されたら、準備完了フラグをリセットする
 modelSelect.addEventListener('change', () => {
     isModelReady = false;
-    chatContainer.innerHTML = ''; // チャット履歴をクリア
-    conversationHistory = []; // 会話履歴をリセット
+    chatContainer.innerHTML = '';
+    conversationHistory = [];
     const selectedModelText = modelSelect.options[modelSelect.selectedIndex].text;
     status.textContent = `モデルを「${selectedModelText}」に切り替えました。次にメッセージを送信すると読み込みが始まります。`;
 });
@@ -389,7 +454,6 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = populateVoiceList;
 }
 
-// 初期状態のUI設定
 status.textContent = 'メッセージを入力して「送信」ボタンを押してください。';
 promptInput.disabled = false;
 generateButton.disabled = false;
