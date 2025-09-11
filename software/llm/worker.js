@@ -1,4 +1,3 @@
-
 // worker.js (Web Worker)
 
 import { pipeline, TextStreamer } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2/dist/transformers.min.js";
@@ -8,25 +7,25 @@ function postStatus(text) {
     self.postMessage({ type: 'status', text });
 }
 
-let generator = null;
+let generator = null; // このWorkerインスタンスのジェネレーター
 
 // モデルを非同期で初期化する関数
-async function initializeModel() {
+async function initializeModel(modelId) {
     try {
-        postStatus('モデルを読み込んでいます... (初回のみ)');
+        postStatus(`モデル「${modelId}」を読み込んでいます...`);
 
         generator = await pipeline(
             'text-generation',
-            'onnx-community/gemma-3-1b-it-ONNX-GQA',
+            modelId,
             {
-                dtype: 'q8',
+                dtype: 'q8', // 量子化タイプ (多くのモデルでサポート)
                 progress_callback: (progress) => {
                     const percentage = Math.round(progress.progress);
                     postStatus(`モデル読み込み中... (${percentage}%)`);
                 }
             }
         );
-
+        postStatus('準備ができました。メッセージを入力できます。');
     } catch (e) {
         self.postMessage({ type: 'error', text: e.message });
         console.error(e);
@@ -38,38 +37,45 @@ async function initializeModel() {
 self.onmessage = async (event) => {
     const message = event.data;
 
-    if (message.type === 'generate') {
-        try {
+    switch (message.type) {
+        case 'load_model':
+            // Worker起動時にメインスレッドから一度だけ呼ばれる
+            // 新しいモデルの初期化を開始
+            await initializeModel(message.modelId);
+            break;
+
+        case 'generate':
+            // テキスト生成要求
             if (!generator) {
-                await initializeModel();
-                if (!generator) return; // 初期化失敗時は中断
+                // モデルの初期化がまだ完了していないか、失敗した場合
+                self.postMessage({ type: 'error', text: 'モデルが初期化されていません。ページを再読み込みするか、モデルを再選択してください。' });
+                return;
             }
 
-            postStatus('テキストを生成中です...');
+            try {
+                postStatus('テキストを生成中です...');
 
-            // メインスレッドから会話履歴の配列を受け取る
-            const messages = message.prompt;
+                const messages = message.prompt;
+                const streamer = new TextStreamer(generator.tokenizer, {
+                    skip_prompt: true,
+                    callback_function: (text) => {
+                        self.postMessage({ type: 'stream', text });
+                    },
+                });
 
-            const streamer = new TextStreamer(generator.tokenizer, {
-                skip_prompt: true,
-                callback_function: (text) => {
-                    self.postMessage({ type: 'stream', text });
-                },
-            });
+                await generator(messages, {
+                    max_new_tokens: message.max_new_tokens,
+                    temperature: message.temperature,
+                    do_sample: true,
+                    streamer,
+                });
 
-            // メインスレッドから渡されたパラメータを使用してテキスト生成を実行
-            await generator(messages, {
-                max_new_tokens: message.max_new_tokens,
-                temperature: message.temperature,
-                do_sample: true,
-                streamer,
-            });
-
-        } catch (e) {
-            self.postMessage({ type: 'error', text: e.message });
-            console.error(e);
-        } finally {
-            self.postMessage({ type: 'complete' });
-        }
+            } catch (e) {
+                self.postMessage({ type: 'error', text: e.message });
+                console.error(e);
+            } finally {
+                self.postMessage({ type: 'complete' });
+            }
+            break;
     }
 };

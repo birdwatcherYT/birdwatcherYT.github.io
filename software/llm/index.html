@@ -15,8 +15,7 @@
 
     <div id="app-container">
         <h1>ローカルLLM</h1>
-
-        <p><strong>モデル:</strong> onnx-community/gemma-3-1b-it-ONNX-GQA</p>
+        <p>transformers.jsを使ってAIと対話できるプログラムです。</p>
 
         <div id="chat-container"></div>
 
@@ -31,6 +30,18 @@
 
         <div class="parameter-controls">
             <h3>設定</h3>
+            <div class="parameter-group">
+                <label for="model-select">モデル:</label>
+                <select id="model-select">
+                    <option value="onnx-community/gemma-3-1b-it-ONNX-GQA">gemma-3-1b-it-ONNX-GQA</option>
+                    <!-- <option value="onnx-community/Llama-3.2-1B-Instruct">Llama-3.2-1B-Instruct</option> -->
+                    <option value="onnx-community/Qwen3-0.6B-ONNX">Qwen3-0.6B-ONNX</option>
+                </select>
+            </div>
+            <div class="parameter-group">
+                <label for="system-prompt-input">システムプロンプト:</label>
+                <textarea id="system-prompt-input" rows="2">日本語で応答してください</textarea>
+            </div>
             <div class="parameter-group">
                 <label for="max-new-tokens-input">Max New Tokens:</label>
                 <input type="range" id="max-new-tokens-range" min="16" max="8192" value="512">

@@ -6,6 +6,8 @@ const generateButton = document.getElementById('generate-button');
 const chatContainer = document.getElementById('chat-container');
 const status = document.getElementById('status');
 const micButton = document.getElementById('mic-button');
+const modelSelect = document.getElementById('model-select');
+const systemPromptInput = document.getElementById('system-prompt-input');
 
 // パラメータUI要素
 const maxNewTokensRange = document.getElementById('max-new-tokens-range');
@@ -38,8 +40,10 @@ let assistantMessageElement = null;
 let speechBuffer = '';
 let isGenerating = false;
 
-// --- Web Worker の初期化 ---
-const worker = new Worker('worker.js', { type: 'module' });
+// --- Web Worker とモデルの状態管理 ---
+let worker = null;
+let isModelReady = false;
+let pendingGenerationRequest = null; // モデルロード中に待機させるリクエスト
 
 
 // --- 音声認識 (ASR) 関連の関数 (変更なし) ---
@@ -124,7 +128,7 @@ micButton.addEventListener('click', () => {
 });
 
 
-// --- 音声読み上げ (TTS) 関連の関数 ---
+// --- 音声読み上げ (TTS) 関連の関数 (変更なし) ---
 
 function populateVoiceList() {
     voices = synth.getVoices();
@@ -163,46 +167,32 @@ function populateVoiceList() {
     }
 }
 
-/**
- * 音声読み上げキューを処理する
- */
 function processSpeechQueue() {
-    // 条件1: キューが空か？ -> もし空なら、生成完了しているかチェックして認識再開
     if (speechQueue.length === 0) {
-        // AIの生成も完了し、何も話していなければ、ユーザーのターンに戻す
         if (!isGenerating && !isSpeaking) {
             startRecognition();
         }
         return;
     }
-    // 条件2: 既に話しているか？
     if (isSpeaking || !enableSpeechCheckbox.checked) {
         return;
     }
-
-    // これから話すので、認識を止める
     stopRecognition();
     isSpeaking = true;
     const textToSpeak = speechQueue.shift();
-
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     const selectedOptionName = voiceSelect.selectedOptions[0]?.getAttribute('data-name');
     const selectedVoice = voices.find(voice => voice.name === selectedOptionName);
-
     if (selectedVoice) utterance.voice = selectedVoice;
-
-    // 読み上げ完了時の処理
     const onSpeechEnd = () => {
         isSpeaking = false;
-        // 次のキューアイテムの処理を試みる
         processSpeechQueue();
     };
-
     utterance.onend = onSpeechEnd;
     utterance.onerror = (event) => {
         console.error('SpeechSynthesisUtterance.onerror', event);
         status.textContent = `読み上げエラー: ${event.error}`;
-        onSpeechEnd(); // エラーでも次の処理に進む
+        onSpeechEnd();
     };
     synth.speak(utterance);
 }
@@ -215,67 +205,88 @@ function addToSpeechQueue(text) {
 
 // --- メインの処理 ---
 
-worker.onmessage = (event) => {
-    const message = event.data;
-    switch (message.type) {
-        case 'status':
-            status.textContent = message.text;
-            const isReady = message.text.includes('準備ができました') || message.text.includes('入力できます');
-            generateButton.disabled = !isReady;
-            promptInput.disabled = !isReady;
-            break;
-        case 'stream':
-            if (!assistantMessageElement) assistantMessageElement = displayMessage('assistant', '');
-            currentAssistantResponse += message.text;
-            assistantMessageElement.textContent = currentAssistantResponse;
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            speechBuffer += message.text;
-            const sentences = speechBuffer.split(/(?<=[。、！？\n])/);
-            if (sentences.length > 1) {
-                const completeSentences = sentences.slice(0, -1).join('');
-                addToSpeechQueue(completeSentences);
-                speechBuffer = sentences[sentences.length - 1];
-            }
-            break;
-        case 'complete':
-            isGenerating = false;
-            if (speechBuffer.trim()) {
-                addToSpeechQueue(speechBuffer);
+/**
+ * Workerからのメッセージを処理するハンドラ
+ */
+function setupWorkerMessageHandler() {
+    if (!worker) return;
+    worker.onmessage = (event) => {
+        const message = event.data;
+        switch (message.type) {
+            case 'status':
+                status.textContent = message.text;
+                const isReady = message.text.includes('準備ができました');
+                if (isReady) {
+                    isModelReady = true;
+                    if (pendingGenerationRequest) {
+                        status.textContent = '処理を開始します...';
+                        worker.postMessage({
+                            type: 'generate',
+                            ...pendingGenerationRequest
+                        });
+                        pendingGenerationRequest = null;
+                    } else {
+                        // ロードだけ完了した場合（現在はこのケースはない）
+                        generateButton.disabled = false;
+                        promptInput.disabled = false;
+                        modelSelect.disabled = false;
+                    }
+                }
+                break;
+            case 'stream':
+                if (!assistantMessageElement) assistantMessageElement = displayMessage('assistant', '');
+                currentAssistantResponse += message.text;
+                assistantMessageElement.textContent = currentAssistantResponse;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                speechBuffer += message.text;
+                const sentences = speechBuffer.split(/(?<=[。、！？\n.,])/);
+                if (sentences.length > 1) {
+                    const completeSentences = sentences.slice(0, -1).join('');
+                    addToSpeechQueue(completeSentences);
+                    speechBuffer = sentences[sentences.length - 1];
+                }
+                break;
+            case 'complete':
+                isGenerating = false;
+                if (speechBuffer.trim()) {
+                    addToSpeechQueue(speechBuffer);
+                    speechBuffer = '';
+                }
+                if (currentAssistantResponse) {
+                    conversationHistory.push({ role: 'assistant', content: currentAssistantResponse });
+                }
+                currentAssistantResponse = '';
+                assistantMessageElement = null;
+                status.textContent = '準備完了。次のメッセージを入力できます。';
+                generateButton.disabled = false;
+                promptInput.disabled = false;
+                modelSelect.disabled = false;
+                promptInput.focus();
+                if (!enableSpeechCheckbox.checked) {
+                    startRecognition();
+                } else {
+                    processSpeechQueue();
+                }
+                break;
+            case 'error':
+                isGenerating = false;
+                isModelReady = false; // エラーが発生したらモデルをリセット
+                displayMessage('assistant', `エラーが発生しました: ${message.text}`);
+                status.textContent = 'エラーが発生しました。ページを再読み込みするか、再度送信してください。';
+                generateButton.disabled = false;
+                promptInput.disabled = false;
+                modelSelect.disabled = false;
                 speechBuffer = '';
-            }
-            if (currentAssistantResponse) {
-                conversationHistory.push({ role: 'assistant', content: currentAssistantResponse });
-            }
-            currentAssistantResponse = '';
-            assistantMessageElement = null;
-            status.textContent = '準備完了。次のメッセージを入力できます。';
-            generateButton.disabled = false;
-            promptInput.disabled = false;
-            promptInput.focus();
-
-            // TTSがオフの場合の認識再開処理はそのまま
-            if (!enableSpeechCheckbox.checked) {
+                currentAssistantResponse = '';
+                speechQueue = [];
+                isSpeaking = false;
+                synth.cancel();
                 startRecognition();
-            } else {
-                // TTSがオンの場合、キューの処理を促す
-                processSpeechQueue();
-            }
-            break;
-        case 'error':
-            isGenerating = false;
-            displayMessage('assistant', `エラーが発生しました: ${message.text}`);
-            status.textContent = 'エラーが発生しました';
-            generateButton.disabled = false;
-            promptInput.disabled = false;
-            speechBuffer = '';
-            currentAssistantResponse = '';
-            speechQueue = [];
-            isSpeaking = false;
-            synth.cancel();
-            startRecognition();
-            break;
-    }
-};
+                break;
+        }
+    };
+}
+
 
 function displayMessage(role, text) {
     const messageDiv = document.createElement('div');
@@ -288,33 +299,64 @@ function displayMessage(role, text) {
 
 async function sendMessage() {
     const userInput = promptInput.value.trim();
-    if (!userInput || generateButton.disabled) return;
+    if (!userInput || isGenerating) return;
 
     isGenerating = true;
 
-    if (isRecording) {
-        stopRecognition();
-    }
+    // ユーザーメッセージの表示と履歴の更新
+    conversationHistory.push({ role: 'user', content: userInput });
+    displayMessage('user', userInput);
+    promptInput.value = '';
+
+    // 音声関連の処理をリセット
+    if (isRecording) stopRecognition();
     speechQueue = [];
     isSpeaking = false;
     if (synth.speaking) synth.cancel();
     speechBuffer = '';
-    conversationHistory.push({ role: 'user', content: userInput });
-    displayMessage('user', userInput);
-    currentAssistantResponse = '';
-    assistantMessageElement = null;
-    status.textContent = '処理を開始します...';
+
+    // UIを無効化
     generateButton.disabled = true;
     promptInput.disabled = true;
-    promptInput.value = '';
-    const max_new_tokens = parseInt(maxNewTokensInput.value, 10);
-    const temperature = parseFloat(temperatureInput.value);
-    worker.postMessage({
-        type: 'generate',
-        prompt: conversationHistory,
-        max_new_tokens: max_new_tokens,
-        temperature: temperature,
-    });
+    modelSelect.disabled = true;
+
+    // Workerに渡すメッセージ配列を作成
+    const messagesForWorker = [...conversationHistory];
+    const systemPrompt = systemPromptInput.value.trim();
+    if (systemPrompt) {
+        messagesForWorker.unshift({ role: 'system', content: systemPrompt });
+    }
+
+    // 生成リクエストのパラメータを準備
+    const generationRequest = {
+        prompt: messagesForWorker, // システムプロンプトを含む配列を渡す
+        max_new_tokens: parseInt(maxNewTokensInput.value, 10),
+        temperature: parseFloat(temperatureInput.value),
+    };
+
+    if (!isModelReady) {
+        status.textContent = 'モデルの初期化を開始します...（初回のみ時間がかかります）';
+        pendingGenerationRequest = generationRequest;
+
+        if (worker) {
+            worker.terminate(); // モデル切り替え時に古いWorkerを破棄
+        }
+        worker = new Worker('worker.js', { type: 'module' });
+        setupWorkerMessageHandler();
+
+        worker.postMessage({
+            type: 'load_model',
+            modelId: modelSelect.value
+        });
+    } else {
+        status.textContent = '処理を開始します...';
+        currentAssistantResponse = '';
+        assistantMessageElement = null;
+        worker.postMessage({
+            type: 'generate',
+            ...generationRequest
+        });
+    }
 }
 
 // --- イベントリスナーの設定 ---
@@ -325,6 +367,16 @@ promptInput.addEventListener('keydown', (e) => {
         sendMessage();
     }
 });
+
+// モデル選択が変更されたら、準備完了フラグをリセットする
+modelSelect.addEventListener('change', () => {
+    isModelReady = false;
+    chatContainer.innerHTML = ''; // チャット履歴をクリア
+    conversationHistory = []; // 会話履歴をリセット
+    const selectedModelText = modelSelect.options[modelSelect.selectedIndex].text;
+    status.textContent = `モデルを「${selectedModelText}」に切り替えました。次にメッセージを送信すると読み込みが始まります。`;
+});
+
 maxNewTokensRange.addEventListener('input', (e) => { maxNewTokensInput.value = e.target.value; });
 maxNewTokensInput.addEventListener('input', (e) => { maxNewTokensRange.value = e.target.value; });
 temperatureRange.addEventListener('input', (e) => { temperatureInput.value = e.target.value; });
@@ -336,6 +388,8 @@ populateVoiceList();
 if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = populateVoiceList;
 }
+
+// 初期状態のUI設定
 status.textContent = 'メッセージを入力して「送信」ボタンを押してください。';
 promptInput.disabled = false;
 generateButton.disabled = false;
