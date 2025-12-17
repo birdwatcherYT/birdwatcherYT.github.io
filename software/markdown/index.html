@@ -60,6 +60,29 @@
             width: 100px;
         }
 
+        /* テーブルのスタイル */
+        table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        /* 偶数行の色を変えて見やすくする */
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
