@@ -30,15 +30,36 @@
             flex-grow: 1;
         }
 
-        /* コードブロックのスタイル */
+        /* --- コードブロックとインラインコードのスタイル修正 --- */
         pre,
         code {
-            background-color: #f0f0f0;
             font-family: monospace;
         }
 
+        /* インラインコード (`code`) */
+        code {
+            background-color: #f0f0f0;
+            padding: 0.2em 0.4em;
+            /* 上下に少し、左右に広めの余白 */
+            border-radius: 3px;
+            /* 角を少し丸める */
+        }
+
+        /* コードブロック (```code```) */
         pre {
+            background-color: #f0f0f0;
             padding: 10px;
+            overflow-x: auto;
+            /* 横スクロール対応 */
+            border-radius: 4px;
+        }
+
+        /* コードブロック内の code は二重にスタイルが当たらないようリセット */
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            color: inherit;
         }
 
         textarea {
@@ -79,24 +100,23 @@
 
         /* Mermaid用スタイル */
         .mermaid {
-            /* mermaid.htmlに合わせる */
             background-color: white;
             margin: 10px 0;
         }
 
+        /* MathJax ディスプレイ数式用スタイル */
+        mjx-container[display="true"] {
+            display: block;
+            text-align: center;
+            margin: 1em 0;
+        }
+
         /* 印刷（PDF保存）用スタイル */
         @media print {
-            /* 
-               重要: visibility: hidden は使用しない（SVG描画バグの原因）。
-               display: none で不要な要素を個別に消すアプローチをとる。
-            */
-
-            /* Body直下の不要な要素を非表示 */
             body>*:not(.container) {
                 display: none !important;
             }
 
-            /* .containerの設定を上書き（Flex解除、全幅） */
             .container {
                 display: block !important;
                 width: 100% !important;
@@ -107,12 +127,10 @@
                 gap: 0 !important;
             }
 
-            /* コンテナ内の入力エリアを非表示 */
             #input {
                 display: none !important;
             }
 
-            /* プレビューエリアを印刷用に最適化 */
             #preview {
                 display: block !important;
                 width: 100% !important;
@@ -123,13 +141,11 @@
                 overflow: visible !important;
             }
 
-            /* スケールリセット（等倍印刷） */
             .markdown-content {
                 transform: none !important;
                 width: 100% !important;
             }
 
-            /* 改ページ設定 */
             h1,
             h2 {
                 page-break-before: auto;
@@ -138,7 +154,8 @@
             pre,
             blockquote,
             table,
-            .mermaid {
+            .mermaid,
+            mjx-container {
                 page-break-inside: avoid;
             }
         }
@@ -146,6 +163,24 @@
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+
+    <!-- MathJax設定 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'none'
+            },
+            startup: {
+                typeset: false
+            }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.js"></script>
 </head>
 
 <body>
@@ -168,7 +203,7 @@
         <input type="checkbox" id="tabAsSpace">
         <label for="tabAsSpace">Tab as 4 spaces</label>
     </div>
-    <p>Marked.js, html2canvas, Mermaid.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+    <p>Marked.js, html2canvas, Mermaid.js, MathJaxを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -181,7 +216,6 @@
         const preview = document.getElementById('preview');
         const tabAsSpaceCheckbox = document.getElementById('tabAsSpace');
 
-        // Mermaid初期化（デフォルト設定を使用＝mermaid.htmlと同じ挙動にする）
         mermaid.initialize({ startOnLoad: false });
 
         function applyScale() {
@@ -198,11 +232,11 @@
             preview.innerHTML = '<div class="markdown-content"></div>';
             const markdownContent = preview.querySelector('.markdown-content');
 
-            // 1. Markdown変換
+            // Markdown変換
             const html = marked.parse(markdownCode);
             markdownContent.innerHTML = html;
 
-            // 2. Mermaidブロック処理
+            // Mermaidブロック処理
             const mermaidCodeBlocks = markdownContent.querySelectorAll('pre code.language-mermaid');
             mermaidCodeBlocks.forEach(codeBlock => {
                 const pre = codeBlock.parentElement;
@@ -214,10 +248,23 @@
                 }
             });
 
-            // 3. Highlight.js
+            // Highlight.js
             hljs.highlightAll();
 
-            // 4. Mermaid描画
+            // MathJax -> Mermaid
+            if (window.MathJax) {
+                MathJax.typesetPromise([markdownContent]).then(() => {
+                    runMermaid(markdownContent);
+                }).catch((err) => {
+                    console.error('MathJax typeset failed: ' + err.message);
+                    runMermaid(markdownContent);
+                });
+            } else {
+                runMermaid(markdownContent);
+            }
+        }
+
+        function runMermaid(markdownContent) {
             const mermaidNodes = markdownContent.querySelectorAll('.mermaid');
             if (mermaidNodes.length > 0) {
                 mermaid.run({
@@ -235,20 +282,27 @@
 
         const storageKey = "birdwatcheryt_github_io_software_markdown";
         const defaultValue = `# Example
-## Section
-- item
+## Math (LaTeX)
+インライン: $E = mc^2$
 
-\`main.cpp\`
+ディスプレイ:
+$$
+x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
+$$
+
+## Code
+\`main.cpp\`コード
 \`\`\`c++
 int a; // comment
 \`\`\`
 
+## Table
 | 商品名 | 価格 | 在庫 |
 | :---: | ---: | :--- |
 | AAA | 120円 | あり |
 | あ | 90円 | あり |
-| あいうえお | 400円 | なし |
 
+## Diagram
 \`\`\`mermaid
 graph LR
     A[Start] --> B{Check}
@@ -282,27 +336,24 @@ graph LR
             }
         });
 
-        // 初回レンダリング
         rendering(input.value);
-
         scaleValue.addEventListener('input', applyScale);
 
-        // 保存・印刷ボタン
-        document.getElementById('saveImageBtn').addEventListener('click', () => {
+        // --- 保存ボタン処理 ---
+        document.getElementById('saveImageBtn').addEventListener('click', async () => {
             const format = document.getElementById('formatSelect').value;
-            const scale = parseFloat(scaleValue.value) || 1;
+            // 数値入力欄から現在のスケールを取得
+            const currentScale = parseFloat(scaleValue.value) || 1;
 
             if (format === 'print') {
                 const originalTitle = document.title;
                 document.title = "markdown-preview";
-                // 素直にブラウザの印刷機能を呼び出す
-                // CSS (@media print) で表示制御を行うため、ここでは何もしない
                 window.print();
                 document.title = originalTitle;
                 return;
             }
 
-            // --- PNG保存 (html2canvas) ---
+            // PNG保存処理
             const preview = document.getElementById('preview');
             const markdownDiv = preview.querySelector('.markdown-content');
 
@@ -316,6 +367,7 @@ graph LR
             btn.textContent = "処理中...";
             btn.disabled = true;
 
+            // クローン作成
             const clone = markdownDiv.cloneNode(true);
             clone.style.position = 'fixed';
             clone.style.top = '-10000px';
@@ -331,13 +383,100 @@ graph LR
 
             document.body.appendChild(clone);
 
+            // --- MathJax SVGの画像化 ---
+            const originalSvgs = markdownDiv.querySelectorAll('mjx-container svg');
+            const cloneSvgs = clone.querySelectorAll('mjx-container svg');
+
+            if (originalSvgs.length > 0 && originalSvgs.length === cloneSvgs.length) {
+                const svgPromises = Array.from(originalSvgs).map((originalSvg, index) => {
+                    return new Promise((resolve) => {
+                        try {
+                            // getBoundingClientRectは現在の画面上の表示サイズ（スケール適用後）を返す
+                            const rect = originalSvg.getBoundingClientRect();
+                            // スケール適用前の本来のサイズに戻す
+                            const width = rect.width / currentScale;
+                            const height = rect.height / currentScale;
+
+                            const svgClone = originalSvg.cloneNode(true);
+                            // SVG自体のサイズ属性もリセット（念のため）
+                            svgClone.setAttribute("width", width + "px");
+                            svgClone.setAttribute("height", height + "px");
+
+                            const style = window.getComputedStyle(originalSvg);
+                            svgClone.style.color = style.color;
+
+                            const serializer = new XMLSerializer();
+                            const svgString = serializer.serializeToString(svgClone);
+                            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                            const url = URL.createObjectURL(svgBlob);
+
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                // 解像度確保のため、保存倍率に応じたサイズでCanvasを作成
+                                // currentScaleを使用しているのは、高解像度保存したい場合はユーザーが倍率を上げている前提のため
+                                const drawScale = currentScale < 1 ? 2 : currentScale * 2;
+                                canvas.width = width * drawScale;
+                                canvas.height = height * drawScale;
+
+                                const ctx = canvas.getContext('2d');
+                                ctx.scale(drawScale, drawScale);
+                                ctx.drawImage(img, 0, 0);
+
+                                const newImg = document.createElement('img');
+                                newImg.src = canvas.toDataURL('image/png');
+                                // 埋め込む画像の表示サイズは「本来のサイズ(1倍)」にする
+                                newImg.style.width = width + 'px';
+                                newImg.style.height = height + 'px';
+                                newImg.style.verticalAlign = originalSvg.style.verticalAlign || 'middle';
+
+                                const cloneSvg = cloneSvgs[index];
+                                const cloneContainer = cloneSvg.closest('mjx-container');
+                                if (cloneContainer) {
+                                    const isDisplay = cloneContainer.getAttribute('display') === 'true';
+
+                                    cloneContainer.innerHTML = '';
+                                    cloneContainer.appendChild(newImg);
+
+                                    if (isDisplay) {
+                                        cloneContainer.style.width = '100%';
+                                        cloneContainer.style.textAlign = 'center';
+                                        cloneContainer.style.margin = '1em 0';
+                                        newImg.style.display = 'inline-block';
+                                    } else {
+                                        cloneContainer.style.width = width + 'px';
+                                        cloneContainer.style.height = height + 'px';
+                                        cloneContainer.style.display = 'inline-block';
+                                        cloneContainer.style.margin = '0';
+                                    }
+                                } else {
+                                    cloneSvg.replaceWith(newImg);
+                                }
+
+                                URL.revokeObjectURL(url);
+                                resolve();
+                            };
+                            img.onerror = (e) => {
+                                console.warn('Failed to load SVG image for MathJax', e);
+                                resolve();
+                            };
+                            img.src = url;
+                        } catch (e) {
+                            console.error('Error processing MathJax SVG:', e);
+                            resolve();
+                        }
+                    });
+                });
+                await Promise.all(svgPromises);
+            }
+
             if (clone.scrollWidth > clone.clientWidth) {
                 clone.style.width = 'max-content';
                 clone.style.maxWidth = 'none';
             }
 
             html2canvas(clone, {
-                scale: scale,
+                scale: currentScale,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             }).then(canvas => {
