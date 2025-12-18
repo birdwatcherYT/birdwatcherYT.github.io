@@ -27,9 +27,18 @@
             height: 60vh;
             padding: 10px;
             border: 1px solid #ccc;
-            overflow-y: auto;
+            /* 縦横両方のスクロールに対応 */
+            overflow: auto;
             /* #previewが残りのスペースを埋める */
             flex-grow: 1;
+            /* 背景色は白を基本とする（PNG透過確認用） */
+            background-color: #fff;
+        }
+
+        /* 修正点: Mermaidのコンテナを図のサイズに合わせる */
+        .mermaid {
+            width: fit-content;
+            overflow: visible;
         }
 
         textarea {
@@ -95,10 +104,14 @@
             if (mermaidDiv) {
                 mermaidDiv.style.transform = `scale(${scale})`;
                 mermaidDiv.style.transformOrigin = 'top left';
+
+                // スケール変更時に親要素のスクロール領域を確保するためにマージン等を調整する場合があるが、
+                // width: fit-content により基本的には自然に配置される
             }
         }
 
         function rendering(mermaidCode) {
+            // .mermaid クラスを持つ div を生成（CSSで width: fit-content が適用される）
             preview.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
             mermaid.init({}, ".mermaid").then(() => {
                 applyScale();
@@ -150,28 +163,37 @@
             let savePromise;
             let extension;
             const originalBg = mermaidDiv.style.backgroundColor;
-            const scale = parseFloat(scaleValue.value);
-            const rect = mermaidDiv.getBoundingClientRect();
+            const scale = parseFloat(scaleValue.value) || 1;
 
-            // Calculate the target dimensions
-            const targetWidth = Math.round(rect.width);
-            const targetHeight = Math.round(rect.height);
+            // 1. 現在のTransform（見た目の拡大縮小）を一時的に解除
+            const currentTransform = mermaidDiv.style.transform;
+            mermaidDiv.style.transform = 'none';
 
+            // 2. 本来のコンテンツサイズ（スケールなし）を取得
+            // width: fit-content のおかげで、図の最小幅が取得できる
+            const originalWidth = mermaidDiv.offsetWidth;
+            const originalHeight = mermaidDiv.offsetHeight;
+
+            // 3. Transformを元に戻す（画面上の見た目を復帰）
+            mermaidDiv.style.transform = currentTransform;
+
+            // 4. 保存用のオプションを設定
+            // dom-to-image に対して「このサイズで出力してね」と指示する
             const options = {
-                width: targetWidth,
-                height: targetHeight,
+                // 出力画像の解像度（本来のサイズ × 倍率）
+                width: originalWidth * scale,
+                height: originalHeight * scale,
                 style: {
-                    // Apply scale transform to the node during capture
+                    // キャプチャ時に適用するスタイル
+                    // ここで倍率を適用し、原点を左上に固定
                     'transform': `scale(${scale})`,
                     'transform-origin': 'top left',
-                    // Ensure the base dimensions are set correctly for the scaling context
-                    'width': `${rect.width}px`,
-                    'height': `${rect.height}px`,
-                    // Optional: Ensure no clipping from the element itself
+                    // ベースとなる要素のサイズを固定
+                    'width': `${originalWidth}px`,
+                    'height': `${originalHeight}px`,
                     'overflow': 'visible'
                 }
             };
-
 
             switch (format) {
                 case 'svg':
@@ -179,14 +201,14 @@
                     extension = 'svg';
                     break;
                 case 'png-bg':
+                    // 一時的に背景色を白に設定（styleオプションで上書きも可能だが直接操作が確実）
                     mermaidDiv.style.backgroundColor = 'white';
-                // Fall through
+                // fall through
                 case 'png':
                     savePromise = domtoimage.toPng(mermaidDiv, options);
                     extension = 'png';
                     break;
             }
-
 
             savePromise
                 .then(function (dataUrl) {
@@ -194,11 +216,14 @@
                     link.download = `mermaid-diagram.${extension}`;
                     link.href = dataUrl;
                     link.click();
+                    // 背景色を戻す
                     mermaidDiv.style.backgroundColor = originalBg;
                 })
                 .catch(function (error) {
                     console.error('画像保存エラー:', error);
                     alert('画像の保存に失敗しました');
+                    // エラー時も背景色を戻す
+                    mermaidDiv.style.backgroundColor = originalBg;
                 });
         });
     </script>

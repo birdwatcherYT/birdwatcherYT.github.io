@@ -83,8 +83,15 @@
 
         /* 印刷（PDF保存）用スタイル */
         @media print {
-            body * { visibility: hidden; }
-            #preview, #preview * { visibility: visible; }
+            body * {
+                visibility: hidden;
+            }
+
+            #preview,
+            #preview * {
+                visibility: visible;
+            }
+
             #preview {
                 position: absolute;
                 left: 0;
@@ -95,15 +102,31 @@
                 padding: 0;
                 border: none;
                 overflow: visible;
-                transform: none !important; 
+                transform: none !important;
             }
+
             .markdown-content {
                 transform: none !important;
                 width: 100% !important;
             }
-            h1, h2 { page-break-before: auto; }
-            pre, blockquote, table { page-break-inside: avoid; }
-            .controls, p, h1, footer { display: none; }
+
+            h1,
+            h2 {
+                page-break-before: auto;
+            }
+
+            pre,
+            blockquote,
+            table {
+                page-break-inside: avoid;
+            }
+
+            .controls,
+            p,
+            h1,
+            footer {
+                display: none;
+            }
         }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
@@ -223,7 +246,7 @@ int a; // comment
             // --- PNG保存 (html2canvas) ---
             const preview = document.getElementById('preview');
             const markdownDiv = preview.querySelector('.markdown-content');
-            
+
             if (!markdownDiv) {
                 alert('表示中のMarkdownがありません');
                 return;
@@ -236,7 +259,7 @@ int a; // comment
 
             // 途切れ防止のためクローンを作成して整形
             const clone = markdownDiv.cloneNode(true);
-            
+
             clone.style.position = 'fixed';
             clone.style.top = '-10000px';
             clone.style.left = '0';
@@ -249,7 +272,7 @@ int a; // comment
             const previewWidth = preview.clientWidth;
             clone.style.width = 'fit-content';
             clone.style.maxWidth = `${previewWidth}px`;
-            
+
             document.body.appendChild(clone);
 
             // はみ出し対策
