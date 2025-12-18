@@ -18,7 +18,6 @@
             padding: 10px;
             border: 1px solid #ccc;
             font-family: monospace;
-            /* #inputが縮まないように */
             flex-shrink: 0;
         }
 
@@ -28,7 +27,6 @@
             padding: 10px;
             border: 1px solid #ccc;
             overflow-y: auto;
-            /* #previewが残りのスペースを埋める */
             flex-grow: 1;
         }
 
@@ -45,7 +43,6 @@
 
         textarea {
             tab-size: 4;
-            /* Tab文字の幅をスペース4文字分として表示 */
         }
 
         .controls {
@@ -76,40 +73,63 @@
             font-weight: bold;
         }
 
-        /* 偶数行の色を変えて見やすくする */
         tr:nth-child(even) {
             background-color: #fafafa;
         }
 
+        /* Mermaid用スタイル */
+        .mermaid {
+            /* mermaid.htmlに合わせる */
+            background-color: white;
+            margin: 10px 0;
+        }
+
         /* 印刷（PDF保存）用スタイル */
         @media print {
-            body * {
-                visibility: hidden;
+            /* 
+               重要: visibility: hidden は使用しない（SVG描画バグの原因）。
+               display: none で不要な要素を個別に消すアプローチをとる。
+            */
+
+            /* Body直下の不要な要素を非表示 */
+            body>*:not(.container) {
+                display: none !important;
             }
 
-            #preview,
-            #preview * {
-                visibility: visible;
+            /* .containerの設定を上書き（Flex解除、全幅） */
+            .container {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                gap: 0 !important;
             }
 
+            /* コンテナ内の入力エリアを非表示 */
+            #input {
+                display: none !important;
+            }
+
+            /* プレビューエリアを印刷用に最適化 */
             #preview {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: auto;
-                margin: 0;
-                padding: 0;
-                border: none;
-                overflow: visible;
-                transform: none !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                overflow: visible !important;
             }
 
+            /* スケールリセット（等倍印刷） */
             .markdown-content {
                 transform: none !important;
                 width: 100% !important;
             }
 
+            /* 改ページ設定 */
             h1,
             h2 {
                 page-break-before: auto;
@@ -117,15 +137,9 @@
 
             pre,
             blockquote,
-            table {
+            table,
+            .mermaid {
                 page-break-inside: avoid;
-            }
-
-            .controls,
-            p,
-            h1,
-            footer {
-                display: none;
             }
         }
     </style>
@@ -154,17 +168,22 @@
         <input type="checkbox" id="tabAsSpace">
         <label for="tabAsSpace">Tab as 4 spaces</label>
     </div>
-    <p>Marked.js, html2canvasを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+    <p>Marked.js, html2canvas, Mermaid.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
+
     <script>
         const input = document.getElementById('input');
         const scaleValue = document.getElementById('scaleValue');
         const preview = document.getElementById('preview');
         const tabAsSpaceCheckbox = document.getElementById('tabAsSpace');
 
-        // Function to apply scale transform to the content inside preview
+        // Mermaid初期化（デフォルト設定を使用＝mermaid.htmlと同じ挙動にする）
+        mermaid.initialize({ startOnLoad: false });
+
         function applyScale() {
             const scale = parseFloat(scaleValue.value) || 1;
             const markdownContent = preview.querySelector('.markdown-content');
@@ -176,14 +195,44 @@
 
         function rendering(markdownCode) {
             const preview = document.getElementById('preview');
-            // Create a div to contain markdown content for scaling
             preview.innerHTML = '<div class="markdown-content"></div>';
             const markdownContent = preview.querySelector('.markdown-content');
+
+            // 1. Markdown変換
             const html = marked.parse(markdownCode);
             markdownContent.innerHTML = html;
+
+            // 2. Mermaidブロック処理
+            const mermaidCodeBlocks = markdownContent.querySelectorAll('pre code.language-mermaid');
+            mermaidCodeBlocks.forEach(codeBlock => {
+                const pre = codeBlock.parentElement;
+                if (pre && pre.tagName === 'PRE') {
+                    const div = document.createElement('div');
+                    div.className = 'mermaid';
+                    div.textContent = codeBlock.textContent;
+                    pre.replaceWith(div);
+                }
+            });
+
+            // 3. Highlight.js
             hljs.highlightAll();
-            applyScale(); // Apply scale after rendering
+
+            // 4. Mermaid描画
+            const mermaidNodes = markdownContent.querySelectorAll('.mermaid');
+            if (mermaidNodes.length > 0) {
+                mermaid.run({
+                    nodes: mermaidNodes
+                }).then(() => {
+                    applyScale();
+                }).catch(err => {
+                    console.error(err);
+                    applyScale();
+                });
+            } else {
+                applyScale();
+            }
         }
+
         const storageKey = "birdwatcheryt_github_io_software_markdown";
         const defaultValue = `# Example
 ## Section
@@ -194,50 +243,60 @@
 int a; // comment
 \`\`\`
 
-
 | 商品名 | 価格 | 在庫 |
 | :---: | ---: | :--- |
 | AAA | 120円 | あり |
 | あ | 90円 | あり |
 | あいうえお | 400円 | なし |
 
+\`\`\`mermaid
+graph LR
+    A[Start] --> B{Check}
+    B -- Yes --> C[OK]
+    B -- No --> D[Error]
+\`\`\`
 `;
+
         try {
             input.value = localStorage.getItem(storageKey) || defaultValue;
         } catch (error) {
             input.value = defaultValue;
         };
+
         function saveLocal() {
             try {
                 localStorage.setItem(storageKey, input.value);
             } catch (error) { };
         }
+
         input.addEventListener('input', (event) => {
             rendering(input.value);
             saveLocal();
         });
+
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Tab') {
-                event.preventDefault(); // Prevent default Tab behavior (changing focus)
+                event.preventDefault();
                 const textToInsert = tabAsSpaceCheckbox.checked ? '    ' : '\t';
                 document.execCommand('insertText', false, textToInsert);
             }
         });
 
+        // 初回レンダリング
         rendering(input.value);
 
-        // Add event listener for scale input changes
         scaleValue.addEventListener('input', applyScale);
 
-        // 画像保存・印刷機能
+        // 保存・印刷ボタン
         document.getElementById('saveImageBtn').addEventListener('click', () => {
             const format = document.getElementById('formatSelect').value;
             const scale = parseFloat(scaleValue.value) || 1;
 
-            // --- 印刷 (PDF保存) ---
             if (format === 'print') {
                 const originalTitle = document.title;
                 document.title = "markdown-preview";
+                // 素直にブラウザの印刷機能を呼び出す
+                // CSS (@media print) で表示制御を行うため、ここでは何もしない
                 window.print();
                 document.title = originalTitle;
                 return;
@@ -257,9 +316,7 @@ int a; // comment
             btn.textContent = "処理中...";
             btn.disabled = true;
 
-            // 途切れ防止のためクローンを作成して整形
             const clone = markdownDiv.cloneNode(true);
-
             clone.style.position = 'fixed';
             clone.style.top = '-10000px';
             clone.style.left = '0';
@@ -268,14 +325,12 @@ int a; // comment
             clone.style.padding = '20px';
             clone.style.transform = 'none';
 
-            // 幅の自動調整
             const previewWidth = preview.clientWidth;
             clone.style.width = 'fit-content';
             clone.style.maxWidth = `${previewWidth}px`;
 
             document.body.appendChild(clone);
 
-            // はみ出し対策
             if (clone.scrollWidth > clone.clientWidth) {
                 clone.style.width = 'max-content';
                 clone.style.maxWidth = 'none';
