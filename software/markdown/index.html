@@ -63,15 +63,12 @@
         /* テーブルのスタイル */
         table {
             border-collapse: collapse;
-            margin: 15px 0;
-            width: 100%;
         }
 
         th,
         td {
             border: 1px solid #ccc;
             padding: 8px;
-            text-align: left;
         }
 
         th {
@@ -149,6 +146,14 @@
 \`\`\`c++
 int a; // comment
 \`\`\`
+
+
+| 商品名 | 価格 | 在庫 |
+| :---: | ---: | :--- |
+| AAA | 120円 | あり |
+| あ | 90円 | あり |
+| あいうえお | 400円 | なし |
+
 `;
         try {
             input.value = localStorage.getItem(storageKey) || defaultValue;
