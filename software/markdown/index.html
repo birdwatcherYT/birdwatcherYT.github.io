@@ -80,6 +80,31 @@
         tr:nth-child(even) {
             background-color: #fafafa;
         }
+
+        /* 印刷（PDF保存）用スタイル */
+        @media print {
+            body * { visibility: hidden; }
+            #preview, #preview * { visibility: visible; }
+            #preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                margin: 0;
+                padding: 0;
+                border: none;
+                overflow: visible;
+                transform: none !important; 
+            }
+            .markdown-content {
+                transform: none !important;
+                width: 100% !important;
+            }
+            h1, h2 { page-break-before: auto; }
+            pre, blockquote, table { page-break-inside: avoid; }
+            .controls, p, h1, footer { display: none; }
+        }
     </style>
     <link rel="icon" href="https://birdwatcheryt.github.io/image/icon.ico">
     <link rel="stylesheet" type="text/css" href="https://birdwatcheryt.github.io/footer.css">
@@ -99,17 +124,16 @@
         <label for="scaleValue"> 表示・保存倍率:</label>
         <input type="number" id="scaleValue" min="0.1" step="0.1" value="1">
         <select id="formatSelect">
-            <option value="svg">SVG</option>
-            <option value="png">PNG(透過)</option>
-            <option value="png-bg">PNG(不透明)</option>
+            <option value="png">PNG</option>
+            <option value="print">印刷（PDF保存用）</option>
         </select>
         <button id="saveImageBtn">保存</button>
         <input type="checkbox" id="tabAsSpace">
         <label for="tabAsSpace">Tab as 4 spaces</label>
     </div>
-    <p>Marked.jsを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
+    <p>Marked.js, html2canvasを使用しています。入力されたデータは、お使いのブラウザに保存されます。テキストエリアを空にすると保存されたデータは消えます。</p>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
         const input = document.getElementById('input');
@@ -182,70 +206,75 @@ int a; // comment
         // Add event listener for scale input changes
         scaleValue.addEventListener('input', applyScale);
 
-        // 画像保存機能
+        // 画像保存・印刷機能
         document.getElementById('saveImageBtn').addEventListener('click', () => {
+            const format = document.getElementById('formatSelect').value;
+            const scale = parseFloat(scaleValue.value) || 1;
+
+            // --- 印刷 (PDF保存) ---
+            if (format === 'print') {
+                const originalTitle = document.title;
+                document.title = "markdown-preview";
+                window.print();
+                document.title = originalTitle;
+                return;
+            }
+
+            // --- PNG保存 (html2canvas) ---
             const preview = document.getElementById('preview');
             const markdownDiv = preview.querySelector('.markdown-content');
-            const format = document.getElementById('formatSelect').value;
-
+            
             if (!markdownDiv) {
                 alert('表示中のMarkdownがありません');
                 return;
             }
 
-            let savePromise;
-            let extension;
-            const originalBg = preview.style.backgroundColor;
-            const scale = parseFloat(scaleValue.value);
-            const rect = markdownDiv.getBoundingClientRect();
+            const btn = document.getElementById('saveImageBtn');
+            const originalText = btn.textContent;
+            btn.textContent = "処理中...";
+            btn.disabled = true;
 
-            // Calculate the target dimensions
-            const targetWidth = Math.round(rect.width);
-            const targetHeight = Math.round(rect.height);
+            // 途切れ防止のためクローンを作成して整形
+            const clone = markdownDiv.cloneNode(true);
+            
+            clone.style.position = 'fixed';
+            clone.style.top = '-10000px';
+            clone.style.left = '0';
+            clone.style.backgroundColor = 'white';
+            clone.style.zIndex = '-1000';
+            clone.style.padding = '20px';
+            clone.style.transform = 'none';
 
-            const options = {
-                width: targetWidth,
-                height: targetHeight,
-                style: {
-                    // Apply scale transform to the node during capture
-                    'transform': `scale(${scale})`,
-                    'transform-origin': 'top left',
-                    // Ensure the base dimensions are set correctly for the scaling context
-                    'width': `${rect.width}px`,
-                    'height': `${rect.height}px`,
-                    // Optional: Ensure no clipping from the element itself
-                    'overflow': 'visible'
-                }
-            };
+            // 幅の自動調整
+            const previewWidth = preview.clientWidth;
+            clone.style.width = 'fit-content';
+            clone.style.maxWidth = `${previewWidth}px`;
+            
+            document.body.appendChild(clone);
 
-
-            switch (format) {
-                case 'svg':
-                    savePromise = domtoimage.toSvg(markdownDiv, options);
-                    extension = 'svg';
-                    break;
-                case 'png-bg':
-                    markdownDiv.style.backgroundColor = 'white';
-                // Fall through
-                case 'png':
-                    savePromise = domtoimage.toPng(markdownDiv, options);
-                    extension = 'png';
-                    break;
+            // はみ出し対策
+            if (clone.scrollWidth > clone.clientWidth) {
+                clone.style.width = 'max-content';
+                clone.style.maxWidth = 'none';
             }
 
-
-            savePromise
-                .then(function (dataUrl) {
-                    const link = document.createElement('a');
-                    link.download = `markdown-preview.${extension}`;
-                    link.href = dataUrl;
-                    link.click();
-                    markdownDiv.style.backgroundColor = originalBg;
-                })
-                .catch(function (error) {
-                    console.error('画像保存エラー:', error);
-                    alert('画像の保存に失敗しました');
-                });
+            html2canvas(clone, {
+                scale: scale,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `markdown-preview.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(error => {
+                console.error('画像保存エラー:', error);
+                alert('画像の保存に失敗しました');
+            }).finally(() => {
+                document.body.removeChild(clone);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
         });
     </script>
     <footer></footer>
