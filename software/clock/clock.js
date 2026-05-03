@@ -29,7 +29,7 @@ function alerm_reset() {
     alerm_datetime = null;
     document.getElementById("alerm_button").textContent = "Set";
     document.getElementById("alerm_date").disabled = false;
-    document.getElementById("alerm_target_time").textContent = "YYYY/MM/DD hh:mm:ssまで残り";
+    document.getElementById("alerm_target_time").textContent = "YYYY/MM/DD hh:mm:ssまで";
     document.getElementById("alerm_countdown").textContent = "00:00:00";
 }
 
@@ -69,7 +69,7 @@ function alerm_check() {
     if (diff <= 0) {
         play();
         // アラーム終了後は設定時刻のみ表示
-        document.getElementById("alerm_target_time").textContent = `${targetStr}まで残り`;
+        document.getElementById("alerm_target_time").textContent = `${targetStr}まで`;
         document.getElementById("alerm_countdown").textContent = "00:00:00";
 
         // 内部状態のみリセットして、次のアラーム設定を可能にする
@@ -86,7 +86,7 @@ function alerm_check() {
     const rest_hour = Math.floor(rest_min_total / 60);
 
     // 2つのdivをそれぞれ更新
-    document.getElementById("alerm_target_time").textContent = `${targetStr}まで残り`;
+    document.getElementById("alerm_target_time").textContent = `${targetStr}まで`;
     document.getElementById("alerm_countdown").textContent = `${zeroPadding(rest_hour, 2)}:${zeroPadding(rest_min, 2)}:${zeroPadding(rest_sec, 2)}`;
 }
 
