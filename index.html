@@ -63,11 +63,11 @@
 		</style>
 	</head>
 	<body>
-		<h1><a href="https://www.instagram.com/birdwatcheryt/" target="_blank" style="text-decoration: none; color:black;"><img src="image/icon.ico" class="icon_left"/>birdwatcherYT<img src="image/laugh_doves.svg" class="icon_right"/></a></h1>
+		<h1 id="home"><a href="https://www.instagram.com/birdwatcheryt/" target="_blank" style="text-decoration: none; color:black;"><img src="image/icon.ico" class="icon_left"/>birdwatcherYT<img src="image/laugh_doves.svg" class="icon_right"/></a></h1>
 
 		<div id="profile" class="profile">
 			Email: yoshida.t.mllab.nit[at]gmail.com
-			<h2>Papers</h2>
+			<h2 id="papers">Papers</h2>
 			<ul>
 				<li>Safe Triplet Screening for Distance Metric Learning</li>
 				<ul>
@@ -82,30 +82,30 @@
 					<li><a href="https://link.springer.com/article/10.1007%2Fs10994-021-06009-3" target="_blank">Machine Learning Journal</a></li>
 				</ul>
 			</ul>
-			<h2>Qualifications</h2>
+			<h2 id="qualifications">Qualifications</h2>
 			<ul>
 				<li><a href="https://www.ipa.go.jp/shiken/kubun/ap.html" target="_blank">Applied Information Technology Engineer（応用情報技術者）</a></li>
 				<li><a href="https://www.ipa.go.jp/shiken/kubun/fe.html" target="_blank">Fundamental Information Technology Engineer（基本情報技術者）</a></li>
 			</ul>
-			<h2>Education</h2>
+			<h2 id="education">Education</h2>
 			<ul>
 				<li>2014/4-2018/3: Bachelor of Engineering, Department of Computer Science, Nagoya Institute of Technology</li>
 				<li>2018/4-2020/3: Master of Engineering, Department of Computer Science, Nagoya Institute of Technology</li>
 			</ul>
-			<h2>Awards</h2>
+			<h2 id="awards">Awards</h2>
 			<ul>
 				<li>2018 名古屋工業会賞</li>
 				<li><a href="http://ibisml.org/ibis2017/awards/" target="_blank">IBIS2017 学生優秀プレゼンテーション賞</a></li>
 			</ul>
-			<h2>Skills</h2>
+			<h2 id="skills">Skills</h2>
 			<ul>
 				<li>Machine Learning</li>
 				<li>Optimization</li>
 				<li>Data Mining</li>
 				<li>C++, C, Java, Python, C#, Matlab, SQL, Prolog, JavaScript</li>
 			</ul>
-			<h2>Softwares</h2>
-            <h3>Tools</h3>
+			<h2 id="softwares">Softwares</h2>
+            <h3 id="tools">Tools</h3>
 			<ul>
 				<li><a href="./software/aa/index.html" target="_blank">AA変換</a></li>
 				<li><a href="./software/music/index.html" target="_blank">音楽作成</a></li>
@@ -136,7 +136,7 @@
             	<li><a href="./software/ocr/index.html" target="_blank">OCR（画像文字認識）</a></li>
             	<li><a href="./software/camera/index.html" target="_blank">Webカメラ</a></li>
 			</ul>
-            <h3>Games</h3>
+            <h3 id="games">Games</h3>
 			<ul>
 				<li><a href="./software/typing/index.html" target="_blank">Typing</a></li>
 				<li><a href="./software/reversi/index.html" target="_blank">Reversi</a></li>
@@ -151,9 +151,9 @@
             	<li><a href="./software/javasparrow/index.html" target="_blank">Java Sparrow Game</a></li>
                 <li><a href="./software/bird/index.html" target="_blank">鳥ゲーム</a></li>
 			</ul>
-			<h2>Links</h2>
+			<h2 id="links">Links</h2>
 			<div class="indent">
-				<h3>Technology</h3>
+				<h3 id="technology-links">Technology</h3>
 				<ul>
 					<li><a href="https://qiita.com/birdwatcher" target="_blank">Qiita</a></li>
 					<li><a href="https://github.com/birdwatcherYT" target="_blank">GitHub</a></li>
@@ -162,16 +162,16 @@
 					<li><a href="https://atcoder.jp/users/birdwatcher" target="_blank">AtCoder</a></li>
 					<li><a href="https://signate.jp/users/23580" target="_blank">Signate</a></li>
 				</ul>
-				<h3>Bird</h3>
+				<h3 id="bird-links">Bird</h3>
 				<ul>
 					<li><a href="https://www.instagram.com/birdwatcheryt/" target="_blank">Instagram</a></li>
 					<li><a href="https://www.youtube.com/channel/UCQmKQaXIq0KEwhnIJHYcYYQ" target="_blank">YouTube</a></li>
 					<li><a href="https://store.line.me/stickershop/author/1589422" target="_blank">LINE Sticker</a></li>
 				</ul>
-				<h3>Misc</h3>
+				<h3 id="misc-links">Misc</h3>
 				<ul>
 					<li><a href="https://www.linkedin.com/in/tomoki-yoshida-3a6905164/" target="_blank">LinkedIn</a></li>
-					<li><a href="https://twitter.com/birdwatcherYT" target="_blank">Twitter</a></li>
+					<li><a href="https://twitter.com/birdwatcherYT" target="_blank">X (Twitter)</a></li>
 				</ul>
 			</div>
 		</div>
@@ -334,5 +334,13 @@
 		}else if (param == "?profile") {
 			document.getElementById('bird').innerHTML="";
 		}
+
+		var headingLinks = document.querySelectorAll('h2[id], h3[id]');
+		headingLinks.forEach(function(heading) {
+			heading.style.cursor = 'pointer';
+			heading.addEventListener('click', function() {
+				location.hash = heading.id;
+			});
+		});
 	</script>
 </html>
