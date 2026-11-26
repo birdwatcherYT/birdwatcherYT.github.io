@@ -106,8 +106,8 @@
 				<li>C++, C, Java, Python, C#, Matlab, SQL, Prolog, JavaScript</li>
 			</ul>
 			</div>
-			<div id="software">
-			<h2 id="softwares">Softwares</h2>
+			<div id="software-section">
+			<h2 id="software">Software</h2>
             <h3 id="tools">Tools</h3>
 			<ul>
 				<li><a href="./software/aa/index.html" target="_blank">AA変換</a></li>
@@ -155,7 +155,7 @@
                 <li><a href="./software/bird/index.html" target="_blank">鳥ゲーム</a></li>
 			</ul>
 			</div>
-			<div id="link">
+			<div id="links-section">
 			<h2 id="links">Links</h2>
 			<div class="indent">
 				<h3 id="technology-links">Technology</h3>
@@ -341,14 +341,14 @@
 			document.getElementById('profile').style.display="none";
 		}else if (param == "?profile") {
 			document.getElementById('bird').style.display="none";
-		}else if (param == "?link") {
+		}else if (param == "?links") {
 			document.getElementById('bird').style.display="none";
 			document.getElementById('profile-info').style.display="none";
-			document.getElementById('software').style.display="none";
+			document.getElementById('software-section').style.display="none";
 		}else if (param == "?software") {
 			document.getElementById('bird').style.display="none";
 			document.getElementById('profile-info').style.display="none";
-			document.getElementById('link').style.display="none";
+			document.getElementById('links-section').style.display="none";
 		}
 
 		var headingLinks = document.querySelectorAll('h2[id], h3[id]');
