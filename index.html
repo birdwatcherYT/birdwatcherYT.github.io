@@ -66,6 +66,7 @@
 		<h1 id="home"><a href="https://www.instagram.com/birdwatcheryt/" target="_blank" style="text-decoration: none; color:black;"><img src="image/icon.ico" class="icon_left"/>birdwatcherYT<img src="image/laugh_doves.svg" class="icon_right"/></a></h1>
 
 		<div id="profile" class="profile">
+			<div id="profile-info">
 			Email: yoshida.t.mllab.nit[at]gmail.com
 			<h2 id="papers">Papers</h2>
 			<ul>
@@ -104,6 +105,8 @@
 				<li>Data Mining</li>
 				<li>C++, C, Java, Python, C#, Matlab, SQL, Prolog, JavaScript</li>
 			</ul>
+			</div>
+			<div id="software">
 			<h2 id="softwares">Softwares</h2>
             <h3 id="tools">Tools</h3>
 			<ul>
@@ -151,6 +154,8 @@
             	<li><a href="./software/javasparrow/index.html" target="_blank">Java Sparrow Game</a></li>
                 <li><a href="./software/bird/index.html" target="_blank">鳥ゲーム</a></li>
 			</ul>
+			</div>
+			<div id="link">
 			<h2 id="links">Links</h2>
 			<div class="indent">
 				<h3 id="technology-links">Technology</h3>
@@ -175,6 +180,7 @@
 					<li><a href="https://youtrust.jp/users/birdwatcher" target="_blank">YOUTRUST</a></li>
 					<li><a href="https://twitter.com/birdwatcherYT" target="_blank">X (Twitter)</a></li>
 				</ul>
+			</div>
 			</div>
 		</div>
 		
@@ -332,9 +338,17 @@
 	<script>
 		var param = location.search;
 		if (param == "?bird") {
-			document.getElementById('profile').innerHTML="";
+			document.getElementById('profile').style.display="none";
 		}else if (param == "?profile") {
-			document.getElementById('bird').innerHTML="";
+			document.getElementById('bird').style.display="none";
+		}else if (param == "?link") {
+			document.getElementById('bird').style.display="none";
+			document.getElementById('profile-info').style.display="none";
+			document.getElementById('software').style.display="none";
+		}else if (param == "?software") {
+			document.getElementById('bird').style.display="none";
+			document.getElementById('profile-info').style.display="none";
+			document.getElementById('link').style.display="none";
 		}
 
 		var headingLinks = document.querySelectorAll('h2[id], h3[id]');
