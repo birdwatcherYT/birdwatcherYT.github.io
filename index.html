@@ -57,6 +57,9 @@
 			.indent{
 				padding-left: 15px;
 			}
+			.heading-content{
+				margin-left: 2.25rem;
+			}
 			ul,ol{
 				margin-left: 15px;
 			}
@@ -108,52 +111,7 @@
 			</div>
 			<div id="software-section">
 			<h2 id="software">Software</h2>
-            <h3 id="tools">Tools</h3>
-			<ul>
-				<li><a href="./software/aa/index.html" target="_blank">AA変換</a></li>
-				<li><a href="./software/music/index.html" target="_blank">音楽作成</a></li>
-				<li><a href="./software/fx/index.html" target="_blank">FX計算ツール</a></li>
-				<li><a href="./software/clock/index.html" target="_blank">Clock</a></li>
-				<li><a href="./software/text-encoding/dist/index.html" target="_blank">文字コード変換</a></li>
-				<li><a href="./software/graph/index.html" target="_blank">データプロット</a></li>
-				<li><a href="./software/roulette/index.html" target="_blank">ルーレット</a></li>
-				<li><a href="./software/random-string/index.html" target="_blank">ランダム文字列ジェネレーター</a></li>
-            	<li><a href="./software/sample-size/index.html" target="_blank">Sample Size Calculator</a></li>
-            	<li><a href="./software/hypothesis-test/index.html" target="_blank">検定</a></li>
-            	<li><a href="./software/latex/index.html" target="_blank">LaTeX数式画像生成</a></li>
-            	<li><a href="./software/markdown/index.html" target="_blank">Markdown Preview</a></li>
-            	<li><a href="./software/mermaid/index.html" target="_blank">Mermaid Preview</a></li>
-            	<li><a href="./software/python/index.html" target="_blank">Python Runner</a></li>
-            	<li><a href="./software/qrcode/index.html" target="_blank">QRコード生成</a></li>
-            	<li><a href="./software/qrcode-read/index.html" target="_blank">QRコード読み取り</a></li>
-            	<li><a href="./software/transcript/index.html" target="_blank">リアルタイム音声文字起こし (オンライン: Web Speech API)</a></li>
-            	<li><a href="./software/whisper-realtime/index.html" target="_blank">リアルタイム音声文字起こし (オフライン: whisper)</a></li>
-            	<li><a href="./software/whisper/index.html" target="_blank">Whisperによる音声ファイル書き起こし</a></li>
-            	<li><a href="./software/translate/index.html" target="_blank">ローカル翻訳</a></li>
-            	<li><a href="./software/llm/index.html" target="_blank">ローカルLLM</a></li>
-            	<li><a href="./software/tts/index.html" target="_blank">テキスト読み上げ</a></li>
-            	<li><a href="./software/calculator/index.html" target="_blank">関数電卓</a></li>
-            	<li><a href="./software/paint/index.html" target="_blank">ペイント</a></li>
-            	<li><a href="./software/grid-image/index.html" target="_blank">画像グリッドジェネレーター</a></li>
-            	<li><a href="./software/to-svg/index.html" target="_blank">画像SVG変換</a></li>
-            	<li><a href="./software/ocr/index.html" target="_blank">OCR（画像文字認識）</a></li>
-            	<li><a href="./software/camera/index.html" target="_blank">Webカメラ</a></li>
-			</ul>
-            <h3 id="games">Games</h3>
-			<ul>
-				<li><a href="./software/typing/index.html" target="_blank">Typing</a></li>
-				<li><a href="./software/reversi/index.html" target="_blank">Reversi</a></li>
-				<li><a href="./software/sudoku/create.html" target="_blank">ナンプレ問題自動作成</a></li>
-				<li><a href="./software/sudoku/solve.html" target="_blank">ナンプレソルバー</a></li>
-				<li><a href="./software/maze/index.html" target="_blank">迷路自動作成</a></li>
-				<li><a href="./software/hyperrobot/index.html" target="_blank">Hyper Robot</a></li>
-				<!-- <li><a href="https://birdwatcheryt.github.io/number-puzzle/" target="_blank">Number Puzzle</a></li> -->
-				<li><a href="./software/number-puzzle/index.html" target="_blank">Number Puzzle</a></li>
-				<li><a href="https://birdwatcheryt.github.io/block-breaker/" target="_blank">ブロック崩し</a></li>
-            	<li><a href="./software/jump/index.html" target="_blank">Jump Game</a></li>
-            	<li><a href="./software/javasparrow/index.html" target="_blank">Java Sparrow Game</a></li>
-                <li><a href="./software/bird/index.html" target="_blank">鳥ゲーム</a></li>
-			</ul>
+				<p class="heading-content"><a href="./software/index.html">Software一覧を見る</a></p>
 			</div>
 			<div id="links-section">
 			<h2 id="links">Links</h2>
@@ -345,10 +303,6 @@
 			document.getElementById('bird').style.display="none";
 			document.getElementById('profile-info').style.display="none";
 			document.getElementById('software-section').style.display="none";
-		}else if (param == "?software") {
-			document.getElementById('bird').style.display="none";
-			document.getElementById('profile-info').style.display="none";
-			document.getElementById('links-section').style.display="none";
 		}
 
 		var headingLinks = document.querySelectorAll('h2[id], h3[id]');
